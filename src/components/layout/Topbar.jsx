@@ -1,6 +1,5 @@
 import React from "react";
 import { Search, Bell, Menu, ChevronDown } from "lucide-react";
-
 import {
   TopbarWrapper,
   LeftActions,
@@ -23,14 +22,14 @@ function Topbar({ onOpenSidebar }) {
         <MenuButton type="button" onClick={onOpenSidebar}>
           <Menu size={22} />
         </MenuButton>
+      </LeftActions>
 
+      <Actions>
         <SearchBox>
           <Search size={17} />
           <SearchInput placeholder="Buscar productos, clientes, ventas..." />
         </SearchBox>
-      </LeftActions>
 
-      <Actions>
         <IconButton type="button">
           <Bell size={18} />
         </IconButton>

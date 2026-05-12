@@ -40,7 +40,7 @@ export const Brand = styled.div`
 `;
 
 export const BrandText = styled.h2`
-  font-size: 18px;
+  font-size: 25px;
   margin: 0;
   color: #fb0404;
 `;
@@ -110,39 +110,4 @@ export const NavItem = styled.div`
     background: #fff7f0;
     color: #fb0404;
   }
-`;
-
-export const UserBox = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-top: 18px;
-  border-top: 1px solid #eeeeee;
-`;
-
-export const UserAvatar = styled.div`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #d9d9d9;
-  flex: 0 0 auto;
-`;
-
-export const UserInfo = styled.div`
-  min-width: 0;
-`;
-
-export const UserName = styled.p`
-  margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: #0f172a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-export const UserRole = styled.span`
-  font-size: 12px;
-  color: #64748b;
 `;
