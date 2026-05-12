@@ -12,6 +12,8 @@ import {
   X,
 } from "lucide-react";
 
+import { NavLink } from "react-router-dom";
+
 import {
   SidebarWrapper,
   SidebarHeader,
@@ -33,36 +35,76 @@ const sidebarSections = [
   {
     title: "Inicio",
     items: [
-      { label: "Dashboard", icon: LayoutDashboard, active: true },
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/dashboard",
+      },
     ],
   },
   {
     title: "Inventario",
     items: [
-      { label: "Productos", icon: Package },
-      { label: "Kardex FV", icon: ClipboardList },
+      {
+        label: "Productos",
+        icon: Package,
+        path: "/products",
+      },
+      {
+        label: "Kardex FV",
+        icon: ClipboardList,
+        path: "/kardex",
+      },
     ],
   },
   {
     title: "Ventas",
     items: [
-      { label: "Carrito de Venta", icon: ShoppingCart },
-      { label: "Comprobantes", icon: ReceiptText },
+      {
+        label: "Carrito de Venta",
+        icon: ShoppingCart,
+        path: "/cart",
+      },
+      {
+        label: "Comprobantes",
+        icon: ReceiptText,
+        path: "/receipts",
+      },
     ],
   },
   {
     title: "Administración",
     items: [
-      { label: "Márgenes y Uti.", icon: BarChart3 },
-      { label: "Clientes", icon: Users },
-      { label: "Reportes de Ventas", icon: BarChart3 },
+      {
+        label: "Márgenes y Uti.",
+        icon: BarChart3,
+        path: "/profits",
+      },
+      {
+        label: "Clientes",
+        icon: Users,
+        path: "/clients",
+      },
+      {
+        label: "Reportes de Ventas",
+        icon: BarChart3,
+        path: "/sales-reports",
+      },
     ],
   },
   {
     title: "Configuración",
     items: [
-      { label: "Usuarios", icon: UserCog },
-      { label: "Sistema", icon: Settings },
+      {
+        label: "Usuarios",
+        icon: UserCog,
+        path: "/users",
+      },
+      {
+        label: "Sistema",
+        icon: Settings,
+        path: "/settings",
+      },
     ],
   },
 ];
@@ -72,9 +114,7 @@ function Sidebar({ isOpen, onClose }) {
     <SidebarWrapper $isOpen={isOpen}>
       <SidebarHeader>
         <Brand>
-          <BrandText>
-            Meggadis
-          </BrandText>
+          <BrandText>Meggadis</BrandText>
         </Brand>
 
         <CloseButton type="button" onClick={onClose}>
@@ -87,11 +127,21 @@ function Sidebar({ isOpen, onClose }) {
           <NavSection key={section.title}>
             <SectionTitle>{section.title}</SectionTitle>
 
-            {section.items.map(({ label, icon: Icon, active }) => (
-              <NavItem key={label} $active={active}>
-                <Icon size={16} />
-                <span>{label}</span>
-              </NavItem>
+            {section.items.map(({ label, icon: Icon, path }) => (
+              <NavLink
+                key={label}
+                to={path}
+                style={{
+                  textDecoration: "none",
+                }}
+              >
+                {({ isActive }) => (
+                  <NavItem $active={isActive}>
+                    <Icon size={16} />
+                    <span>{label}</span>
+                  </NavItem>
+                )}
+              </NavLink>
             ))}
           </NavSection>
         ))}
@@ -99,6 +149,7 @@ function Sidebar({ isOpen, onClose }) {
 
       <UserBox>
         <UserAvatar />
+
         <UserInfo>
           <UserName>Carlos Mendoza</UserName>
           <UserRole>Administrador</UserRole>

@@ -4,7 +4,7 @@ import { useLoginStore } from "./components/store/loginStore";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-
+import Products from "./pages/Products"
 function App() {
   const { isLoggedIn } = useLoginStore();
 
@@ -20,6 +20,7 @@ function App() {
         {isLoggedIn && (
           <>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/products" element={<Products />} />
           </>
         )}
 

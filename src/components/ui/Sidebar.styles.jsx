@@ -83,14 +83,17 @@ export const SectionTitle = styled.p`
   letter-spacing: 0.04em;
 `;
 
-export const NavItem = styled.button`
+export const NavItem = styled.div`
   width: 100%;
   height: 40px;
   padding: 0 12px;
-  border: none;
   border-radius: 10px;
-  background: ${({ $active }) => ($active ? "#fff3eb" : "transparent")};
-  color: ${({ $active }) => ($active ? "#fb0404" : "#334155")};
+
+  background: ${({ $active }) =>
+    $active ? "#fff3eb" : "transparent"};
+
+  color: ${({ $active }) =>
+    $active ? "#fb0404" : "#334155"};
 
   display: flex;
   align-items: center;
@@ -101,6 +104,7 @@ export const NavItem = styled.button`
   text-align: left;
 
   cursor: pointer;
+  transition: 0.2s;
 
   &:hover {
     background: #fff7f0;
