@@ -5,8 +5,11 @@ import {
   ClipboardList,
   ShoppingCart,
   ReceiptText,
+  ClipboardMinus,
   Users,
   BarChart3,
+  Building2,
+  Truck,
   Settings,
   UserCog,
   X,
@@ -22,11 +25,6 @@ import {
   NavSection,
   SectionTitle,
   NavItem,
-  UserBox,
-  UserAvatar,
-  UserInfo,
-  UserName,
-  UserRole,
 } from "../ui/Sidebar.styles";
 
 const sidebarSections = [
@@ -48,14 +46,16 @@ const sidebarSections = [
     items: [
       { label: "Carrito de Venta", icon: ShoppingCart },
       { label: "Comprobantes", icon: ReceiptText },
+      { label: "Matriz de Ventas", icon: ClipboardMinus },
     ],
   },
   {
     title: "Administración",
     items: [
-      { label: "Márgenes y Uti.", icon: BarChart3 },
+      { label: "Márgenes y Uti", icon: BarChart3 },
       { label: "Clientes", icon: Users },
-      { label: "Reportes de Ventas", icon: BarChart3 },
+      { label: "Sucursales", icon: Building2 },
+      { label: "Transferencias", icon: Truck },
     ],
   },
   {
@@ -73,7 +73,7 @@ function Sidebar({ isOpen, onClose }) {
       <SidebarHeader>
         <Brand>
           <BrandText>
-            Meggadis
+            Megadis
           </BrandText>
         </Brand>
 
@@ -96,14 +96,6 @@ function Sidebar({ isOpen, onClose }) {
           </NavSection>
         ))}
       </NavContent>
-
-      <UserBox>
-        <UserAvatar />
-        <UserInfo>
-          <UserName>Carlos Mendoza</UserName>
-          <UserRole>Administrador</UserRole>
-        </UserInfo>
-      </UserBox>
     </SidebarWrapper>
   );
 }
