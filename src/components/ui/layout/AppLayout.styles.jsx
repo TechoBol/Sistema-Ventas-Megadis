@@ -5,7 +5,7 @@ export const LayoutWrapper = styled.div`
   min-height: 100dvh;
   display: grid;
   grid-template-columns: 260px 1fr;
-  background: ${theme.colors.background};
+  background: ${theme.colors.backgroundSoft};
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
