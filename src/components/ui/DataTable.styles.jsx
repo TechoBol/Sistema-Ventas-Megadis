@@ -59,7 +59,7 @@ export const TableContainer = styled.div`
 export const TableActionGroup = styled.div`
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 10px;
 `;
 

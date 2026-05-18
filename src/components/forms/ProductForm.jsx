@@ -1,5 +1,3 @@
-// components/forms/ProductForm.tsx
-
 import React, {
   useEffect,
   useMemo,
@@ -8,9 +6,14 @@ import React, {
 
 import { useForm } from "@mantine/form";
 
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
 import { useProduct } from "../../hooks/useProduct";
+
 import { useLines } from "../../hooks/useLine";
 
 import useInventory from "../../hooks/useInventory";
@@ -20,7 +23,7 @@ import {
   errorToast,
 } from "../../services/toasts";
 
-import {socket} from "../../services/SocketIOConnection";
+import { socket } from "../../services/SocketIOConnection";
 
 import {
   FormWrapper,
@@ -46,6 +49,33 @@ import {
   FieldLabel,
 } from "../../components/ui/Products";
 
+const UNITS = [
+  {
+    code: "PIECE",
+    label: "Pieza",
+  },
+  {
+    code: "BOX",
+    label: "Caja",
+  },
+  {
+    code: "DOZEN",
+    label: "Docena",
+  },
+  {
+    code: "KG",
+    label: "Kilogramo",
+  },
+  {
+    code: "METER",
+    label: "Metro",
+  },
+  {
+    code: "ROLL",
+    label: "Rollo",
+  },
+];
+
 function ProductForm({
   onBack,
   product = null,
@@ -63,21 +93,49 @@ function ProductForm({
 
   const { lines } = useLines();
 
-  const [brands, setBrands] = useState([]);
+  const [brands, setBrands] =
+    useState([]);
+
+  const [productUnits, setProductUnits] =
+    useState(
+      product?.productUnits?.length
+        ? product.productUnits
+        : [
+            {
+              unitCode: "PIECE",
+              equivalence: 1,
+              salePrice: "",
+              isDefault: true,
+            },
+          ],
+    );
 
   const form = useForm({
     initialValues: {
       name: product?.name ?? "",
+
       description:
         product?.description ?? "",
+
       code: product?.code ?? "",
-      price: product?.price ?? "",
-      finalPrice:
-        product?.finalPrice ?? "",
-      stock: product?.stockTotal ?? "",
-      lineId: product?.lineId ?? "",
+
+      cost:
+        product?.inventories?.[0]
+          ?.averageCost ?? "",
+
+      stock:
+        product?.inventories?.[0]
+          ?.quantity ?? "",
+
+      lineId:
+        product?.lineId ?? "",
+
       brandName:
         product?.brandName ?? "",
+
+      baseUnitCode:
+        product?.baseUnit?.code ??
+        "PIECE",
     },
 
     validateInputOnChange: true,
@@ -93,57 +151,39 @@ function ProductForm({
           ? "Ingresa el código"
           : null,
 
-      price: (v) =>
-        !v || Number(v) <= 0
-          ? "Precio inválido"
-          : null,
-
-      finalPrice: (v, values) =>
-        !v || Number(v) <= 0
-          ? "Precio inválido"
-          : Number(v) <
-            Number(values.price)
-          ? "No puede ser menor"
+      cost: (v) =>
+        Number(v) <= 0
+          ? "Costo inválido"
           : null,
 
       stock: (v) =>
-        v === "" || Number(v) < 0
+        Number(v) < 0
           ? "Stock inválido"
+          : null,
+
+      lineId: (v) =>
+        !v
+          ? "Selecciona línea"
+          : null,
+
+      brandName: (v) =>
+        !v
+          ? "Selecciona marca"
           : null,
     },
   });
 
   const hasChanges = useMemo(() => {
-    if (!isEdit) return true;
-
-    return (
-      form.values.name !==
-        product?.name ||
-      form.values.description !==
-        product?.description ||
-      form.values.code !==
-        product?.code ||
-      Number(form.values.price) !==
-        Number(product?.price) ||
-      Number(
-        form.values.finalPrice,
-      ) !==
-        Number(product?.finalPrice) ||
-      Number(form.values.stock) !==
-        Number(product?.stockTotal) ||
-      Number(form.values.lineId) !==
-        Number(product?.lineId) ||
-      form.values.brandName !==
-        product?.brandName
-    );
-  }, [form.values, product, isEdit]);
+    return true;
+  }, [form.values, productUnits]);
 
   useEffect(() => {
-    const selectedLine = lines?.find(
-      (l) =>
-        l.id ===
-        Number(form.values.lineId),
-    );
+    const selectedLine =
+      lines?.find(
+        (l) =>
+          l.id ===
+          Number(form.values.lineId),
+      );
 
     if (selectedLine) {
       setBrands(
@@ -154,36 +194,121 @@ function ProductForm({
     }
   }, [form.values.lineId, lines]);
 
+  const addFormat = () => {
+    setProductUnits((prev) => [
+      ...prev,
+      {
+        unitCode: "BOX",
+        equivalence: 1,
+        salePrice: "",
+        isDefault: false,
+      },
+    ]);
+  };
+
+  const removeFormat = (index) => {
+    setProductUnits((prev) =>
+      prev.filter(
+        (_, i) => i !== index,
+      ),
+    );
+  };
+
+  const updateFormat = (
+    index,
+    field,
+    value,
+  ) => {
+    setProductUnits((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item,
+      ),
+    );
+  };
+
+  const handleDefault = (index) => {
+    setProductUnits((prev) =>
+      prev.map((item, i) => ({
+        ...item,
+        isDefault: i === index,
+      })),
+    );
+  };
+
   const handleSubmit = form.onSubmit(
     async (values) => {
       try {
         setLoading(true);
 
         const payload = {
-          ...values,
-          lineId: Number(values.lineId),
-          price: Number(values.price),
-          finalPrice: Number(
-            values.finalPrice,
+          name: values.name,
+
+          description:
+            values.description,
+
+          code: values.code,
+
+          lineId: Number(
+            values.lineId,
           ),
-          stock: Number(values.stock),
+
+          brandName:
+            values.brandName,
+
+          baseUnitCode:
+            values.baseUnitCode,
+
+          stock: Number(
+            values.stock,
+          ),
+
+          averageCost: Number(
+            values.cost,
+          ),
+
+          productUnits:
+            productUnits.map(
+              (item) => ({
+                unitCode:
+                  item.unitCode,
+
+                equivalence:
+                  Number(
+                    item.equivalence,
+                  ),
+
+                  salePrice: Number(
+                  item.salePrice,
+                ),
+
+                isDefault:
+                  item.isDefault,
+              }),
+            ),
         };
 
         let result;
 
         if (isEdit) {
-          result = await updateProduct(
-            product.id,
-            payload,
-          );
+          result =
+            await updateProduct(
+              product.id,
+              payload,
+            );
 
           successToast(
             "Producto actualizado",
           );
         } else {
-          result = await createProduct(
-            payload,
-          );
+          result =
+            await createProduct(
+              payload,
+            );
 
           successToast(
             "Producto creado",
@@ -227,8 +352,8 @@ function ProductForm({
           </Title>
 
           <Subtitle>
-            Administra la información del
-            producto
+            Administra la información
+            del producto
           </Subtitle>
         </HeaderContent>
       </HeaderLeft>
@@ -243,7 +368,10 @@ function ProductForm({
 
               <Grid2>
                 <ContainerInput>
-                  <FieldLabel>Nombre</FieldLabel>
+                  <FieldLabel>
+                    Nombre
+                  </FieldLabel>
+
                   <Input
                     placeholder="Nombre"
                     {...form.getInputProps(
@@ -253,13 +381,19 @@ function ProductForm({
 
                   {form.errors.name && (
                     <ErrorText>
-                      {form.errors.name}
+                      {
+                        form.errors
+                          .name
+                      }
                     </ErrorText>
                   )}
                 </ContainerInput>
 
                 <ContainerInput>
-                  <FieldLabel>Descripción</FieldLabel>
+                  <FieldLabel>
+                    Descripción
+                  </FieldLabel>
+
                   <Input
                     placeholder="Descripción"
                     {...form.getInputProps(
@@ -270,7 +404,10 @@ function ProductForm({
               </Grid2>
 
               <ContainerInput>
-                <FieldLabel>Código</FieldLabel>
+                <FieldLabel>
+                  Código
+                </FieldLabel>
+
                 <Input
                   placeholder="Código"
                   {...form.getInputProps(
@@ -280,7 +417,10 @@ function ProductForm({
 
                 {form.errors.code && (
                   <ErrorText>
-                    {form.errors.code}
+                    {
+                      form.errors
+                        .code
+                    }
                   </ErrorText>
                 )}
               </ContainerInput>
@@ -288,53 +428,71 @@ function ProductForm({
 
             <Section>
               <SectionTitle>
-                Inventario y Costos
+                Inventario
               </SectionTitle>
 
               <Grid3>
                 <ContainerInput>
-                  <FieldLabel>Precio compra</FieldLabel>
-                  <Input
-                    type="number"
-                    placeholder="Precio compra"
-                    {...form.getInputProps(
-                      "price",
-                    )}
-                  />
+                  <FieldLabel>
+                    Unidad Base
+                  </FieldLabel>
 
-                  {form.errors.price && (
-                    <ErrorText>
-                      {form.errors.price}
-                    </ErrorText>
-                  )}
+                  <Select
+                    {...form.getInputProps(
+                      "baseUnitCode",
+                    )}
+                  >
+                    {UNITS.map(
+                      (unit) => (
+                        <option
+                          key={
+                            unit.code
+                          }
+                          value={
+                            unit.code
+                          }
+                        >
+                          {
+                            unit.label
+                          }
+                        </option>
+                      ),
+                    )}
+                  </Select>
                 </ContainerInput>
 
                 <ContainerInput>
-                  <FieldLabel>Precio venta</FieldLabel>
+                  <FieldLabel>
+                    Costo
+                  </FieldLabel>
+
                   <Input
                     type="number"
-                    placeholder="Precio venta"
+                    placeholder="0"
                     {...form.getInputProps(
-                      "finalPrice",
+                      "cost",
                     )}
                   />
 
-                  {form.errors
-                    .finalPrice && (
+                  {form.errors.cost && (
                     <ErrorText>
                       {
                         form.errors
-                          .finalPrice
+                          .cost
                       }
                     </ErrorText>
                   )}
                 </ContainerInput>
 
                 <ContainerInput>
-                  <FieldLabel>Stock</FieldLabel>
+                  <FieldLabel>
+                    Stock Inicial
+                  </FieldLabel>
+
                   <Input
                     type="number"
-                    placeholder="Stock"
+                    placeholder="0"
+                    onWheel={(e) => e.currentTarget.blur()}
                     {...form.getInputProps(
                       "stock",
                     )}
@@ -342,11 +500,189 @@ function ProductForm({
 
                   {form.errors.stock && (
                     <ErrorText>
-                      {form.errors.stock}
+                      {
+                        form.errors
+                          .stock
+                      }
                     </ErrorText>
                   )}
                 </ContainerInput>
               </Grid3>
+            </Section>
+
+            <Section>
+              <SectionTitle>
+                Presentaciones
+              </SectionTitle>
+
+              {productUnits.map(
+                (
+                  item,
+                  index,
+                ) => (
+                  <div
+                    key={index}
+                    style={{
+                      border:
+                        "1px solid #E5E7EB",
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 14,
+                    }}
+                  >
+                    <Grid3>
+                      <ContainerInput>
+                        <FieldLabel>
+                          Unidad
+                        </FieldLabel>
+
+                        <Select
+                          value={
+                            item.unitCode
+                          }
+                          onChange={(
+                            e,
+                          ) =>
+                            updateFormat(
+                              index,
+                              "unitCode",
+                              e.target
+                                .value,
+                            )
+                          }
+                        >
+                          {UNITS.map(
+                            (
+                              unit,
+                            ) => (
+                              <option
+                                key={
+                                  unit.code
+                                }
+                                value={
+                                  unit.code
+                                }
+                              >
+                                {
+                                  unit.label
+                                }
+                              </option>
+                            ),
+                          )}
+                        </Select>
+                      </ContainerInput>
+
+                      <ContainerInput>
+                        <FieldLabel>
+                          Equivalencia
+                        </FieldLabel>
+
+                        <Input
+                          type="number"
+                          placeholder="1"
+                          value={
+                            item.equivalence
+                          }
+                          onChange={(
+                            e,
+                          ) =>
+                            updateFormat(
+                              index,
+                              "equivalence",
+                              e.target
+                                .value,
+                            )
+                          }
+                        />
+                      </ContainerInput>
+
+                      <ContainerInput>
+                        <FieldLabel>
+                          Precio Venta
+                        </FieldLabel>
+
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={
+                            item.prsalePriceice
+                          }
+                          onChange={(
+                            e,
+                          ) =>
+                            updateFormat(
+                              index,
+                              "salePrice",
+                              e.target
+                                .value,
+                            )
+                          }
+                        />
+                      </ContainerInput>
+                    </Grid3>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 10,
+                        marginTop: 14,
+                        alignItems:
+                          "center",
+                      }}
+                    >
+                      <label
+                        style={{
+                          display:
+                            "flex",
+                          alignItems:
+                            "center",
+                          gap: 8,
+                          fontSize: 14,
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          checked={
+                            item.isDefault
+                          }
+                          onChange={() =>
+                            handleDefault(
+                              index,
+                            )
+                          }
+                        />
+
+                        Presentación por
+                        defecto
+                      </label>
+
+                      {productUnits.length >
+                        1 && (
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            removeFormat(
+                              index,
+                            )
+                          }
+                        >
+                          <Trash2
+                            size={16}
+                          />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ),
+              )}
+
+              <Button
+                type="button"
+                onClick={addFormat}
+              >
+                <Plus size={18} />
+                Agregar Presentación
+              </Button>
             </Section>
           </LeftColumn>
 
@@ -358,47 +694,83 @@ function ProductForm({
 
               <Grid2>
                 <ContainerInput>
-                  <FieldLabel>Marca</FieldLabel>
+                  <FieldLabel>
+                    Línea
+                  </FieldLabel>
+
                   <Select
                     {...form.getInputProps(
                       "lineId",
                     )}
                   >
                     <option value="">
-                      Selecciona marca
+                      Selecciona línea
                     </option>
 
-                    {lines?.map((line) => (
-                      <option
-                        key={line.id}
-                        value={line.id}
-                      >
-                        {line.name}
-                      </option>
-                    ))}
+                    {lines?.map(
+                      (line) => (
+                        <option
+                          key={
+                            line.id
+                          }
+                          value={
+                            line.id
+                          }
+                        >
+                          {
+                            line.name
+                          }
+                        </option>
+                      ),
+                    )}
                   </Select>
+
+                  {form.errors
+                    .lineId && (
+                    <ErrorText>
+                      {
+                        form.errors
+                          .lineId
+                      }
+                    </ErrorText>
+                  )}
                 </ContainerInput>
 
                 <ContainerInput>
-                  <FieldLabel>Linea</FieldLabel>
+                  <FieldLabel>
+                    Marca
+                  </FieldLabel>
+
                   <Select
                     {...form.getInputProps(
                       "brandName",
                     )}
                   >
                     <option value="">
-                      Selecciona linea
+                      Selecciona marca
                     </option>
 
-                    {brands.map((brand) => (
-                      <option
-                        key={brand}
-                        value={brand}
-                      >
-                        {brand}
-                      </option>
-                    ))}
+                    {brands.map(
+                      (brand) => (
+                        <option
+                          key={brand}
+                          value={brand}
+                        >
+                          {brand}
+                        </option>
+                      ),
+                    )}
                   </Select>
+
+                  {form.errors
+                    .brandName && (
+                    <ErrorText>
+                      {
+                        form.errors
+                          .brandName
+                      }
+                    </ErrorText>
+                  )}
                 </ContainerInput>
               </Grid2>
             </Section>
@@ -411,7 +783,8 @@ function ProductForm({
             disabled={
               loading ||
               !form.isValid() ||
-              (isEdit && !hasChanges)
+              (isEdit &&
+                !hasChanges)
             }
           >
             {loading

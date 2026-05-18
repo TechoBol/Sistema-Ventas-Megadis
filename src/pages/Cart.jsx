@@ -28,7 +28,7 @@ import {
   PaymentPanel,
   PaymentTitle,
   RadioGroup,
-  RadioOption
+  RadioOption,
 } from "../components/ui/Cart";
 
 import { useInventoryStore } from "../components/store/inventoryStore";
@@ -66,12 +66,16 @@ const Cart = () => {
   const [paymentMethod, setPaymentMethod] = useState("Efectivo");
   const filtered =
     query.trim() === ""
-      ? (products ?? []).slice(0, 50) // primeros 50 cuando no hay query
-      : (products ?? []).filter(
-          (p) =>
-            p.name.toLowerCase().includes(query.toLowerCase()) ||
-            p.code.toLowerCase().includes(query.toLowerCase()),
-        );
+      ? (products ?? []).slice(0, 50)
+      : (products ?? []).filter((p) => {
+          const name = p?.name?.toLowerCase?.() || "";
+
+          const code = p?.code?.toLowerCase?.() || "";
+
+          const q = query.toLowerCase();
+
+          return name.includes(q) || code.includes(q);
+        });
 
   /* cierra el dropdown al hacer click fuera */
   useEffect(() => {
@@ -90,22 +94,31 @@ const Cart = () => {
   const addToCart = (product) => {
     setCartItems((prev) => {
       const exists = prev.find((i) => i.id === product.id);
-      if (exists)
+
+      if (exists) {
         return prev.map((i) =>
-          i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i.id === product.id
+            ? {
+                ...i,
+                quantity: i.quantity + 1,
+              }
+            : i,
         );
+      }
+
       return [
         ...prev,
         {
           id: product.id,
           code: product.code,
           name: product.name,
-          unitPrice: product.finalPrice,
+          unitPrice: Number(product.salePrice || 0),
           quantity: 1,
           itemDiscount: 0,
         },
       ];
     });
+
     setQuery("");
     setDropOpen(false);
   };
@@ -294,13 +307,17 @@ const Cart = () => {
               ) : (
                 filtered.map((p) => (
                   <DropItem key={p.id} onClick={() => addToCart(p)}>
-                    <DropCode>{p.code}</DropCode>
+                    <DropCode>{p?.code || "-"}</DropCode>
 
-                    <DropName>{p.name}</DropName>
+                    <DropName>{p?.name || "-"}</DropName>
 
-                    <DropCantidad>{p.inventories[0].quantity}</DropCantidad>
+                    <DropCantidad>
+                      {p?.inventories?.[0]?.quantity || 0}
+                    </DropCantidad>
 
-                    <DropPrice>Bs {p.finalPrice.toFixed(2)}</DropPrice>
+                    <DropPrice>
+                      Bs {Number(p?.salePrice || 0).toFixed(2)}
+                    </DropPrice>
                   </DropItem>
                 ))
               )}
@@ -623,14 +640,14 @@ const DropHeaderPrice = styled.span`
   color: #64748b;
 `;
 const CustomerEmpty = styled.div`
-    padding: 20px;
+  padding: 20px;
 
-    text-align: center;
+  text-align: center;
 
-    font-size: 14px;
+  font-size: 14px;
 
-    font-weight: 600;
+  font-weight: 600;
 
-    color: #94a3b8;
+  color: #94a3b8;
 `;
 export default Cart;

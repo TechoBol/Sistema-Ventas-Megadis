@@ -47,8 +47,9 @@ function DataTable({
     const baseColumns = columns.map((column) => ({
       flex: column.flex ?? 1,
       minWidth: column.minWidth ?? 140,
-      sortable: column.sortable ?? true,
-      filterable: column.filterable ?? true,
+      sortable: true,
+      filterable: true,
+      disableColumnMenu: true,
       headerAlign: column.headerAlign ?? "left",
       align: column.align ?? "left",
       ...column,
@@ -106,8 +107,6 @@ function DataTable({
         width: 140,
         sortable: false,
         filterable: false,
-        align: "right",
-        headerAlign: "right",
         renderCell: (params) => (
           <TableActionGroup>
             {actions.map((action) => {
