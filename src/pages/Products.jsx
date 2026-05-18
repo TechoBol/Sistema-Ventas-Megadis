@@ -173,9 +173,8 @@ function Products() {
                     setShowForm(true);
                   }}
                 >
-                  Añadir Producto
-
                   <Plus size={18} strokeWidth={3} />
+                  Añadir Producto
                 </AddButton>
               </TopActions>
             </PageHeader>

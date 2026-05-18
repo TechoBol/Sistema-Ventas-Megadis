@@ -9,6 +9,7 @@ import Cart from "./pages/Cart";
 import Receipts from "./pages/Receipts";
 import Customer from "./pages/Customer";
 import Transfer from "./pages/Transfer";
+import Users from "./pages/Users";
 
 function App() {
   const { isLoggedIn } = useLoginStore();
@@ -28,6 +29,7 @@ function App() {
             <Route path="/receipts" element={<Receipts/>} />
             <Route path="/customer" element={<Customer />} />
             <Route path="/transfers" element={<Transfer />} />
+            <Route path="/users" element={<Users />} />
           </>
         )}
         {!isLoggedIn && <Route path="*" element={<Navigate to="/login" />} />}

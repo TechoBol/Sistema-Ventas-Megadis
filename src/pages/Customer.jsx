@@ -10,6 +10,7 @@ import {
   HeaderTitle,
   Title,
   Subtitle,
+  Toolbar,
   SearchBox,
   SearchInput,
   ErrorMessage,
@@ -91,15 +92,17 @@ function Customer() {
             <Subtitle>{fechaHoy()}</Subtitle>
           </HeaderTitle>
           {/* buscador */}
-          <SearchBox>
-            <Search size={18} />
-            <SearchInput
-              type="text"
-              placeholder="Buscar"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </SearchBox>
+          <Toolbar>
+            <SearchBox>
+              <Search size={18} />
+              <SearchInput
+                type="text"
+                placeholder="Buscar"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </SearchBox>
+          </Toolbar>
 
           {error && <ErrorMessage>Error al cargar clientes</ErrorMessage>}
 
