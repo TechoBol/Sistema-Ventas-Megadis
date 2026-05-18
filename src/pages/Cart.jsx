@@ -254,9 +254,13 @@ const Cart = () => {
         customer: customerData,
 
         products: cartItems.map((item) => ({
-          productId: item.id,
+          productId: item.productId,
+
+          productUnitId: item.selectedUnitId,
 
           quantity: item.quantity,
+
+          equivalence: item.equivalence,
 
           itemDiscount: Number(item.itemDiscount || 0),
         })),
@@ -378,7 +382,7 @@ const Cart = () => {
                     </DropCantidad>
 
                     <DropPrice>
-                      Bs {Number(p?.salePrice || 0).toFixed(2)}
+                      {Number(p?.salePrice || 0).toFixed(2)} Bs
                     </DropPrice>
                   </DropItem>
                 ))
@@ -397,10 +401,9 @@ const Cart = () => {
                   <TH>Nombre</TH>
                   <TH>Unidad</TH>
                   <TH style={{ textAlign: "center" }}>Cantidad</TH>
-                  <TH style={{ textAlign: "right" }}>Precio Unit.</TH>
-                  <TH style={{ textAlign: "right" }}>Descuento</TH>
-                  <TH style={{ textAlign: "right" }}>Subtotal</TH>
-                  <TH />
+                  <TH style={{ textAlign: "left" }}>Precio Unit.</TH>
+                  <TH style={{ textAlign: "left" }}>Descuento</TH>
+                  <TH style={{ textAlign: "left" }}>Subtotal</TH>
                 </tr>
               </THead>
               <TBody>
@@ -455,7 +458,7 @@ const Cart = () => {
                         </QuantityControls>
                       </TD>
                       <TD style={{ textAlign: "right" }}>
-                        Bs {item.unitPrice.toFixed(2)}
+                        {item.unitPrice.toFixed(2)} Bs
                       </TD>
                       <TD style={{ textAlign: "right" }}>
                         <div
@@ -466,9 +469,6 @@ const Cart = () => {
                             gap: 4,
                           }}
                         >
-                          <span style={{ fontSize: 13, color: "#94a3b8" }}>
-                            Bs
-                          </span>
                           <DiscountInput
                             type="number"
                             min="0"
@@ -480,9 +480,12 @@ const Cart = () => {
                               setItemDiscount(item.productId, Math.min(v, max));
                             }}
                           />
+                          <span style={{ fontSize: 13, color: "#94a3b8" }}>
+                            Bs
+                          </span>
                         </div>
                       </TD>
-                      <TD>Bs {itemSubtotal(item).toFixed(2)}</TD>
+                      <TD>{itemSubtotal(item).toFixed(2)} Bs</TD>
                       <TD style={{ textAlign: "center" }}>
                         <DeleteButton
                           onClick={() => removeItem(item.productId)}
@@ -548,17 +551,17 @@ const Cart = () => {
             <SummaryPanel>
               <SummaryRow>
                 <span>Subtotal:</span>
-                <span>Bs {subtotal.toFixed(2)}</span>
+                <span> {subtotal.toFixed(2)} Bs</span>
               </SummaryRow>
 
               <SummaryRow>
                 <span>Descuento:</span>
-                <span>Bs {totalDiscount.toFixed(2)}</span>
+                <span>{totalDiscount.toFixed(2)}Bs</span>
               </SummaryRow>
 
               <SummaryTotal>
                 <span>Total:</span>
-                <span>Bs {total.toFixed(2)}</span>
+                <span>{total.toFixed(2)}Bs</span>
               </SummaryTotal>
 
               <CheckoutButton

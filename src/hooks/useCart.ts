@@ -3,6 +3,7 @@ import { useLoginStore } from "../components/store/loginStore";
 import { createSaleService } from "../services/cartService";
 import { useAmazonS3 } from "./useAmazonS3";
 import { generarDocumentoVenta } from "../components/pdf/generarPDF.jsx";
+import { generarFacturaVenta } from "../components/pdf/generarPDFFactura.jsx";
 import { socketTesoreria } from "../services/SocketIOConnection.ts";
 import { useCashFlow } from "./useCashFlow";
 
@@ -12,7 +13,7 @@ export const useCart = () => {
 
   const { token, location, fullName } = useLoginStore();
 
-  const { uploadPDF } = useAmazonS3();
+  const { uploadPDF,uploadPDFFactura } = useAmazonS3();
   const { addCashFlow } = useCashFlow();
 
   const createSale = async (
@@ -59,6 +60,22 @@ export const useCart = () => {
       // =====================================================
 
       await uploadPDF(file, sale.code);
+
+      const pdfBlobFactura = generarFacturaVenta(sale);
+
+      // =====================================================
+      // 3. CONVERTIR A FILE
+      // =====================================================
+
+      const fileFactura = new File([pdfBlobFactura], `factura_${sale.code}.pdf`, {
+        type: "application/pdf",
+      });
+
+      // =====================================================
+      // 4. SUBIR PDF
+      // =====================================================
+
+      await uploadPDFFactura(fileFactura, sale.code);
 
       // =====================================================
       // 5. MOVIMIENTO TESORERIA

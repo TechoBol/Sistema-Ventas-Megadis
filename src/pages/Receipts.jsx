@@ -19,7 +19,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import PrintIcon from "@mui/icons-material/Print";
 
 import { FaTrash } from "react-icons/fa";
-import { FileText, Search } from "lucide-react";
+import { FileText, Search , ReceiptText } from "lucide-react";
 
 import { Document, Page, pdfjs } from "react-pdf";
 
@@ -306,6 +306,12 @@ function Receipts() {
         title: "Ver PDF",
         icon: FileText,
         onClick: (sale) => handleViewPDF(sale.pdfUrl, sale.code),
+      },
+      {
+        key: "view-pdf",
+        title: "Ver Factura",
+        icon: ReceiptText,
+        onClick: (sale) => handleViewPDF(`MEGADIS/FACTURAS/${sale.code}.pdf`, sale.code),
       },
     ],
     [handleViewPDF]
