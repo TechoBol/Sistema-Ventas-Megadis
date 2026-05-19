@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import DataTable from "../components/table/DataTable";
+import LocationModal from "../components/modals/LocationModal";
 import { Search, Pencil, Trash2, Plus } from "lucide-react";
 import {
   PageSurface,
@@ -31,13 +32,26 @@ const mapLocationType = (type) => {
 
 function Locations() {
   const [searchTerm, setSearchTerm] = useState("");
-  const { data, deleteLocation, loading, isLoading } = useSucursales();
+  const [modalState, setModalState] = useState({
+    open: false,
+    mode: "create",
+    selectedLocation: null,
+  });
+  const {
+    data,
+    createLocation,
+    updateLocation,
+    deleteLocation,
+    loading,
+    isLoading,
+  } = useSucursales();
 
   const locations = useMemo(() => {
     return data.map((location) => ({
       id: location.id,
       name: location.name,
       type: mapLocationType(location.type),
+      typeValue: location.type,
       abbreviation: location.abbreviation,
       address: location.address ?? "Sin dirección",
       saleCounter: location.saleCounter,
@@ -91,15 +105,47 @@ function Locations() {
     []
   );
 
+  // Modal acciones
+  const openCreateModal = () => {
+    setModalState({
+      open: true,
+      mode: "create",
+      selectedLocation: null,
+    });
+  };
+
+  const openEditModal = (location) => {
+    setModalState({
+      open: true,
+      mode: "edit",
+      selectedLocation: location,
+    });
+  };
+
+  const closeModal = () => {
+    setModalState({
+      open: false,
+      mode: "create",
+      selectedLocation: null,
+    });
+  };
+
+  const handleSubmitLocation = async (formData) => {
+    if (modalState.mode === "edit" && modalState.selectedLocation) {
+      await updateLocation(modalState.selectedLocation.id, formData);
+    } else {
+      await createLocation(formData);
+    }
+    closeModal();
+  };
+
   const locationActions = useMemo(
     () => [
       {
         key: "edit",
         title: "Editar sucursal",
         icon: Pencil,
-        onClick: (location) => {
-          console.log("Editar sucursal:", location);
-        },
+        onClick: openEditModal,
       },
       {
         key: "delete",
@@ -112,10 +158,6 @@ function Locations() {
     ],
     [deleteLocation]
   );
-
-  const handleAddLocation = () => {
-    console.log("Agregar sucursal");
-  };
 
   return (
     <AppLayout>
@@ -137,7 +179,7 @@ function Locations() {
               />
             </SearchBox>
 
-            <PrimaryActionButton type="button" onClick={handleAddLocation}>
+            <PrimaryActionButton type="button" onClick={openCreateModal}>
               <Plus size={17} />
               Agregar sucursal
             </PrimaryActionButton>
@@ -153,6 +195,15 @@ function Locations() {
           />
         </PageWrapper>
       </PageSurface>
+      {/* Modal */}
+      <LocationModal
+        open={modalState.open}
+        mode={modalState.mode}
+        initialData={modalState.selectedLocation}
+        onClose={closeModal}
+        onSubmit={handleSubmitLocation}
+        loading={loading || isLoading}
+      />
     </AppLayout>
   );
 }
