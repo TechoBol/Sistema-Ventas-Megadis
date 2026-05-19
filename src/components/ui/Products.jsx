@@ -380,6 +380,13 @@ export const Input = styled.input`
   &::placeholder {
     color: #94a3b8;
   }
+
+  &:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
 `;
 
 export const Select = styled.select`
@@ -406,6 +413,13 @@ export const Select = styled.select`
   &:focus {
     border-color: #cbd5e1;
     box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.04);
+  }
+
+  &:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.9;
   }
 `;
 
@@ -522,5 +536,64 @@ export const TotalValue = styled.span`
 
   @media (max-width: 768px) {
     font-size: 22px;
+  }
+`;
+
+export const SwitchWrapper = styled.label`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 14px 16px;
+
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+`;
+
+export const SwitchLabel = styled.span`
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+`;
+
+export const Switch = styled.input`
+  appearance: none;
+  width: 44px;
+  height: 24px;
+  background: #cbd5e1;
+  border-radius: 999px;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:checked {
+    background: ${theme.colors.primary};
+  }
+
+  &:before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 3px;
+    left: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+
+  &:checked:before {
+    transform: translateX(20px);
   }
 `;
