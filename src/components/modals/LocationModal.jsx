@@ -43,7 +43,7 @@ function LocationModal({
       setFormData({
         name: initialData.name || "",
         abbreviation: initialData.abbreviation || "",
-        type: initialData.rawType || initialData.type || "",
+        type: initialData.typeValue || initialData.type || "",
         address: initialData.address === "Sin dirección" ? "" : initialData.address || "",
       });
     } else {
@@ -67,7 +67,7 @@ function LocationModal({
       name: formData.name.trim(),
       abbreviation: formData.abbreviation.trim(),
       type: formData.type,
-      address: formData.address.trim(),
+      address: formData.address.trim() || null,
     };
 
     onSubmit?.(payload);
