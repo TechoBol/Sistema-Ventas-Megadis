@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import DataTable from "../components/table/DataTable";
+import UserModal from "../components/modals/UserModal";
 import { Search, Pencil, Trash2, Plus } from "lucide-react";
 import {
   PageSurface,
@@ -25,6 +26,11 @@ const fechaHoy = () =>
 
 function Users() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalState, setModalState] = useState({
+    open: false,
+    mode: "create",
+    selectedUser: null,
+  });
   const { data, deleteEmployee, isLoading } = useEmployees();
 
   const users = useMemo(() => {
@@ -33,6 +39,8 @@ function Users() {
       name: employee.name,
       lastName: employee.lastName,
       email: employee.email,
+      phone: employee.phone ?? "",
+      numeral: employee.numeral ?? "",
       role: employee.role?.name ?? "Sin cargo",
       branch: employee.location?.name ?? "Sin sucursal",
     }));
@@ -46,8 +54,9 @@ function Users() {
         user.name,
         user.lastName,
         user.email,
-        user.role,
+        user.phone,
         user.numeral,
+        user.role,
         user.branch,
       ]
         .join(" ")
@@ -98,15 +107,57 @@ function Users() {
     []
   );
 
+  // Modal
+  const openCreateModal = () => {
+    setModalState({
+      open: true,
+      mode: "create",
+      selectedUser: null,
+    });
+  };
+
+  const openEditModal = (user) => {
+    setModalState({
+      open: true,
+      mode: "edit",
+      selectedUser: user,
+    });
+  };
+
+  const closeModal = () => {
+    setModalState({
+      open: false,
+      mode: "create",
+      selectedUser: null,
+    });
+  };
+
+  const handleSubmitUser = (formData) => {
+    if (modalState.mode === "edit") {
+      console.log("Actualizar usuario:", {
+        id: modalState.selectedUser.id,
+        ...formData,
+      });
+
+      // Aquí luego conectas con tu función real:
+      // updateEmployee(modalState.selectedUser.id, formData);
+    } else {
+      console.log("Crear usuario:", formData);
+
+      // Aquí luego conectas con tu función real:
+      // createEmployee(formData);
+    }
+
+    closeModal();
+  };
+
   const userActions = useMemo(
     () => [
       {
         key: "edit",
         title: "Editar usuario",
         icon: Pencil,
-        onClick: (user) => {
-          console.log("Editar usuario:", user);
-        },
+        onClick: openEditModal,
       },
       {
         key: "delete",
@@ -119,10 +170,6 @@ function Users() {
     ],
     [deleteEmployee]
   );
-
-  const handleAddEmployee = () => {
-    console.log("Agregar empleado");
-  };
 
   return (
     <AppLayout>
@@ -144,7 +191,7 @@ function Users() {
               />
             </SearchBox>
 
-            <PrimaryActionButton type="button" onClick={handleAddEmployee}>
+            <PrimaryActionButton type="button" onClick={openCreateModal}>
               <Plus size={17} />
               Agregar usuario
             </PrimaryActionButton>
@@ -160,6 +207,15 @@ function Users() {
           />
         </PageWrapper>
       </PageSurface>
+      {/* Modal */}
+      <UserModal
+        open={modalState.open}
+        mode={modalState.mode}
+        initialData={modalState.selectedUser}
+        loading={isLoading}
+        onClose={closeModal}
+        onSubmit={handleSubmitUser}
+      />
     </AppLayout>
   );
 }

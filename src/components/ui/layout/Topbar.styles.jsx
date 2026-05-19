@@ -4,7 +4,7 @@ import { theme } from "../Theme";
 export const TopbarWrapper = styled.header`
   height: 64px;
   padding: 0 28px;
-  min-width: 280px;
+  min-width: 300px;
   background: ${theme.colors.background};
 
   display: flex;

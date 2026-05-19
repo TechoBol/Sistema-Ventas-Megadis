@@ -3,6 +3,7 @@ import { theme } from "../Theme";
 
 export const LayoutWrapper = styled.div`
   min-height: 100dvh;
+  min-width: 300px;
   display: grid;
   grid-template-columns: ${({ $isCollapsed }) =>
     $isCollapsed ? "76px 1fr" : "260px 1fr"};

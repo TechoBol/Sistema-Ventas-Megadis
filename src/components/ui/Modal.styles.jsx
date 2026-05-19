@@ -18,7 +18,11 @@ export const ModalOverlay = styled.div`
 
 export const ModalCard = styled.div`
   width: 100%;
-  max-width: 640px;
+  max-width: ${({ $size }) => ($size === "large" ? "1100px" : "640px")};
+  min-width: 280px;
+  max-height: calc(100dvh - 48px);//
+  overflow-y: auto;//
+
 
   background: ${theme.colors.background};
   border-radius: 26px;
@@ -185,7 +189,7 @@ export const SaveButton = styled.button`
 
   font-size: 14px;
   font-weight: 700;
-   letter-spacing: 0.3px;
+  letter-spacing: 0.3px;
 
   cursor: pointer;
 
@@ -238,4 +242,35 @@ export const CloseButton = styled.button`
   &:hover {
     background: #e5e7eb;
   }
+`;
+
+export const FormSectionTitle = styled.h3`
+  margin: 10px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: ${theme.colors.textPrimary};
+
+  @media (max-width: 700px) {
+    font-size: 20px;
+  }
+`;
+
+export const FieldsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(${({ $columns }) => $columns || 2}, 1fr);
+  gap: 24px 32px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const FullWidthField = styled.div`
+  grid-column: 1 / -1;
+`;
+
+export const ModalHint = styled.p`
+  margin: -8px 0 0;
+  font-size: 13px;
+  color: ${theme.colors.textSecondary};
 `;
