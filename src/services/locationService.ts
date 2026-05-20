@@ -1,3 +1,5 @@
+import { cerrarSesion } from "./CerrarSesion";
+
 export const getLocationsService = async (token: string) => {
   const res = await fetch(
     `${import.meta.env.VITE_API_DOMAIN}/location/get-location`,
@@ -6,7 +8,9 @@ export const getLocationsService = async (token: string) => {
       headers: { "x-access-token": token },
     },
   );
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 
@@ -45,7 +49,7 @@ export const updateLocationService = async (id: any, data: any, token: any) => {
         "x-access-token": token,
       },
       body: JSON.stringify(data),
-    }
+    },
   );
 
   if (!response.ok) {

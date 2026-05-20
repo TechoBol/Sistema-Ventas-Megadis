@@ -1,3 +1,5 @@
+import { cerrarSesion } from "./CerrarSesion";
+
 const API = import.meta.env.VITE_API_DOMAIN;
 
 export const getEmployeesService = async (token: string) => {
@@ -7,7 +9,9 @@ export const getEmployeesService = async (token: string) => {
       "x-access-token": token,
     },
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) throw new Error("Error al cargar los empleados.");
   return res.json();
 };
@@ -29,7 +33,7 @@ export const createEmployeeService = async (data: any, token: string) => {
 export const updateEmployeeService = async (
   id: number,
   data: any,
-  token: string
+  token: string,
 ) => {
   const res = await fetch(`${API}/employee/update-employee/${id}`, {
     method: "PUT",
@@ -40,7 +44,8 @@ export const updateEmployeeService = async (
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error("No se pudo actualizar la información del empleado");
+  if (!res.ok)
+    throw new Error("No se pudo actualizar la información del empleado");
   return res.json();
 };
 

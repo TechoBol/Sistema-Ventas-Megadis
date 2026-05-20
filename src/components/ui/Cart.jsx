@@ -93,8 +93,8 @@ export const TableCard = styled.div`
   flex: 1;
   background: ${white};
   border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   min-height: 420px;
 `;
 
@@ -139,6 +139,9 @@ export const TD = styled.td`
   font-size: 14px;
   color: ${textPrimary};
   vertical-align: middle;
+
+  width: 1%;
+  white-space: nowrap;
 
   &:last-child {
     text-align: right;

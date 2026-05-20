@@ -299,14 +299,14 @@ const drawTotales = (doc, venta, finalY) => {
   return boxY;
 };
 
-// =====================================================
-// NOTA ENTREGA
-// =====================================================
-
-const generarNotaEntrega = (doc, venta, copia) => {
+const generarFactura = (doc, venta) => {
   doc.addPage("letter", "p");
 
   const pageWidth = doc.internal.pageSize.getWidth();
+
+  // =====================================================
+  // EMPRESA
+  // =====================================================
 
   drawEmpresa(doc);
 
@@ -317,126 +317,138 @@ const generarNotaEntrega = (doc, venta, copia) => {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
 
-  doc.text("NOTA DE ENTREGA", pageWidth / 2, 55, {
+  doc.text("FACTURA", pageWidth / 2, 54, {
     align: "center",
   });
 
-  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
 
-  doc.text(`COPIA ${copia}`, pageWidth / 2, 63, {
+  doc.text("(Con Derecho a Crédito Fiscal)", pageWidth / 2, 63, {
     align: "center",
   });
 
   // =====================================================
-  // DATOS
+  // DATOS FACTURA
   // =====================================================
 
-  let y = 80;
+  const labelX = 120;
+  const valueX = 178;
 
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+
+  doc.text("NIT:", labelX, 76);
+
+  doc.text("FACTURA N°:", labelX, 84);
+
+  doc.text("CÓD. AUTORIZACIÓN:", labelX, 92);
+
+  doc.setFont("helvetica", "normal");
+
+  doc.text("123456789", valueX, 76, {
+    align: "right",
+  });
+
+  doc.text(venta.code || "-", valueX, 84, {
+    align: "right",
+  });
+
+  doc.text("ABCDE123456789", valueX, 92, {
+    align: "right",
+  });
+
+  // =====================================================
+  // CLIENTE
+  // =====================================================
+
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
 
-  // fila 1
-
-  doc.setFont("helvetica", "bold");
-
-  doc.text("Código Cliente:", 14, y);
-
-  doc.text("Vendedor:", 85, y);
-
-  doc.text("Código Venta:", 150, y);
+  doc.text("Nombre/Razón Social:", 14, 108);
 
   doc.setFont("helvetica", "normal");
 
-  doc.text(venta.customer?.code || "-", 45, y);
-
-  doc.text(venta.employee?.name +" "+ venta.employee?.lastName || "-", 105, y);
-
-  doc.text(venta.code || "-", 175, y);
-
-  // fila 2
-
-  y += 10;
+  doc.text(venta.customer?.name || "S/N", 56, 108);
 
   doc.setFont("helvetica", "bold");
 
-  doc.text("Cliente:", 14, y);
-
-  doc.text("CI/NIT:", 85, y);
-
-  doc.text("Fecha:", 150, y);
+  doc.text("NIT/CI:", 128, 108);
 
   doc.setFont("helvetica", "normal");
 
-  doc.text(venta.customer?.name || "-", 45, y);
-
-  doc.text(venta.customer?.nitCi || "-", 105, y);
-
-  doc.text(new Date(venta.date).toLocaleDateString("es-BO"), 175, y);
-
-  // fila 3
-
-  y += 10;
+  doc.text(venta.customer?.nitCi || "0", 152, 108);
 
   doc.setFont("helvetica", "bold");
 
-  doc.text("Teléfono/Celular:", 14, y);
+  doc.text("Fecha:", 14, 118);
 
   doc.setFont("helvetica", "normal");
 
-  doc.text(venta.customer?.phone || "-", 45, y);
-
-  // fila 4
-
-  y += 10;
+  doc.text(new Date(venta.date).toLocaleString("es-BO"), 56, 118);
 
   doc.setFont("helvetica", "bold");
 
-  doc.text("Dirección:", 14, y);
+  doc.text("Vendedor:", 14, 128);
 
   doc.setFont("helvetica", "normal");
 
-  doc.text(venta.customer?.address || "-", 45, y);
+  doc.text(
+    venta.employee?.name + " " + venta.employee?.lastName || "-",
+    56,
+    128,
+  );
 
-  const finalY = drawTablaProductos(doc, venta, y + 12);
+  // =====================================================
+  // TABLA
+  // =====================================================
+
+  const finalY = drawTablaProductos(doc, venta, 132);
+
+  // =====================================================
+  // TOTALES
+  // =====================================================
 
   const boxY = drawTotales(doc, venta, finalY);
 
+  // =====================================================
+  // LITERAL
+  // =====================================================
+
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+
+  doc.text(`SON: ${numeroALetras(venta.total).toUpperCase()}`, 14, boxY + 36);
+
+  // =====================================================
+  // LEYENDAS
+  // =====================================================
+
   doc.setFontSize(9);
 
-  doc.text("Glosa:", 14, boxY + 18);
+  doc.text("ESTA FACTURA CONTRIBUYE AL DESARROLLO DEL PAÍS.", 14, boxY + 54);
+
+  doc.text("EL USO ILÍCITO SERÁ SANCIONADO PENALMENTE.", 14, boxY + 62);
 
   doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
 
-  doc.text(venta.glosa || "", 28, boxY + 18);
-
-  const firmaY = boxY + 50;
-
-  const width = 45;
-
-  doc.line(18, firmaY, 18 + width, firmaY);
-
-  doc.line(78, firmaY, 78 + width, firmaY);
-
-  doc.line(138, firmaY, 138 + width, firmaY);
-
-  doc.setFontSize(8);
-
-  doc.text("Elaborado por", 30, firmaY + 6);
-
-  doc.text("Despachado por", 90, firmaY + 6);
-
-  doc.text("Recibí conforme", 148, firmaY + 6);
+  doc.text(
+    "Ley N° 453: Está prohibido importar, distribuir o comercializar productos expirados o próximos a expirar.",
+    14,
+    boxY + 78,
+    {
+      maxWidth: 180,
+    },
+  );
 };
 
-export const generarDocumentoVenta = (venta) => {
+export const generarFacturaVenta = (venta) => {
   const doc = new jsPDF("p", "mm", "letter");
 
   doc.deletePage(1);
 
-  generarNotaEntrega(doc, venta, "CLIENTE");
-
-  generarNotaEntrega(doc, venta, "ARCHIVO");
+  generarFactura(doc, venta);
 
   return doc.output("blob");
 };

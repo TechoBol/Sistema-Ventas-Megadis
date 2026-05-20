@@ -11,6 +11,10 @@ export const PageContainer = styled.div`
   flex-direction: column;
   padding: 28px 32px;
   gap: 28px;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
 `;
 
 /* =========================================================
@@ -102,12 +106,11 @@ export const BackButton = styled.button`
 
 export const TopActions = styled.div`
   width: 100%;
-
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-
-  gap: 18px;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
 
   @media (max-width: 700px) {
     flex-direction: column;
@@ -116,71 +119,60 @@ export const TopActions = styled.div`
 `;
 
 export const SearchWrapper = styled.div`
-  flex: 1;
+  width: 320px;
+  height: 42px;
+  padding: 0 16px;
+  //margin-bottom: 24px;
+
+  border-radius: 22px;
+  background: ${theme.colors.background};
+  color: ${theme.colors.textMuted};
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+
+  @media (max-width: 700px) {
+    width: 100%;
+  }
 `;
 
 export const SearchInput = styled.input`
   width: 100%;
-  max-width: 380px;
-  height: 42px;
-
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-
-  padding: 0 20px;
-
-  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  outline: none;
+  background: transparent;
 
   font-size: 14px;
-  font-weight: 500;
-
-  color: #0f172a;
-
-  outline: none;
-  box-sizing: border-box;
-
-  transition: all 0.2s ease;
-
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+  color: ${theme.colors.textPrimary};
 
   &::placeholder {
-    color: #94a3b8;
-  }
-
-  &:focus {
-    background: white;
-    border-color: #d1d5db;
-    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.04);
-  }
-
-  @media (max-width: 768px) {
-    max-width: 100%;
+    color: ${theme.colors.textMuted};
   }
 `;
 
 export const AddButton = styled.button`
-  height: 40px;
+  height: 42px;
+  padding: 0 16px;
 
   border: none;
-  border-radius: 20px;
-
-  padding: 0 24px;
+  border-radius: 22px;
 
   background: ${theme.colors.primary};
-  color: white;
-
-  font-size: 14px;
-  font-weight: 700;
-
-  white-space: nowrap;
+  color: ${theme.colors.background};
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
+
+  font-size: 14px;
+  font-weight: 700;
 
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
 
   box-shadow: 0 10px 24px rgba(17, 24, 39, 0.12);
 
@@ -195,6 +187,39 @@ export const AddButton = styled.button`
 
   @media (max-width: 700px) {
     width: 100%;
+  }
+`;
+
+export const FiltersGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+export const ClearFiltersButton = styled.button`
+  width: 40px;
+  height: 40px;
+
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: ${theme.colors.primary};
+    background: rgba(242, 12, 31, 0.08);
+  }
+
+  @media (max-width: 700px) {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.85);
   }
 `;
 
@@ -355,6 +380,13 @@ export const Input = styled.input`
   &::placeholder {
     color: #94a3b8;
   }
+
+  &:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
 `;
 
 export const Select = styled.select`
@@ -382,6 +414,13 @@ export const Select = styled.select`
     border-color: #cbd5e1;
     box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.04);
   }
+
+  &:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
 `;
 
 export const ErrorText = styled.span`
@@ -389,6 +428,13 @@ export const ErrorText = styled.span`
   font-weight: 600;
 
   color: #dc2626;
+`;
+
+export const FieldLabel = styled.label`
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  margin-left: 4px;
 `;
 
 /* =========================================================
@@ -441,12 +487,6 @@ export const Button = styled.button`
   }
 `;
 
-export const FieldLabel = styled.label`
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
-  margin-left: 4px;
-`; 
 /* =========================================================
    TOTAL BAR
 ========================================================= */
@@ -457,7 +497,7 @@ export const TotalBar = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  
+
   gap: 16px;
 
   padding: 18px 26px;
@@ -498,89 +538,62 @@ export const TotalValue = styled.span`
     font-size: 22px;
   }
 `;
-export const ActionButton = styled.button`
-  width: 36px;
-  height: 36px;
 
-  border: none;
-  background: transparent;
-  color: ${theme.colors.primary};
-  border-radius: 50%;
+export const SwitchWrapper = styled.label`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 14px 16px;
+
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
 
   cursor: pointer;
+  user-select: none;
+
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(255, 31, 31, 0.08);
-    transform: scale(1.08);
+    border-color: #cbd5e1;
   }
 `;
-export const TableContainer = styled.div`
-  width: 100%;
-  height: 600px;
 
-  background: rgba(255, 255, 255, 0.78);
+export const SwitchLabel = styled.span`
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+`;
 
-  border: 1px solid rgba(255, 255, 255, 0.7);
+export const Switch = styled.input`
+  appearance: none;
+  width: 44px;
+  height: 24px;
+  background: #cbd5e1;
+  border-radius: 999px;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 
-  border-radius: 30px;
-
-  padding: 20px;
-
-  box-sizing: border-box;
-
-  backdrop-filter: blur(10px);
-
-  box-shadow:
-    0 10px 35px rgba(15, 23, 42, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
-
-  .MuiDataGrid-root {
-    border: none;
-    background: transparent;
-    font-family: inherit;
+  &:checked {
+    background: ${theme.colors.primary};
   }
 
-  .MuiDataGrid-columnHeaders {
-    background: transparent;
-    border-bottom: 1px solid #e5e7eb;
+  &:before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 3px;
+    left: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.2s ease;
   }
 
-  .MuiDataGrid-columnHeaderTitle {
-    font-weight: 700;
-    color: #0f172a;
-    font-size: 13px;
-  }
-
-  .MuiDataGrid-cell {
-    border-bottom: 1px solid #f1f5f9;
-    color: #475569;
-    font-size: 14px;
-  }
-
-  .MuiDataGrid-row:hover {
-    background: rgba(248, 250, 252, 0.75);
-  }
-
-  .MuiDataGrid-columnSeparator {
-    display: none;
-  }
-
-  .MuiDataGrid-cell:focus,
-  .MuiDataGrid-columnHeader:focus,
-  .MuiDataGrid-cell:focus-within,
-  .MuiDataGrid-columnHeader:focus-within {
-    outline: none;
-  }
-
-  /* FOOTER PAGINACIÓN */
-  .MuiDataGrid-footerContainer {
-    border-top: 1px solid #e5e7eb;
-    min-height: 56px;
-  }
-
-  .MuiTablePagination-root {
-    color: #475569;
-    font-size: 14px;
+  &:checked:before {
+    transform: translateX(20px);
   }
 `;

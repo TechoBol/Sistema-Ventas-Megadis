@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
-import AppLayout from "../components/layout/AppLayout";
+
 import ProductForm from "../components/forms/ProductForm";
 import DataTable from "../components/table/DataTable";
+
 import useInventory from "../hooks/useInventory";
+
 import {
   PageContainer,
   PageHeader,
@@ -14,7 +16,8 @@ import {
   TopActions,
   SearchWrapper,
 } from "../components/ui/Products";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Search } from "lucide-react";
+import { useLoginStore } from "../components/store/loginStore";
 
 const fechaHoy = () =>
   new Date().toLocaleDateString("es-BO", {
@@ -26,15 +29,24 @@ const fechaHoy = () =>
 
 function Products() {
   const [showForm, setShowForm] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
 
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const { location } = useLoginStore();
   const { products, search, onFilterTextBoxChanged, isLoading } =
     useInventory();
+
+  ////////////////////////////////////////////////////////////
+  // EDITAR PRODUCTO
+  ////////////////////////////////////////////////////////////
 
   const handleEditProduct = (product) => {
     setSelectedProduct(product);
     setShowForm(true);
   };
+
+  ////////////////////////////////////////////////////////////
+  // COLUMNAS TABLA
+  ////////////////////////////////////////////////////////////
 
   const columns = useMemo(
     () => [
@@ -43,42 +55,87 @@ function Products() {
         headerName: "Código",
         flex: 1,
       },
+
       {
         field: "name",
         headerName: "Nombre",
         flex: 1.5,
       },
+
       {
         field: "line",
-        headerName: "Línea",
+        headerName: "Marca",
         flex: 1.2,
         valueGetter: (_, row) => row?.line?.name || "-",
       },
+
       {
         field: "brandName",
-        headerName: "Marca",
+        headerName: "Línea",
         flex: 1.2,
+        valueGetter: (_, row) => row?.brandName || "-",
       },
+
       {
-        field: "price",
+        field: "purchasePrice",
         headerName: "Costo",
         flex: 1,
-        valueFormatter: (value) => `${Number(value || 0).toFixed(2)}`,
+        valueFormatter: (value) =>
+          `${Number(value || 0).toFixed(2)}`,
       },
+
       {
-        field: "finalPrice",
+        field: "salePrice",
         headerName: "Venta",
         flex: 1,
-        valueFormatter: (value) => `${Number(value || 0).toFixed(2)}`,
+        valueFormatter: (value) =>
+          `${Number(value || 0).toFixed(2)}`,
       },
+
       {
-        field: "stockTotal",
+        field: "baseUnit",
+        headerName: "Unidad Base",
+        flex: 1,
+        valueGetter: (_, row) => row?.baseUnit?.name || "-",
+      },
+
+      {
+        field: "units",
+        headerName: "Otras Unidades",
+        flex: 2,
+        valueGetter: (_, row) =>
+          row?.productUnits
+            ?.filter((u) => !u.isDefault)
+            ?.map(
+              (u) =>
+                `${u.unit.name} (${u.equivalence})`
+            )
+            .join(", ") || "-",
+      },
+
+      {
+        field: "stock",
         headerName: "Stock",
         flex: 0.8,
+      
+        valueGetter: (_, row) => {
+          const inventory = row?.inventories?.find(
+            (inv) => inv.locationId === location?.id
+          );
+      
+          return inventory?.quantity || 0;
+        },
+      
+        valueFormatter: (value) =>
+          `${Number(value || 0).toFixed(2)}`,
       },
     ],
     []
   );
+
+  ////////////////////////////////////////////////////////////
+  // ACCIONES
+  ////////////////////////////////////////////////////////////
 
   const actions = useMemo(
     () => [
@@ -92,20 +149,25 @@ function Products() {
     []
   );
 
+  ////////////////////////////////////////////////////////////
+  // RENDER
+  ////////////////////////////////////////////////////////////
+
   return (
-    <AppLayout>
+    <>
       <PageContainer>
         {!showForm ? (
           <>
             <PageHeader>
-              {/* titulo y fecha */}
               <HeaderTitle>
                 <Title>Productos</Title>
+
                 <Subtitle>{fechaHoy()}</Subtitle>
               </HeaderTitle>
 
               <TopActions>
                 <SearchWrapper>
+                  <Search size={18} />
                   <SearchInput
                     value={search}
                     onChange={onFilterTextBoxChanged}
@@ -120,8 +182,8 @@ function Products() {
                     setShowForm(true);
                   }}
                 >
-                  Añadir Producto
                   <Plus size={18} strokeWidth={3} />
+                  Añadir Producto
                 </AddButton>
               </TopActions>
             </PageHeader>
@@ -147,7 +209,7 @@ function Products() {
           />
         )}
       </PageContainer>
-    </AppLayout>
+    </>
   );
 }
 

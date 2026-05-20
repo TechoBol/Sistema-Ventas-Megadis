@@ -1,3 +1,5 @@
+import { cerrarSesion } from "./CerrarSesion";
+
 const API = import.meta.env.VITE_API_DOMAIN;
 
 export const getLinesService = async (token: string) => {
@@ -5,6 +7,9 @@ export const getLinesService = async (token: string) => {
     method: "GET",
     headers: { "x-access-token": token },
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 
@@ -20,7 +25,11 @@ export const createLineService = async (data: any, token: string) => {
   return res.json();
 };
 
-export const updateLineService = async (id: number, data: any, token: string) => {
+export const updateLineService = async (
+  id: number,
+  data: any,
+  token: string,
+) => {
   const res = await fetch(`${API}/line/update-line/${id}`, {
     method: "PUT",
     headers: {
@@ -39,7 +48,11 @@ export const deleteLineService = async (id: number, token: string) => {
   });
 };
 
-export const addBrandService = async (lineId: number, name: string, token: string) => {
+export const addBrandService = async (
+  lineId: number,
+  name: string,
+  token: string,
+) => {
   const res = await fetch(`${API}/line/add-brand/${lineId}`, {
     method: "POST",
     headers: {
@@ -55,7 +68,7 @@ export const updateBrandService = async (
   lineId: number,
   oldName: string,
   newName: string,
-  token: string
+  token: string,
 ) => {
   const res = await fetch(`${API}/line/update-brand/${lineId}`, {
     method: "PUT",
@@ -68,7 +81,11 @@ export const updateBrandService = async (
   return res.json();
 };
 
-export const deleteBrandService = async (lineId: number, name: string, token: string) => {
+export const deleteBrandService = async (
+  lineId: number,
+  name: string,
+  token: string,
+) => {
   const res = await fetch(`${API}/line/delete-brand/${lineId}`, {
     method: "DELETE",
     headers: {

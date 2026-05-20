@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import AppLayout from "../components/layout/AppLayout";
 import { Search, Pencil, ChevronDown, ShoppingBag } from "lucide-react";
 import DataTable from "../components/table/DataTable";
 import { useCustomer } from "../hooks/useCustomer";
@@ -10,10 +9,11 @@ import {
   HeaderTitle,
   Title,
   Subtitle,
+  Toolbar,
   SearchBox,
   SearchInput,
   ErrorMessage,
-} from "../components/ui/Customer.styles";
+} from "../components/ui/Page.styles";
 
 const fechaHoy = () =>
   new Date().toLocaleDateString("es-BO", {
@@ -82,7 +82,7 @@ function Customer() {
   };
 
   return (
-    <AppLayout>
+    <>
       <PageSurface>
         <PageWrapper>
           {/* titulo y fecha */}
@@ -91,15 +91,17 @@ function Customer() {
             <Subtitle>{fechaHoy()}</Subtitle>
           </HeaderTitle>
           {/* buscador */}
-          <SearchBox>
-            <Search size={18} />
-            <SearchInput
-              type="text"
-              placeholder="Buscar"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </SearchBox>
+          <Toolbar>
+            <SearchBox>
+              <Search size={18} />
+              <SearchInput
+                type="text"
+                placeholder="Buscar"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </SearchBox>
+          </Toolbar>
 
           {error && <ErrorMessage>Error al cargar clientes</ErrorMessage>}
 
@@ -117,7 +119,7 @@ function Customer() {
           />
         </PageWrapper>
       </PageSurface>
-    </AppLayout>
+    </>
   );
 }
 

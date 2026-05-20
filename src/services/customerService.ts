@@ -1,3 +1,5 @@
+import { cerrarSesion } from "./CerrarSesion";
+
 const API = import.meta.env.VITE_API_DOMAIN;
 
 export const getCustomersService = async (token: string) => {
@@ -7,7 +9,9 @@ export const getCustomersService = async (token: string) => {
       "x-access-token": token,
     },
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) throw new Error("Error al cargar los clientes.");
   return res.json();
 };
@@ -41,7 +45,7 @@ export const createCustomerService = async (data: any, token: string) => {
 export const updateCustomerService = async (
   id: number,
   data: any,
-  token: string
+  token: string,
 ) => {
   const res = await fetch(`${API}/customer/${id}`, {
     method: "PUT",

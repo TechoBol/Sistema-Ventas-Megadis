@@ -1,3 +1,5 @@
+import { cerrarSesion } from "./CerrarSesion";
+
 const API = import.meta.env.VITE_API_DOMAIN;
 
 export const getRolesService = async (token: string) => {
@@ -5,6 +7,9 @@ export const getRolesService = async (token: string) => {
     method: "GET",
     headers: { "x-access-token": token },
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 

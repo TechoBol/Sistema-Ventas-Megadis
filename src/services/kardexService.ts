@@ -1,7 +1,6 @@
-export const getKardexService = async (
-  data: any,
-  token: string,
-) => {
+import { cerrarSesion } from "./CerrarSesion";
+
+export const getKardexService = async (data: any, token: string) => {
   const response = await fetch(
     `${import.meta.env.VITE_API_DOMAIN}/product/kardex-pro`,
     {
@@ -13,13 +12,13 @@ export const getKardexService = async (
       body: JSON.stringify(data),
     },
   );
-
+  if (response.status === 401 || response.status === 403) {
+    cerrarSesion();
+  }
   const resData = await response.json();
 
   if (!response.ok) {
-    throw new Error(
-      resData.message || "No se pudo obtener el kardex",
-    );
+    throw new Error(resData.message || "No se pudo obtener el kardex");
   }
 
   return resData;
