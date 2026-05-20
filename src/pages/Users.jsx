@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import DataTable from "../components/table/DataTable";
+import UserModal from "../components/modals/UserModal";
 import { Search, Pencil, Trash2, Plus } from "lucide-react";
 import {
   PageSurface,
@@ -11,8 +12,10 @@ import {
   SearchInput,
   Toolbar,
   PrimaryActionButton,
-} from "../components/ui/Customer.styles";
+} from "../components/ui/Page.styles";
 import { useEmployees } from "../hooks/useEmployees";
+import { useRoles } from "../hooks/useRoles";
+import { useSucursales } from "../hooks/useSucursales";
 
 const fechaHoy = () =>
   new Date().toLocaleDateString("es-BO", {
@@ -24,14 +27,31 @@ const fechaHoy = () =>
 
 function Users() {
   const [searchTerm, setSearchTerm] = useState("");
-  const { data, deleteEmployee, isLoading } = useEmployees();
+  const [modalState, setModalState] = useState({
+    open: false,
+    mode: "create",
+    selectedUser: null,
+  });
+  const {
+    data,
+    createEmployee,
+    updateEmployee,
+    deleteEmployee,
+    isLoading,
+  } = useEmployees();
+  const { roles } = useRoles();
+  const { data: sucursales } = useSucursales();
 
   const users = useMemo(() => {
     return data.map((employee) => ({
       id: employee.id,
       name: employee.name,
       lastName: employee.lastName,
-      email: employee.email,
+      email: employee.email ?? "",
+      celular: employee.celular ?? "",
+      numeral: employee.numeral ?? "",
+      roleId: employee.role?.id ?? "",
+      locationId: employee.location?.id ?? "",
       role: employee.role?.name ?? "Sin cargo",
       branch: employee.location?.name ?? "Sin sucursal",
     }));
@@ -97,6 +117,45 @@ function Users() {
     []
   );
 
+  // Modal
+  const openCreateModal = () => {
+    setModalState({
+      open: true,
+      mode: "create",
+      selectedUser: null,
+    });
+  };
+
+  const openEditModal = (user) => {
+    setModalState({
+      open: true,
+      mode: "edit",
+      selectedUser: user,
+    });
+  };
+
+  const closeModal = () => {
+    setModalState({
+      open: false,
+      mode: "create",
+      selectedUser: null,
+    });
+  };
+
+  const handleSubmitUser = async (formData) => {
+    if (modalState.mode === "edit") {
+      const updated = await updateEmployee(modalState.selectedUser.id, formData);
+      if (updated) {
+        closeModal();
+      }
+      return;
+    }
+    const created = await createEmployee(formData);
+    if (created) {
+      closeModal();
+    }
+  };
+
   const userActions = useMemo(
     () => [
       {
@@ -104,7 +163,7 @@ function Users() {
         title: "Editar usuario",
         icon: Pencil,
         onClick: (user) => {
-          console.log("Editar usuario:", user);
+          openEditModal(user);
         },
       },
       {
@@ -143,7 +202,7 @@ function Users() {
               />
             </SearchBox>
 
-            <PrimaryActionButton type="button" onClick={handleAddEmployee}>
+            <PrimaryActionButton type="button" onClick={openCreateModal}>
               <Plus size={17} />
               Agregar usuario
             </PrimaryActionButton>
@@ -156,9 +215,21 @@ function Users() {
             pageSize={7}
             pageSizeOptions={[7, 10, 20]}
             noRowsLabel="No hay usuarios registrados"
+            loading={isLoading}
           />
         </PageWrapper>
       </PageSurface>
+      {/* Modal */}
+      <UserModal
+        open={modalState.open}
+        mode={modalState.mode}
+        initialData={modalState.selectedUser}
+        roles={roles}
+        sucursales={sucursales}
+        loading={isLoading}
+        onClose={closeModal}
+        onSubmit={handleSubmitUser}
+      />
     </>
   );
 }

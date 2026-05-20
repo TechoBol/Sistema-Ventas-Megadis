@@ -159,7 +159,7 @@ export const NavItem = styled.div`
   margin-bottom: 2px;
   padding: ${({ $isCollapsed }) => ($isCollapsed ? "0" : "0 12px")};
   border-radius: 10px;
-
+  border: none;
   background: ${({ $active }) => ($active ? "#fff3eb" : "transparent")};
 
   color: ${({ $active }) => ($active ? theme.colors.primary : "#334155")};
@@ -189,5 +189,60 @@ export const NavItem = styled.div`
 `;
 
 export const NavItemText = styled.span`
+  white-space: nowrap;
+`;
+
+// SUB-MENU
+export const ToggleIcon = styled.span`
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: transform 0.2s ease;
+  transform: ${({ $isOpen }) =>
+    $isOpen ? "rotate(180deg)" : "rotate(0deg)"};
+`;
+
+export const SubNavList = styled.div`
+  margin: 6px 0 8px 18px;
+  padding-left: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  border-left: 2px solid rgba(148, 163, 184, 0.18);
+`;
+
+export const SubNavItem = styled.div`
+  width: 100%;
+  height: 36px;
+  padding: 0 14px;
+  box-sizing: border-box;
+
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+
+  color: ${({ $active }) =>
+    $active ? theme.colors.primary : "#425065"};
+
+  background: ${({ $active }) =>
+    $active ? "rgba(242, 12, 31, 0.08)" : "transparent"};
+
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover {
+    color: ${theme.colors.primary};
+    background: rgba(242, 12, 31, 0.06);
+  }
+`;
+
+export const SubNavItemText = styled.span`
   white-space: nowrap;
 `;

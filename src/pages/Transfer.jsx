@@ -22,7 +22,7 @@ import {
   FilterButton,
   PrimaryActionButton,
   StatusBadge,
-} from "../components/ui/Customer.styles";
+} from "../components/ui/Page.styles";
 import useInventory from "../hooks/useInventory";
 import TransferDetailModal from "../components/modals/TransferDetailModal";
 import { useAmazonS3 } from "../hooks/useAmazonS3";
