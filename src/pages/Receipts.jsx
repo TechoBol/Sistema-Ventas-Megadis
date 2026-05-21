@@ -42,13 +42,16 @@ import {
 } from "../components/ui/Products";
 import { errorToast } from "../services/toasts";
 
-const fechaHoy = () =>
-  new Date().toLocaleDateString("es-BO", {
+const fechaHoy = () => {
+  const fecha = new Date().toLocaleDateString("es-BO", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  return fecha.charAt(0).toUpperCase() + fecha.slice(1);
+};
 
 // =====================================================
 // PDF WORKER
@@ -307,7 +310,7 @@ function Receipts() {
     () => [
       {
         key: "view-pdf",
-        title: "Ver PDF",
+        title: "Ver Recibo",
         icon: FileText,
         onClick: (sale) => handleViewPDF(sale.pdfUrl, sale.code),
       },
@@ -327,7 +330,7 @@ function Receipts() {
         <PageHeader>
           {/* titulo y fecha */}
           <HeaderTitle>
-            <Title>Comprobantes</Title>
+            <Title>Recibos/Facturas</Title>
             <Subtitle>{fechaHoy()}</Subtitle>
           </HeaderTitle>
 
@@ -354,7 +357,7 @@ function Receipts() {
                       width: "150px",
                       "& .MuiOutlinedInput-root": {
                         height: "40px",
-                        borderRadius: "10px",
+                        borderRadius: "25px",
                       },
                     },
                   },

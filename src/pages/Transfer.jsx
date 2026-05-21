@@ -27,13 +27,16 @@ import useInventory from "../hooks/useInventory";
 import TransferDetailModal from "../components/modals/TransferDetailModal";
 import { useAmazonS3 } from "../hooks/useAmazonS3";
 
-const fechaHoy = () =>
-  new Date().toLocaleDateString("es-BO", {
+const fechaHoy = () => {
+  const fecha = new Date().toLocaleDateString("es-BO", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  return fecha.charAt(0).toUpperCase() + fecha.slice(1);
+};
 
 const EMPTY_TRANSFER_FORM = {
   destinationId: null,

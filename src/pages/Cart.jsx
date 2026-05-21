@@ -38,13 +38,16 @@ import { socket } from "../services/SocketIOConnection";
 import { getProducts } from "../services/InventoryService";
 import CheckoutModal from "../components/modals/CheckoutModal";
 /* ── utilidad: fecha legible ── */
-const fechaHoy = () =>
-  new Date().toLocaleDateString("es-BO", {
+const fechaHoy = () => {
+  const fecha = new Date().toLocaleDateString("es-BO", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  return fecha.charAt(0).toUpperCase() + fecha.slice(1);
+};
 
 const Cart = () => {
   /* ── productos del store global ── */
@@ -127,9 +130,8 @@ const Cart = () => {
           unitPrice: Number(defaultUnit.salePrice),
 
           stock:
-  product?.inventories?.find(
-    (inv) => inv.locationId === location.id
-  )?.quantity || 0,
+            product?.inventories?.find((inv) => inv.locationId === location.id)
+              ?.quantity || 0,
         },
       ];
     });
@@ -580,7 +582,7 @@ const Cart = () => {
           paymentMethod={paymentMethod}
           loading={loading}
           onClose={() => setOpenCheckoutModal(false)}
-          onFinish={async (customerData, generateInvoice, bankName) => {
+          onFinish={async ({ generateInvoice, bankName, ...customerData }) => {
             await finalizarVenta({
               metodoPago: paymentMethod,
               codigoTransaccion: null,
