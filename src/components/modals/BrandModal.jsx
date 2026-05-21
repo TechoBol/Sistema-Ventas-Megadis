@@ -40,13 +40,13 @@ function BrandModal({
     if (!open) return;
 
     if (initialData) {
-      setFormData({
-        name: initialData.name || "",
-        lines:
-          initialData.lines && initialData.lines.length > 0
-            ? initialData.lines
-            : [""],
-      });
+      const currentLines =
+        Array.isArray(initialData.brands) && initialData.brands.length > 0
+          ? initialData.brands
+          : Array.isArray(initialData.lines) && initialData.lines.length > 0
+          ? initialData.lines
+          : [""];
+      setFormData({name: initialData.name || "", lines: currentLines});
     } else {
       setFormData(emptyForm);
     }
@@ -97,7 +97,7 @@ function BrandModal({
 
     const payload = {
       name: formData.name.trim(),
-      lines: cleanLines,
+      brands: cleanLines,
     };
 
     onSubmit?.(payload);

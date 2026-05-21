@@ -216,36 +216,38 @@ export const StatusBadge = styled.span`
 
 export const BrandLinesCell = styled.div`
   width: 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
 `;
 
 export const BrandLineChip = styled.span`
-  max-width: 120px;
+  max-width: 140px;
   height: 26px;
   padding: 0 10px;
 
   border-radius: 5px;
-  background: rgba(242, 12, 31, 0.08);
+  background: ${({ $match }) => $match ? "rgba(242, 12, 31, 0.16)" : "rgba(242, 12, 31, 0.08)"};
   color: ${theme.colors.primary};
 
   display: inline-flex;
   align-items: center;
-
   font-size: 12px;
-  font-weight: 550;
+  font-weight: ${({ $match }) => ($match ? 700 : 550)};
 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  flex-shrink: 0;
 `;
 
 export const BrandMoreButton = styled.button`
   min-height: 28px;
   padding: 0 12px;
-
   border: none;
   border-radius: 5px;
 
@@ -262,6 +264,8 @@ export const BrandMoreButton = styled.button`
 
   cursor: pointer;
   transition: all 0.18s ease;
+
+  flex-shrink: 0;
 
   &:hover {
     background: #e9edf3;
@@ -289,7 +293,11 @@ export const BrandPopoverList = styled.div`
 
 export const BrandPopoverItem = styled.span`
   font-size: 13px;
-  font-weight: 500;
-  color: ${theme.colors.textSecondary};
+  font-weight: ${({ $match }) => ($match ? 700 : 500)};
+  color: ${({ $match }) => $match ? theme.colors.primary : theme.colors.textSecondary};
+
   line-height: 1.4;
+  padding: ${({ $match }) => ($match ? "4px 8px" : "0")};
+  border-radius: 8px;
+  background: ${({ $match }) => $match ? "rgba(242, 12, 31, 0.08)" : "transparent"};
 `;

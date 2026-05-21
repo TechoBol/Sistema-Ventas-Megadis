@@ -4,7 +4,7 @@ import DataTable from "../components/table/DataTable";
 import BrandModal from "../components/modals/BrandModal";
 import { Search, Pencil, Trash2, Plus, ChevronDown } from "lucide-react";
 import Popover from "@mui/material/Popover";
-
+import { useLines } from "../hooks/useLine";
 import {
   PageSurface,
   PageWrapper,
@@ -32,30 +32,25 @@ const fechaHoy = () =>
     day: "numeric",
   });
 
-const brandsMock = [
-  {
-    id: 1,
-    name: "Tramontina",
-    lines: ["Herramientas", "Jardinería", "Cocina", "Electricidad"],
-  },
-  {
-    id: 2,
-    name: "Bosch",
-    lines: ["Taladros", "Sierras", "Accesorios", "Medición", "Industrial"],
-  },
-  {
-    id: 3,
-    name: "Stanley",
-    lines: ["Manuales", "Construcción", "Seguridad"],
-  },
-];
-
-function BrandLinesPreview({ lines = [] }) {
+function BrandLinesPreview({ lines = [], searchTerm = "" }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   if (!lines.length) return "-";
 
-  const visibleLines = lines.slice(0, 2);
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const matchingLines = normalizedSearch
+    ? lines.filter((line) => line.toLowerCase().includes(normalizedSearch))
+    : [];
+
+  const nonMatchingLines = normalizedSearch
+    ? lines.filter((line) => !line.toLowerCase().includes(normalizedSearch))
+    : lines;
+
+  const visibleLines = normalizedSearch
+    ? [...matchingLines, ...nonMatchingLines].slice(0, 2)
+    : lines.slice(0, 2);
+
   const extraCount = lines.length - visibleLines.length;
 
   const handleOpen = (event) => {
@@ -71,9 +66,17 @@ function BrandLinesPreview({ lines = [] }) {
   return (
     <>
       <BrandLinesCell>
-        {visibleLines.map((line) => (
-          <BrandLineChip key={line}>{line}</BrandLineChip>
-        ))}
+        {visibleLines.map((line) => {
+          const isMatch =
+            normalizedSearch &&
+            line.toLowerCase().includes(normalizedSearch);
+
+          return (
+            <BrandLineChip key={line} $match={isMatch}>
+              {line}
+            </BrandLineChip>
+          );
+        })}
 
         {extraCount > 0 && (
           <BrandMoreButton type="button" onClick={handleOpen}>
@@ -103,6 +106,7 @@ function BrandLinesPreview({ lines = [] }) {
               boxShadow: "0 12px 28px rgba(15, 23, 42, 0.14)",
               padding: "14px 16px",
               minWidth: "220px",
+              maxWidth: "320px",
             },
           },
         }}
@@ -111,9 +115,17 @@ function BrandLinesPreview({ lines = [] }) {
           <BrandPopoverTitle>Líneas de la marca</BrandPopoverTitle>
 
           <BrandPopoverList>
-            {lines.map((line) => (
-              <BrandPopoverItem key={line}>{line}</BrandPopoverItem>
-            ))}
+            {lines.map((line) => {
+              const isMatch =
+                normalizedSearch &&
+                line.toLowerCase().includes(normalizedSearch);
+
+              return (
+                <BrandPopoverItem key={line} $match={isMatch}>
+                  {line}
+                </BrandPopoverItem>
+              );
+            })}
           </BrandPopoverList>
         </BrandPopoverContent>
       </Popover>
@@ -123,12 +135,30 @@ function BrandLinesPreview({ lines = [] }) {
 
 function Brands() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [brands, setBrands] = useState(brandsMock);
+  const {
+    lines,
+    createLine,
+    updateLine,
+    deleteLine,
+    isLoading,
+  } = useLines();
   const [modalState, setModalState] = useState({
     open: false,
     mode: "create",
     selectedBrand: null,
   });
+
+  const brands = useMemo(() => {
+    return lines.map((line) => {
+      const brandLines = Array.isArray(line.brands) ? line.brands : [];
+      return {
+        id: line.id,
+        name: line.name,
+        lines: brandLines,
+        linesText: brandLines.length > 0 ? brandLines.join(", ") : "Sin líneas",
+      };
+    });
+  }, [lines]);
 
   const filteredBrands = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
@@ -136,7 +166,7 @@ function Brands() {
     if (!value) return brands;
 
     return brands.filter((brand) =>
-      [brand.name, ...(brand.lines || [])]
+      [brand.name, brand.linesText]
         .join(" ")
         .toLowerCase()
         .includes(value)
@@ -157,10 +187,9 @@ function Brands() {
         flex: 1.8,
         minWidth: 320,
         sortable: false,
-        renderCell: (params) => <BrandLinesPreview lines={params.row.lines} />,
-      },
+        renderCell: (params) => (<BrandLinesPreview lines={params.row.lines} searchTerm={searchTerm}/>)},
     ],
-    []
+    [searchTerm]
   );
 
   // ACCIONES MODAL
@@ -188,34 +217,17 @@ function Brands() {
     });
   };
 
-  const handleSubmitBrand = (formData) => {
+  const handleSubmitBrand = async (formData) => {
     if (modalState.mode === "edit" && modalState.selectedBrand) {
-      setBrands((currentBrands) =>
-        currentBrands.map((brand) =>
-          brand.id === modalState.selectedBrand.id
-            ? {
-                ...brand,
-                ...formData,
-              }
-            : brand
-        )
-      );
+      await updateLine(modalState.selectedBrand.id, formData);
     } else {
-      setBrands((currentBrands) => [
-        ...currentBrands,
-        {
-          id: Date.now(),
-          ...formData,
-        },
-      ]);
+      await createLine(formData);
     }
     closeModal();
   };
 
-  const handleDeleteBrand = (brandToDelete) => {
-    setBrands((currentBrands) =>
-      currentBrands.filter((brand) => brand.id !== brandToDelete.id)
-    );
+  const handleDeleteBrand = async (brand) => {
+    await deleteLine(brand.id);
   };
 
   const brandActions = useMemo(
@@ -233,7 +245,7 @@ function Brands() {
         onClick: handleDeleteBrand,
       },
     ],
-    []
+    [deleteLine]
   );
 
   return (
@@ -276,9 +288,15 @@ function Brands() {
         initialData={modalState.selectedBrand}
         onClose={closeModal}
         onSubmit={handleSubmitBrand}
+        loading={isLoading}
       />
     </PageSurface>
   );
 }
 
 export default Brands;
+
+
+
+
+
