@@ -129,6 +129,10 @@ const sidebarSections = [
             label: "Roles",
             path: "/roles",
           },
+          {
+            label: "Marcas",
+            path: "/brands",
+          },
         ],
       },
     ],

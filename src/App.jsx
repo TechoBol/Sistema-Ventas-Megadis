@@ -16,6 +16,7 @@ import Locations from "./pages/Locations";
 import Transfer from "./pages/Transfer";
 import Users from "./pages/Users";
 import Roles from "./pages/Roles";
+import Brands from "./pages/Brands";
 
 function App() {
   const { isLoggedIn } = useLoginStore();
@@ -41,6 +42,8 @@ function App() {
             <Route path="/transfers" element={<Transfer />} />
             <Route path="/users" element={<Users />} />
             <Route path="/roles" element={<Roles />} />
+            <Route path="/roles" element={<Roles />} />
+            <Route path="/brands" element={<Brands />} />
           </Route>
         )}
 
