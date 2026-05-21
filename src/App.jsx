@@ -18,6 +18,8 @@ import Users from "./pages/Users";
 import Roles from "./pages/Roles";
 import InventoryFisico from "./pages/InventoryFisico"
 import MatrizVenta from "./pages/MatrizVenta";
+import Brands from "./pages/Brands";
+
 function App() {
   const { isLoggedIn } = useLoginStore();
 
@@ -44,6 +46,8 @@ function App() {
             <Route path="/roles" element={<Roles />} />
             <Route path="/kardex" element={<InventoryFisico />} />
             <Route path="/sales-matrix" element={<MatrizVenta />} />
+            <Route path="/roles" element={<Roles />} />
+            <Route path="/brands" element={<Brands />} />
           </Route>
         )}
 
