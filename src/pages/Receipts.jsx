@@ -310,7 +310,7 @@ function Receipts() {
     () => [
       {
         key: "view-pdf",
-        title: "Ver PDF",
+        title: "Ver Recibo",
         icon: FileText,
         onClick: (sale) => handleViewPDF(sale.pdfUrl, sale.code),
       },
@@ -330,7 +330,7 @@ function Receipts() {
         <PageHeader>
           {/* titulo y fecha */}
           <HeaderTitle>
-            <Title>Comprobantes</Title>
+            <Title>Recibos/Facturas</Title>
             <Subtitle>{fechaHoy()}</Subtitle>
           </HeaderTitle>
 
@@ -357,7 +357,7 @@ function Receipts() {
                       width: "150px",
                       "& .MuiOutlinedInput-root": {
                         height: "40px",
-                        borderRadius: "10px",
+                        borderRadius: "25px",
                       },
                     },
                   },

@@ -15,9 +15,14 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
+
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import MenuIcon from "@mui/icons-material/Menu";
+import Tooltip from "@mui/material/Tooltip";
+
 import { NavLink, useLocation } from "react-router-dom";
+
+import { actionTooltipProps } from "../ui/DataTable.styles";
 
 import {
   SidebarWrapper,
@@ -72,7 +77,7 @@ const sidebarSections = [
         path: "/cart",
       },
       {
-        label: "Comprobantes",
+        label: "Recibos/Facturas",
         icon: ReceiptText,
         path: "/receipts",
       },
@@ -135,11 +140,17 @@ const sidebarSections = [
   },
 ];
 
-function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
+function Sidebar({
+  isOpen,
+  isCollapsed,
+  onClose,
+  onToggleCollapse,
+}) {
   const location = useLocation();
 
   const defaultOpenMenus = useMemo(() => {
     const openMenus = {};
+
     sidebarSections.forEach((section) => {
       section.items.forEach((item) => {
         const hasActiveChild = item.children?.some(
@@ -151,6 +162,7 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
         }
       });
     });
+
     return openMenus;
   }, [location.pathname]);
 
@@ -164,6 +176,7 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
 
   const toggleSubmenu = (label) => {
     if (isCollapsed) return;
+
     setOpenMenus((current) => ({
       ...current,
       [label]: !current[label],
@@ -171,7 +184,10 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   };
 
   return (
-    <SidebarWrapper $isOpen={isOpen} $isCollapsed={isCollapsed}>
+    <SidebarWrapper
+      $isOpen={isOpen}
+      $isCollapsed={isCollapsed}
+    >
       <SidebarHeader $isCollapsed={isCollapsed}>
         <Brand>
           {!isCollapsed && <BrandText>Megadis</BrandText>}
@@ -181,9 +197,12 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
           type="button"
           $isCollapsed={isCollapsed}
           onClick={onToggleCollapse}
-          title={isCollapsed ? "Expandir menú" : "Contraer menú"}
         >
-          {isCollapsed ? <MenuIcon size={18} /> : <MenuOpenIcon size={18} />}
+          {isCollapsed ? (
+            <MenuIcon size={18} />
+          ) : (
+            <MenuOpenIcon size={18} />
+          )}
         </CollapseButton>
 
         <CloseButton type="button" onClick={onClose}>
@@ -194,12 +213,19 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
       <NavContent $isCollapsed={isCollapsed}>
         {sidebarSections.map((section) => (
           <NavSection key={section.title}>
-            {!isCollapsed && <SectionTitle>{section.title}</SectionTitle>}
+            {!isCollapsed && (
+              <SectionTitle>{section.title}</SectionTitle>
+            )}
 
             {section.items.map((item) => {
               const Icon = item.icon;
+
               const hasChildren = Boolean(item.children?.length);
-              const isSubmenuOpen = Boolean(openMenus[item.label]);
+
+              const isSubmenuOpen = Boolean(
+                openMenus[item.label]
+              );
+
               const hasActiveChild = item.children?.some(
                 (child) => child.path === location.pathname
               );
@@ -207,24 +233,36 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
               if (hasChildren) {
                 return (
                   <div key={item.label}>
-                    <NavItem
-                      as="button"
-                      type="button"
-                      $active={hasActiveChild}
-                      $isCollapsed={isCollapsed}
-                      title={isCollapsed ? item.label : undefined}
-                      onClick={() => toggleSubmenu(item.label)}
+                    <Tooltip
+                      title={isCollapsed ? item.label : ""}
+                      {...actionTooltipProps}
                     >
-                      <Icon size={18} />
-                      {!isCollapsed && (
-                        <>
-                          <NavItemText>{item.label}</NavItemText>
-                          <ToggleIcon $isOpen={isSubmenuOpen}>
-                            <ChevronDown size={16} />
-                          </ToggleIcon>
-                        </>
-                      )}
-                    </NavItem>
+                      <NavItem
+                        as="button"
+                        type="button"
+                        $active={hasActiveChild}
+                        $isCollapsed={isCollapsed}
+                        onClick={() =>
+                          toggleSubmenu(item.label)
+                        }
+                      >
+                        <Icon size={18} />
+
+                        {!isCollapsed && (
+                          <>
+                            <NavItemText>
+                              {item.label}
+                            </NavItemText>
+
+                            <ToggleIcon
+                              $isOpen={isSubmenuOpen}
+                            >
+                              <ChevronDown size={16} />
+                            </ToggleIcon>
+                          </>
+                        )}
+                      </NavItem>
+                    </Tooltip>
 
                     {!isCollapsed && isSubmenuOpen && (
                       <SubNavList>
@@ -232,12 +270,18 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
                           <NavLink
                             key={child.label}
                             to={child.path}
-                            style={{ textDecoration: "none" }}
+                            style={{
+                              textDecoration: "none",
+                            }}
                             onClick={closeOnMobile}
                           >
                             {({ isActive }) => (
-                              <SubNavItem $active={isActive}>
-                                <SubNavItemText>{child.label}</SubNavItemText>
+                              <SubNavItem
+                                $active={isActive}
+                              >
+                                <SubNavItemText>
+                                  {child.label}
+                                </SubNavItemText>
                               </SubNavItem>
                             )}
                           </NavLink>
@@ -256,16 +300,23 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
                   onClick={closeOnMobile}
                 >
                   {({ isActive }) => (
-                    <NavItem
-                      $active={isActive}
-                      $isCollapsed={isCollapsed}
-                      title={isCollapsed ? item.label : undefined}
+                    <Tooltip
+                      title={isCollapsed ? item.label : ""}
+                      {...actionTooltipProps}
                     >
-                      <Icon size={18} />
-                      {!isCollapsed && (
-                        <NavItemText>{item.label}</NavItemText>
-                      )}
-                    </NavItem>
+                      <NavItem
+                        $active={isActive}
+                        $isCollapsed={isCollapsed}
+                      >
+                        <Icon size={18} />
+
+                        {!isCollapsed && (
+                          <NavItemText>
+                            {item.label}
+                          </NavItemText>
+                        )}
+                      </NavItem>
+                    </Tooltip>
                   )}
                 </NavLink>
               );
