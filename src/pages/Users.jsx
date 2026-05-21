@@ -17,13 +17,16 @@ import { useEmployees } from "../hooks/useEmployees";
 import { useRoles } from "../hooks/useRoles";
 import { useSucursales } from "../hooks/useSucursales";
 
-const fechaHoy = () =>
-  new Date().toLocaleDateString("es-BO", {
+const fechaHoy = () => {
+  const fecha = new Date().toLocaleDateString("es-BO", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  return fecha.charAt(0).toUpperCase() + fecha.slice(1);
+};
 
 function Users() {
   const [searchTerm, setSearchTerm] = useState("");

@@ -42,13 +42,16 @@ import {
 } from "../components/ui/Products";
 import { errorToast } from "../services/toasts";
 
-const fechaHoy = () =>
-  new Date().toLocaleDateString("es-BO", {
+const fechaHoy = () => {
+  const fecha = new Date().toLocaleDateString("es-BO", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  return fecha.charAt(0).toUpperCase() + fecha.slice(1);
+};
 
 // =====================================================
 // PDF WORKER
