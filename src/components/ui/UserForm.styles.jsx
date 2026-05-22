@@ -3,8 +3,7 @@ import { theme } from "./Theme";
 
 export const FormPageCard = styled.section`
   width: 100%;
-
-  background: ${theme.colors.background};
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 18px;
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
 
@@ -72,8 +71,7 @@ export const FormSection = styled.section`
 
 export const SectionTitle = styled.h3`
   margin: 0;
-
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 600;
   color: ${theme.colors.textPrimary};
 `;
@@ -97,7 +95,7 @@ export const Field = styled.div`
 export const Label = styled.label`
   font-size: 15px;
   font-weight: 600;
-  color: ${theme.colors.textPrimary};
+  color: #334155;
 `;
 
 export const Input = styled.input`
