@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Receipts from "./pages/Receipts";
+import MarginProfit from "./pages/MarginProfit";
 import Customer from "./pages/Customer";
 import Locations from "./pages/Locations";
 import Transfer from "./pages/Transfer";
@@ -48,6 +49,7 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/receipts" element={<Receipts />} />
+            <Route path="/profits" element={<MarginProfit />} />
             <Route path="/customer" element={<Customer />} />
             <Route path="/locations" element={<Locations />} />
             <Route path="/transfers" element={<Transfer />} />
