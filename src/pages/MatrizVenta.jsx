@@ -15,9 +15,17 @@ import {
   GroupButton,
   TotalBar,
   TotalText,
+  DetailButton,
+  DetailPopoverCard,
+  DetailPopoverTitle,
+  DetailPopoverTable,
+  DetailPopoverHead,
+  DetailPopoverRow,
 } from "../components/ui/Kardex";
 
 import { DataGrid } from "@mui/x-data-grid";
+import Popover from "@mui/material/Popover";
+import { ChevronDown } from "lucide-react";
 
 const fechaHoy = () => {
   const fecha = new Date().toLocaleDateString("es-BO", {
@@ -34,6 +42,29 @@ export default function Kardex() {
   const [openFilters, setOpenFilters] = useState(true);
   const [rawRows, setRawRows] = useState([]);
   const [groupBy, setGroupBy] = useState("");
+  
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedDetails, setSelectedDetails] = useState([]);
+  const openDetailPopover = (event, details = []) => {
+  event.stopPropagation();
+  setAnchorEl(event.currentTarget);
+    setSelectedDetails(details);
+  };
+  const closeDetailPopover = () => {
+    setAnchorEl(null);
+    setSelectedDetails([]);
+  };
+  const detailPopoverOpen = Boolean(anchorEl);
+  // formato de moneda
+  const formatMoney = (value) =>
+    `Bs ${Number(value || 0).toLocaleString("es-BO", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  const getLastFinalPrice = (details = []) => {
+    if (!details.length) return 0;
+    return Number(details[details.length - 1]?.finalPrice || 0);
+  };
 
   const round = (value) => Number(value.toFixed(2));
 
@@ -45,15 +76,13 @@ export default function Kardex() {
     if (!groupBy) {
       return rawRows.map((item) => ({
         id: item.id,
-
         name: item.product,
-
         quantity: Number(item.quantity || 0),
-
+        price: Number(item.price || 0),
+        finalPrice: getLastFinalPrice(item.details || []),
+        details: item.details || [],
         subtotal: Number(item.subtotal || 0),
-
         discount: Number(item.discount || 0),
-
         total: Number(item.total || 0),
       }));
     }
@@ -144,7 +173,7 @@ export default function Kardex() {
       : "Producto";
 
   const columns = useMemo(() => {
-    return [
+    const baseColumns = [
       {
         field: "name",
         headerName: firstColumnTitle,
@@ -162,7 +191,7 @@ export default function Kardex() {
             }}
           >
             <div style={{ fontSize: 14, color: "#111827", lineHeight: 1.4 }}>
-              {String(params.value).toUpperCase()}
+              {String(params.value || "").toUpperCase()}
             </div>
           </div>
         ),
@@ -179,6 +208,73 @@ export default function Kardex() {
           </div>
         ),
       },
+    ];
+
+    const detailColumns = !groupBy
+      ? [
+          {
+            field: "price",
+            headerName: "Costo Unitario",
+            width: 150,
+            type: "number",
+            sortable: true,
+            renderCell: (params) => (
+              <div style={{ fontSize: 14, color: "#64748b", width: "100%" }}>
+                {formatMoney(params.value)}
+              </div>
+            ),
+          },
+          {
+            field: "finalPrice",
+            headerName: "Precio Venta",
+            width: 170,
+            type: "number",
+            sortable: true,
+            renderCell: (params) => (
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#111827",
+                  width: "100%",
+                }}
+              >
+                {formatMoney(params.value)}
+              </div>
+            ),
+          },
+          {
+            field: "details",
+            headerName: "Detalle",
+            width: 170,
+            sortable: false,
+            filterable: false,
+            renderCell: (params) => {
+              const details = params.row.details || [];
+
+              if (!details.length || details.length === 1) {
+                return (
+                  <span style={{ color: "#94a3b8", fontSize: 14 }}>
+                    Sin desglose
+                  </span>
+                );
+              }
+
+              return (
+                <DetailButton
+                  type="button"
+                  onClick={(event) => openDetailPopover(event, details)}
+                >
+                  {details.length} precios
+                  <ChevronDown size={16} />
+                </DetailButton>
+              );
+            },
+          },
+        ]
+      : [];
+
+    const amountColumns = [
       {
         field: "subtotal",
         headerName: "Subtotal",
@@ -187,10 +283,7 @@ export default function Kardex() {
         sortable: true,
         renderCell: (params) => (
           <div style={{ fontSize: 14, color: "#64748b", width: "100%" }}>
-            {`Bs ${Number(params.value || 0).toLocaleString("es-BO", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`}
+            {formatMoney(params.value)}
           </div>
         ),
       },
@@ -208,12 +301,7 @@ export default function Kardex() {
               width: "100%",
             }}
           >
-            {Number(params.value) > 0
-              ? `- Bs ${Number(params.value).toLocaleString("es-BO", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}`
-              : "—"}
+            {Number(params.value) > 0 ? `- ${formatMoney(params.value)}` : "—"}
           </div>
         ),
       },
@@ -232,14 +320,13 @@ export default function Kardex() {
               width: "100%",
             }}
           >
-            {`Bs ${Number(params.value || 0).toLocaleString("es-BO", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`}
+            {formatMoney(params.value)}
           </div>
         ),
       },
     ];
+
+    return [...baseColumns, ...detailColumns, ...amountColumns];
   }, [groupBy, firstColumnTitle]);
 
   return (
@@ -334,6 +421,50 @@ export default function Kardex() {
               "& .MuiTablePagination-root": { fontSize: 14 },
             }}
           />
+          // detalles
+          <Popover
+            open={detailPopoverOpen}
+            anchorEl={anchorEl}
+            onClose={closeDetailPopover}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "left",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "left",
+            }}
+            slotProps={{
+              paper: {
+                sx: {
+                  mt: 1,
+                  borderRadius: "20px",
+                  boxShadow: "none",
+                  background: "transparent",
+                },
+              },
+            }}
+          >
+            <DetailPopoverCard>
+              <DetailPopoverTitle>Detalle de venta</DetailPopoverTitle>
+
+              <DetailPopoverTable>
+                <DetailPopoverHead>
+                  <span>Precio venta</span>
+                  <span>Cantidad</span>
+                  <span>Subtotal</span>
+                </DetailPopoverHead>
+
+                {selectedDetails.map((detail, index) => (
+                  <DetailPopoverRow key={`${detail.finalPrice}-${index}`}>
+                    <span>{formatMoney(detail.finalPrice)}</span>
+                    <span>{detail.quantity}</span>
+                    <span>{formatMoney(detail.subtotal)}</span>
+                  </DetailPopoverRow>
+                ))}
+              </DetailPopoverTable>
+            </DetailPopoverCard>
+          </Popover>
         </TableWrapper>
 
         <TotalBar>
