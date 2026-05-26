@@ -68,10 +68,10 @@ export default function Kardex() {
 
   const round = (value) => Number(value.toFixed(2));
 
-  const rows = useMemo(() => {
-    ////////////////////////////////////////////////////////////
-    // 🔥 GENERAL
-    ////////////////////////////////////////////////////////////
+const rows = useMemo(() => {
+  ////////////////////////////////////////////////////////////
+  // 🔥 GENERAL
+  ////////////////////////////////////////////////////////////
 
     if (!groupBy) {
       return rawRows.map((item) => ({
@@ -87,60 +87,125 @@ export default function Kardex() {
       }));
     }
 
-    ////////////////////////////////////////////////////////////
-    // 🔥 GROUPED
-    ////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////
+  // 🔥 AGRUPAR POR VENDEDORES
+  ////////////////////////////////////////////////////////////
 
+  if (groupBy === "seller") {
     const grouped = {};
 
     rawRows.forEach((item) => {
-      const groupValue = item[groupBy] || "Sin grupo";
+      ////////////////////////////////////////////////////////
+      // 🔥 RECORRER VENDEDORES DEL PRODUCTO
+      ////////////////////////////////////////////////////////
 
-      //////////////////////////////////////////////////////////
-      // 🔥 INIT
-      //////////////////////////////////////////////////////////
+      (item.sellers || []).forEach((seller) => {
+        const sellerName = seller.name || "Sin vendedor";
 
-      if (!grouped[groupValue]) {
-        grouped[groupValue] = {
-          id: `${groupBy}-${groupValue}`,
+        //////////////////////////////////////////////////////
+        // 🔥 INIT
+        //////////////////////////////////////////////////////
 
-          name: groupValue,
+        if (!grouped[sellerName]) {
+          grouped[sellerName] = {
+            id: `seller-${sellerName}`,
 
-          quantity: 0,
+            name: sellerName,
 
-          subtotal: 0,
+            quantity: 0,
 
-          discount: 0,
+            subtotal: 0,
 
-          total: 0,
-        };
-      }
+            discount: 0,
 
-      //////////////////////////////////////////////////////////
-      // 🔥 ACUMULAR
-      //////////////////////////////////////////////////////////
+            total: 0,
+          };
+        }
 
-      grouped[groupValue].quantity += Number(item.quantity || 0);
+        //////////////////////////////////////////////////////
+        // 🔥 ACUMULAR
+        //////////////////////////////////////////////////////
 
-      grouped[groupValue].subtotal = round(
-        grouped[groupValue].subtotal + Number(item.subtotal || 0),
-      );
+        grouped[sellerName].quantity += Number(
+          seller.quantity || 0
+        );
 
-      grouped[groupValue].discount = round(
-        grouped[groupValue].discount + Number(item.discount || 0),
-      );
+        grouped[sellerName].subtotal = round(
+          grouped[sellerName].subtotal +
+            Number(seller.subtotal || 0)
+        );
 
-      grouped[groupValue].total = round(
-        grouped[groupValue].total + Number(item.total || 0),
-      );
+        grouped[sellerName].discount = round(
+          grouped[sellerName].discount +
+            Number(seller.discount || 0)
+        );
+
+        grouped[sellerName].total = round(
+          grouped[sellerName].total +
+            Number(seller.total || 0)
+        );
+      });
     });
 
-    ////////////////////////////////////////////////////////////
-    // 🔥 RETURN
-    ////////////////////////////////////////////////////////////
-
     return Object.values(grouped);
-  }, [rawRows, groupBy]);
+  }
+
+  ////////////////////////////////////////////////////////////
+  // 🔥 AGRUPAR NORMAL
+  ////////////////////////////////////////////////////////////
+
+  const grouped = {};
+
+  rawRows.forEach((item) => {
+    const groupValue = item[groupBy] || "Sin grupo";
+
+    //////////////////////////////////////////////////////////
+    // 🔥 INIT
+    //////////////////////////////////////////////////////////
+
+    if (!grouped[groupValue]) {
+      grouped[groupValue] = {
+        id: `${groupBy}-${groupValue}`,
+
+        name: groupValue,
+
+        quantity: 0,
+
+        subtotal: 0,
+
+        discount: 0,
+
+        total: 0,
+      };
+    }
+
+    //////////////////////////////////////////////////////////
+    // 🔥 ACUMULAR
+    //////////////////////////////////////////////////////////
+
+    grouped[groupValue].quantity += Number(
+      item.quantity || 0
+    );
+
+    grouped[groupValue].subtotal = round(
+      grouped[groupValue].subtotal +
+        Number(item.subtotal || 0)
+    );
+
+    grouped[groupValue].discount = round(
+      grouped[groupValue].discount +
+        Number(item.discount || 0)
+    );
+
+    grouped[groupValue].total = round(
+      grouped[groupValue].total +
+        Number(item.total || 0)
+    );
+  });
+
+  return Object.values(grouped);
+}, [rawRows, groupBy]);
+
   const totalGeneral = useMemo(() => {
     return Number(
       rows
