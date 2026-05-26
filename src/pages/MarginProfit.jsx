@@ -16,6 +16,7 @@ import {
   FilterButtonGroup,
   FilterButton,
 } from "../components/ui/Page.styles";
+import { socket } from "../services/SocketIOConnection";
 
 const fechaHoy = () => {
   const fecha = new Date().toLocaleDateString("es-BO", {
@@ -40,9 +41,9 @@ function MarginProfit() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState("all");
 
-  const { products, isLoading, refresh } = useInventory();
+  const { products, isLoading } = useInventory();
   const { lines } = useLines();
-  const { updateProduct } = useProduct();
+  const { updateMargen } = useProduct();
   const calculateCostWithIva = (unitCost) => {
     return Number(unitCost || 0) * 1.1494;
   };
@@ -75,7 +76,7 @@ function MarginProfit() {
         costIva,
 
         profitMargin,
-        executivePrice: costIva * (1 + profitMargin / 100),
+        executivePrice: Math.round(costIva * (1 + profitMargin / 100)),
 
         quantityPercent: "",
         quantityPrice: "",
@@ -88,7 +89,8 @@ function MarginProfit() {
   const filteredRows = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesBrand = selectedBrandId === "all" || row.brandId === selectedBrandId;
+      const matchesBrand =
+        selectedBrandId === "all" || row.brandId === selectedBrandId;
       const matchesSearch =
         !value ||
         [row.brand, row.line, row.product]
@@ -101,20 +103,54 @@ function MarginProfit() {
 
   // guardado de la columna "Porcentaje ganacia"
   const handleProcessRowUpdate = async (newRow, oldRow) => {
-    const profitMargin = Number(newRow.profitMargin || 0);
-    if (Number.isNaN(profitMargin)) {
+    try {
+      const profitMargin = Number(newRow.profitMargin || 0);
+
+      if (Number.isNaN(profitMargin)) {
+        return oldRow;
+      }
+
+      ////////////////////////////////////////////////////
+      // CALCULAR
+      ////////////////////////////////////////////////////
+
+      const executivePrice = Math.round(
+        Number(newRow.costIva || 0) * (1 + profitMargin / 100),
+      );
+
+      ////////////////////////////////////////////////////
+      // UPDATE API
+      ////////////////////////////////////////////////////
+
+      await updateMargen(newRow.id, {
+        porcentajeGanancia: profitMargin,
+      });
+
+      ////////////////////////////////////////////////////
+      // SOCKET
+      ////////////////////////////////////////////////////
+
+      socket.emit("updateProductMargin", {
+        id: newRow.id,
+        porcentajeGanancia: profitMargin,
+      });
+
+      ////////////////////////////////////////////////////
+      // RETURN
+      ////////////////////////////////////////////////////
+
+      return {
+        ...newRow,
+
+        profitMargin,
+
+        executivePrice
+      };
+    } catch (error) {
+      console.error(error);
+
       return oldRow;
     }
-    const executivePrice = Number(newRow.costIva || 0) * (1 + profitMargin / 100);
-    await updateProduct(newRow.id, {
-      porcentajeGanancia: profitMargin,
-    });
-    await refresh();
-    return {
-      ...newRow,
-      profitMargin,
-      executivePrice,
-    };
   };
 
   const columns = useMemo(
@@ -161,11 +197,19 @@ function MarginProfit() {
       {
         field: "profitMargin",
         headerName: "Margen de ganancia",
-        flex: 1,
-        minWidth: 160,
         editable: true,
         type: "number",
-        valueFormatter: (value) => formatPercent(value),
+
+        valueFormatter: (value) => `${Number(value || 0)}%`,
+
+        preProcessEditCellProps: (params) => {
+          const hasError = isNaN(Number(params.props.value));
+
+          return {
+            ...params.props,
+            error: hasError,
+          };
+        },
       },
       {
         field: "executivePrice",
@@ -203,7 +247,7 @@ function MarginProfit() {
         valueFormatter: (value) => formatMoney(value),
       },
     ],
-    []
+    [],
   );
 
   return (
@@ -248,6 +292,9 @@ function MarginProfit() {
           pageSizeOptions={[7, 10, 20]}
           noRowsLabel="No hay productos registrados"
           processRowUpdate={handleProcessRowUpdate}
+          experimentalFeatures={{
+            newEditingApi: true,
+          }}
         />
       </PageWrapper>
     </PageSurface>
