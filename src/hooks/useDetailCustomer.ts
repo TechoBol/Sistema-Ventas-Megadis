@@ -54,6 +54,7 @@ export function useDetailCustomer(id: string): UseDetailCustomerReturn {
   });
 
   const sales = data?.sales ?? [];
+  console.log (sales)
   const totalGastado = sales.reduce((acc, s) => acc + s.total, 0);
   const comprasRealizadas = sales.length;
   const ticketPromedio = comprasRealizadas > 0 ? totalGastado / comprasRealizadas : 0;
