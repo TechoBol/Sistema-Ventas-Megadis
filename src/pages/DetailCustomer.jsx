@@ -246,6 +246,7 @@ export default function DetailCustomer() {
                                 <thead>
                                     <tr>
                                         <Th>ID</Th>
+                                        <Th>CI/NIT</Th>
                                         <Th>Vendedor</Th>
                                         <Th>Sucursal</Th>
                                         <Th>Total</Th>
@@ -256,6 +257,7 @@ export default function DetailCustomer() {
                                     {customer?.sales?.map((s) => (
                                         <tr key={s.id}>
                                             <Td>#{s.id}</Td>
+                                            <Td>{s.customer.nitCi}</Td>
                                             <Td>{s.employee ? `${s.employee.name} ${s.employee.lastName}` : "—"}</Td>
                                             <Td>{s.location?.name ?? "—"}</Td>
                                             <Td>{formatBs(s.total)}</Td>
