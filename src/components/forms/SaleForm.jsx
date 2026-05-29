@@ -2,17 +2,18 @@ import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, MapPin, ReceiptText, ShieldCheck, CreditCard, Info } from "lucide-react";
 import { useCustomer } from "../../hooks/useCustomer";
 import LocationPicker from "../modals/LocationPicker";
-import { errorToast } from "../../services/toasts"; // Aseguramos consistencia visual
+import { errorToast } from "../../services/toasts";
+import { CHANNELS } from "../ui/SaleForm.channels";
 
 import {
   SaleCard,
-  MainContainer,    
-  LeftColumn,       
-  RightColumn,      
+  MainContainer,
+  LeftColumn,
+  RightColumn,
   Header,
   BackButton,
   Title,
-  TotalCard,        
+  TotalCard,
   TotalLabel,
   TotalValue,
   PaymentInfo,
@@ -40,13 +41,22 @@ import {
   SwitchWrapper,
   SwitchInput,
   SwitchSlider,
-  BankSelectWrapper, 
+  BankSelectWrapper,
   BankSelectLabel,
   BankSelect,
-  StatusBox,        
-  NotificationBox,  
+  StatusBox,
+  NotificationBox,
   Footer,
   FinishButton,
+  PhoneWrapper,
+  PhoneFlagPrefix,
+  PhoneFlagEmoji,
+  PhoneInput,
+  ChannelGrid,
+  ChannelButton,
+  ChannelIconBox,
+  ChannelLabel,
+  ChannelCheck,
 } from "../ui/SaleForm.styles";
 
 function SaleForm({
@@ -110,7 +120,7 @@ function SaleForm({
       occupation: customer.occupation || "",
       phone: customer.phone || "",
       whatsapp: customer.whatsapp || "",
-      originChannel: customer.originChannel || "facebook",
+      originChannel: customer.originChannel || "",
       address: primaryAddress?.address || "",
       latitude: primaryAddress?.latitude || null,
       longitude: primaryAddress?.longitude || null,
@@ -207,10 +217,10 @@ function SaleForm({
               </div>
               {/* Corrección del stopPropagation para evitar doble evento */}
               <SwitchWrapper onClick={(event) => event.stopPropagation()}>
-                <SwitchInput 
-                  type="checkbox" 
-                  checked={generateInvoice} 
-                  onChange={(event) => setGenerateInvoice(event.target.checked)} 
+                <SwitchInput
+                  type="checkbox"
+                  checked={generateInvoice}
+                  onChange={(event) => setGenerateInvoice(event.target.checked)}
                 />
                 <SwitchSlider />
               </SwitchWrapper>
@@ -258,49 +268,86 @@ function SaleForm({
 
             <Field>
               <Label>TELÉFONO</Label>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <span style={{ display: "flex", alignItems: "center", padding: "0 12px", backgroundColor: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: "12px", color: "#64748b", fontSize: "14px", height: "52px", boxSizing: "border-box" }}>+591</span>
-                <Input
+              <PhoneWrapper>
+                <PhoneFlagPrefix>
+                  <PhoneFlagEmoji>🇧🇴</PhoneFlagEmoji>
+                </PhoneFlagPrefix>
+                <PhoneInput
                   value={customerData.phone}
-                  onChange={(event) => handleChange("phone", event.target.value)}
-                  placeholder="70000000"
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    handleChange("phone", v);
+                  }}
+                  placeholder="7X XXX XXX"
+                  maxLength={8}
+                  inputMode="numeric"
                 />
-              </div>
+              </PhoneWrapper>
             </Field>
 
             <Field>
               <Label>WHATSAPP</Label>
+              <PhoneWrapper>
+                <PhoneFlagPrefix>
+                  <PhoneFlagEmoji>🇧🇴</PhoneFlagEmoji>
+                </PhoneFlagPrefix>
+                <PhoneInput
+                  value={customerData.whatsapp}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    handleChange("whatsapp", v);
+                  }}
+                  placeholder="7X XXX XXX"
+                  maxLength={8}
+                  inputMode="numeric"
+                />
+              </PhoneWrapper>
+            </Field>
+
+            <Field>
+              <Label>PROFESIÓN / OCUPACIÓN</Label>
               <Input
-                value={customerData.whatsapp}
-                onChange={(event) => handleChange("whatsapp", event.target.value)}
-                placeholder="Mismo del teléfono o alternativo"
+                value={customerData.occupation}
+                onChange={(event) => handleChange("occupation", event.target.value)}
+                placeholder="Ej: Médico, Ingeniero, Comerciante..."
               />
             </Field>
 
-            <Field style={{ gridColumn: "span 2" }}>
+            <Field>
               <Label>¿CÓMO NOS CONOCIÓ?</Label>
-              <AddressSelect
-                value={customerData.originChannel}
-                onChange={(event) => handleChange("originChannel", event.target.value)}
-                disabled={!!selectedCustomer}
-              >
-                <option value="facebook">Facebook</option>
-                <option value="instagram">Instagram</option>
-                <option value="tiktok">TikTok</option>
-                <option value="referido">Referido</option>
-              </AddressSelect>
+              <ChannelGrid>
+                {CHANNELS.map(({ value, activeBg, iconBg, icon }) => {
+                  const isActive = customerData.originChannel === value;
+                  return (
+                    <ChannelButton
+                      key={value}
+                      type="button"
+                      disabled={!!selectedCustomer}
+                      $active={isActive}
+                      $activeBg={activeBg}
+                      onClick={() => handleChange("originChannel", value)}
+                    >
+                      <ChannelIconBox $bg={isActive ? "rgba(255,255,255,0.15)" : iconBg}>
+                        {icon}
+                      </ChannelIconBox>
+                      <ChannelLabel $active={isActive}>{value}</ChannelLabel>
+                      {isActive && <ChannelCheck>✓</ChannelCheck>}
+                    </ChannelButton>
+                  );
+                })}
+              </ChannelGrid>
             </Field>
 
             <Field style={{ gridColumn: "span 2" }}>
               <Label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <MapPin size={16} style={{ color: "var(--form-primary)" }} /> DIRECCIÓN DE ENTREGA
+                DIRECCIÓN DE ENTREGA
               </Label>
               <AddressWrapper>
                 <Input
                   style={{ paddingRight: "50px" }}
                   value={customerData.address}
-                  onChange={(event) => { 
-                    handleChange("address", event.target.value); 
+                  onChange={(event) => {
+                    handleChange("address", event.target.value);
                     setSelectedAddressId("new"); // Reseteamos el selector de arriba
                   }}
                   placeholder="Calle, avenida, número de casa..."
@@ -416,7 +463,7 @@ function SaleForm({
                 {mode === "cotizacion" ? "Presupuesto Informativo" : generateInvoice ? "Facturación Activa" : "Operación regular"}
               </div>
               <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
-                {mode === "cotizacion" 
+                {mode === "cotizacion"
                   ? "Este documento no genera obligaciones fiscales legales."
                   : generateInvoice
                     ? "Los datos se validarán para emitir la factura electrónica."
@@ -432,7 +479,7 @@ function SaleForm({
         <NotificationBox>
           <Info size={16} style={{ color: "var(--form-primary)" }} />
           <span>
-            {mode === "cotizacion" 
+            {mode === "cotizacion"
               ? "La cotización se guardará en el historial para consultas posteriores."
               : "La venta se registrará automáticamente. El cliente se guardará si es nuevo."
             }

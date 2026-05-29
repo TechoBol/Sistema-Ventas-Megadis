@@ -22,6 +22,8 @@ interface UseDetailCustomerReturn {
   eliminarNota: (noteId: number) => Promise<void>;
   guardandoNota: boolean;
   errorNota: string | null;
+  cotizaciones: CustomerQuote[];
+  loadingQuotes: boolean;
 }
 
 function calcularVentasPorMes(sales: CustomerSale[]) {
@@ -37,6 +39,15 @@ function calcularVentasPorMes(sales: CustomerSale[]) {
   return Object.entries(meses).map(([mes, total]) => ({ mes, total }));
 }
 
+export interface CustomerQuote {
+  id: number;
+  createdAt: string;
+  total: number;
+  status: string;
+  employee?: { name: string; lastName: string };
+  location?: { name: string };
+}
+
 export function useDetailCustomer(id: string): UseDetailCustomerReturn {
   const { token } = useLoginStore();
   const queryClient = useQueryClient();
@@ -47,6 +58,15 @@ export function useDetailCustomer(id: string): UseDetailCustomerReturn {
   const { data, isLoading, error } = useQuery({
     queryKey: ["customer", id],
     queryFn: () => detailCustomerService.getDetalle(id, token),
+    enabled: !!id && !!token,
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: quotesData, isLoading: loadingQuotes } = useQuery({
+    queryKey: ["customer-quotes", id],
+    queryFn: () => detailCustomerService.getCotizaciones(id, token),
     enabled: !!id && !!token,
     staleTime: 1000 * 30,
     gcTime: 1000 * 60 * 5,
@@ -114,5 +134,7 @@ export function useDetailCustomer(id: string): UseDetailCustomerReturn {
     eliminarNota,
     guardandoNota,
     errorNota,
+    cotizaciones: quotesData ?? [],
+    loadingQuotes,
   };
 }

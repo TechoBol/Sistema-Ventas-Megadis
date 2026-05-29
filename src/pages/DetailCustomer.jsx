@@ -1,19 +1,54 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts";
+
 import { useDetailCustomer } from "../hooks/useDetailCustomer";
 
 import {
-    Wrapper, Header, BackButton, Title, Layout, Column, Card,
-    CardHeader, CardTitle, RedDot, ClientTop, Avatar, ClientName,
-    ClientSubtext, Section, SectionTitle, InfoList, InfoRow,
-    InfoLabel, InfoValue, StatsGrid, StatCard, StatValue, StatLabel,
-    DashboardBottom, ActivityList, ActivityItem, ActivityLeft,
-    ActivityDate, NotesInput, TableWrapper, Table, Th, Td,
+    Wrapper,
+    Header,
+    BackButton,
+    Title,
+    Layout,
+    Column,
+    MainGrid,
+    Card,
+    CardHeader,
+    CardTitle,
+    RedDot,
+    ClientTop,
+    Avatar,
+    ClientName,
+    ClientSubtext,
+    Section,
+    SectionTitle,
+    InfoList,
+    InfoRow,
+    InfoLabel,
+    InfoValue,
+    StatsGrid,
+    StatCard,
+    StatValue,
+    StatLabel,
+    NotesInput,
+    TableWrapper,
+    Table,
+    Th,
+    Td,
+    Map,
 } from "../components/ui/DetailCustomer";
 
 const formatBs = (n) =>
-    `Bs. ${Number(n).toLocaleString("es-BO", { minimumFractionDigits: 2 })}`;
+    `Bs. ${Number(n).toLocaleString("es-BO", {
+        minimumFractionDigits: 2,
+    })}`;
 
 export default function DetailCustomer() {
     const { id = "" } = useParams();
@@ -28,15 +63,17 @@ export default function DetailCustomer() {
         ticketPromedio,
         ultimaCompra,
         ventasPorMes,
+        cotizaciones,
+        loadingQuotes,
         crearNota,
-        actualizarNota,  // ← estaba faltando
-        eliminarNota,    // ← estaba faltando
-        guardandoNota,
+        actualizarNota,
     } = useDetailCustomer(id);
 
     const [nota, setNota] = useState("");
+
     const debounceRef = useRef(null);
-    const inicializado = useRef(false);  // ← evita sobreescribir mientras el user escribe
+    const inicializado = useRef(false);
+    const [tabActiva, setTabActiva] = useState("compras");
 
     useEffect(() => {
         if (!inicializado.current && customer) {
@@ -52,11 +89,14 @@ export default function DetailCustomer() {
 
     const handleNotaChange = (e) => {
         const value = e.target.value;
+
         setNota(value);
 
         clearTimeout(debounceRef.current);
+
         debounceRef.current = setTimeout(async () => {
             const notaExistente = customer?.notes?.[0];
+
             if (notaExistente) {
                 await actualizarNota(notaExistente.id, value);
             } else if (value.trim()) {
@@ -66,25 +106,73 @@ export default function DetailCustomer() {
     };
 
     if (error) {
-        return <Wrapper><h2>{error}</h2></Wrapper>;
+        return (
+            <Wrapper>
+                <h2>{error}</h2>
+            </Wrapper>
+        );
     }
 
-    const direccionPrincipal = customer?.addresses?.find((a) => a.isPrimary)
-        ?? customer?.addresses?.[0];
+    const direccionPrincipal =
+        customer?.addresses?.find((a) => a.isPrimary) ??
+        customer?.addresses?.[0];
+
+
+    const estadoLabel = {
+        // Cotizaciones
+        PENDING: "Pendiente",
+        APPROVED: "Aprobado",
+        REJECTED: "Rechazado",
+        EXPIRED: "Expirado",
+        // Ventas
+        Realizado: "Realizado",
+    };
+
+    const estadoColor = {
+        APPROVED: { background: "#dcfce7", color: "#16a34a" },
+        Realizado: { background: "#dcfce7", color: "#16a34a" },
+        PENDING: { background: "#fef9c3", color: "#ca8a04" },
+        REJECTED: { background: "#fee2e2", color: "#dc2626" },
+        EXPIRED: { background: "#fee2e2", color: "#dc2626" },
+    };
+
+    const EstadoBadge = ({ estado }) => {
+        const style = estadoColor[estado] ?? { background: "#f3f4f6", color: "#6b7280" };
+        return (
+            <span style={{
+                ...style,
+                padding: "2px 10px",
+                borderRadius: "999px",
+                fontSize: "12px",
+                fontWeight: "600",
+            }}>
+                {estadoLabel[estado] ?? estado}
+            </span>
+        );
+    };
 
     return (
         <Wrapper>
             <Header>
-                <BackButton onClick={() => navigate(-1)}>‹</BackButton>
+                <BackButton onClick={() => navigate(-1)}>
+                    ‹
+                </BackButton>
+
                 <Title>Cliente</Title>
             </Header>
 
             <Layout>
-                {/* LEFT */}
+
+                {/* LEFT SIDEBAR */}
                 <Column>
+
+                    {/* CLIENTE */}
                     <Card>
                         <CardHeader>
-                            <CardTitle><RedDot />Cliente</CardTitle>
+                            <CardTitle>
+                                <RedDot />
+                                Cliente
+                            </CardTitle>
                         </CardHeader>
 
                         {!loading && customer && (
@@ -94,60 +182,123 @@ export default function DetailCustomer() {
                                         src={`https://api.dicebear.com/9.x/fun-emoji/svg?seed=${customer.id}&backgroundColor=ffdfbf,ffd5dc,d1d4f9,c0aede,b6e3f4`}
                                         alt={customer.name}
                                     />
+
                                     <div>
-                                        <ClientName>{customer.name}</ClientName>
+                                        <ClientName>
+                                            {customer.name}
+                                        </ClientName>
+
                                         <ClientSubtext>
-                                            {customer.occupation ?? "—"} • {new Date(customer.createdAt).toLocaleDateString("es-BO")}
+                                            {customer.occupation ?? "—"} •{" "}
+                                            {new Date(
+                                                customer.createdAt
+                                            ).toLocaleDateString("es-BO")}
                                         </ClientSubtext>
                                     </div>
                                 </ClientTop>
 
                                 <Section>
-                                    <SectionTitle>Contacto</SectionTitle>
+                                    <SectionTitle>
+                                        Contacto
+                                    </SectionTitle>
+
                                     <InfoList>
                                         <InfoRow>
-                                            <InfoLabel>Teléfono</InfoLabel>
-                                            <InfoValue>{customer.phone ?? "—"}</InfoValue>
+                                            <InfoLabel>
+                                                Teléfono
+                                            </InfoLabel>
+
+                                            <InfoValue>
+                                                {customer.phone ?? "—"}
+                                            </InfoValue>
                                         </InfoRow>
+
                                         <InfoRow>
-                                            <InfoLabel>WhatsApp</InfoLabel>
-                                            <InfoValue>{customer.whatsapp ?? "—"}</InfoValue>
+                                            <InfoLabel>
+                                                WhatsApp
+                                            </InfoLabel>
+
+                                            <InfoValue>
+                                                {customer.whatsapp ?? "—"}
+                                            </InfoValue>
                                         </InfoRow>
+
                                         <InfoRow>
-                                            <InfoLabel>Dirección</InfoLabel>
-                                            <InfoValue>{direccionPrincipal?.address ?? "—"}</InfoValue>
+                                            <InfoLabel>
+                                                Dirección
+                                            </InfoLabel>
+
+                                            <InfoValue>
+                                                {direccionPrincipal?.address ??
+                                                    "—"}
+                                            </InfoValue>
                                         </InfoRow>
                                     </InfoList>
                                 </Section>
 
                                 <Section>
-                                    <SectionTitle>Información Comercial</SectionTitle>
+                                    <SectionTitle>
+                                        Información Comercial
+                                    </SectionTitle>
+
                                     <InfoList>
                                         <InfoRow>
-                                            <InfoLabel>Canal de origen</InfoLabel>
-                                            <InfoValue>{customer.originChannel ?? "—"}</InfoValue>
+                                            <InfoLabel>
+                                                Canal de origen
+                                            </InfoLabel>
+
+                                            <InfoValue>
+                                                {customer.originChannel ?? "—"}
+                                            </InfoValue>
                                         </InfoRow>
+
                                         <InfoRow>
-                                            <InfoLabel>Última compra</InfoLabel>
-                                            <InfoValue>{ultimaCompra ?? "—"}</InfoValue>
+                                            <InfoLabel>
+                                                Última compra
+                                            </InfoLabel>
+
+                                            <InfoValue>
+                                                {ultimaCompra ?? "—"}
+                                            </InfoValue>
                                         </InfoRow>
+
                                         <InfoRow>
-                                            <InfoLabel>Método de pago</InfoLabel>
-                                            <InfoValue>{customer.favoritePaymentMethod ?? "—"}</InfoValue>
+                                            <InfoLabel>
+                                                Método de pago
+                                            </InfoLabel>
+
+                                            <InfoValue>
+                                                {customer.favoritePaymentMethod ??
+                                                    "—"}
+                                            </InfoValue>
                                         </InfoRow>
                                     </InfoList>
                                 </Section>
 
                                 <Section>
-                                    <SectionTitle>Información Financiera</SectionTitle>
+                                    <SectionTitle>
+                                        Información Financiera
+                                    </SectionTitle>
+
                                     <InfoList>
                                         <InfoRow>
-                                            <InfoLabel>Total gastado</InfoLabel>
-                                            <InfoValue>{formatBs(totalGastado)}</InfoValue>
+                                            <InfoLabel>
+                                                Total gastado
+                                            </InfoLabel>
+
+                                            <InfoValue>
+                                                {formatBs(totalGastado)}
+                                            </InfoValue>
                                         </InfoRow>
+
                                         <InfoRow>
-                                            <InfoLabel>Ticket promedio</InfoLabel>
-                                            <InfoValue>{formatBs(ticketPromedio)}</InfoValue>
+                                            <InfoLabel>
+                                                Ticket promedio
+                                            </InfoLabel>
+
+                                            <InfoValue>
+                                                {formatBs(ticketPromedio)}
+                                            </InfoValue>
                                         </InfoRow>
                                     </InfoList>
                                 </Section>
@@ -158,7 +309,10 @@ export default function DetailCustomer() {
                     {/* NOTAS */}
                     <Card>
                         <CardHeader>
-                            <CardTitle><RedDot />Notas</CardTitle>
+                            <CardTitle>
+                                <RedDot />
+                                Notas
+                            </CardTitle>
                         </CardHeader>
 
                         <NotesInput
@@ -169,102 +323,176 @@ export default function DetailCustomer() {
                     </Card>
                 </Column>
 
-                {/* RIGHT */}
+                {/* CENTER + RIGHT */}
+                {/* CENTER */}
                 <Column>
+
+                    {/* DASHBOARD */}
                     <Card>
                         <CardHeader>
-                            <CardTitle><RedDot />Dashboard</CardTitle>
+                            <CardTitle>
+                                <RedDot />
+                                Dashboard
+                            </CardTitle>
                         </CardHeader>
 
                         {!loading && customer && (
-                            <>
-                                <StatsGrid>
-                                    <StatCard $accent>
-                                        <StatValue>{formatBs(totalGastado)}</StatValue>
-                                        <StatLabel>Total Gastado</StatLabel>
-                                    </StatCard>
-                                    <StatCard $dark>
-                                        <StatValue>{comprasRealizadas}</StatValue>
-                                        <StatLabel>Compras realizadas</StatLabel>
-                                    </StatCard>
-                                    <StatCard>
-                                        <StatValue>{formatBs(ticketPromedio)}</StatValue>
-                                        <StatLabel>Ticket promedio</StatLabel>
-                                    </StatCard>
-                                    <StatCard $dark>
-                                        <StatValue>{ultimaCompra ?? "—"}</StatValue>
-                                        <StatLabel>Última compra</StatLabel>
-                                    </StatCard>
-                                </StatsGrid>
+                            <StatsGrid>
+                                <StatCard $accent>
+                                    <StatValue>
+                                        {formatBs(totalGastado)}
+                                    </StatValue>
 
-                                <DashboardBottom>
-                                    <div>
-                                        <div style={{ fontWeight: 700, marginBottom: 14, fontSize: 14 }}>
-                                            Compras por mes
-                                        </div>
-                                        <ResponsiveContainer width="100%" height={240}>
-                                            <LineChart data={ventasPorMes}>
-                                                <XAxis dataKey="mes" axisLine={false} tickLine={false} />
-                                                <YAxis axisLine={false} tickLine={false} />
-                                                <Tooltip />
-                                                <Line type="monotone" dataKey="total" stroke="#fb0404" strokeWidth={3} />
-                                            </LineChart>
-                                        </ResponsiveContainer>
-                                    </div>
+                                    <StatLabel>
+                                        Total Gastado
+                                    </StatLabel>
+                                </StatCard>
 
-                                    <div>
-                                        <div style={{ fontWeight: 700, marginBottom: 14, fontSize: 14 }}>
-                                            Actividades
-                                        </div>
-                                        <ActivityList>
-                                            {customer.activities.slice(0, 5).map((act) => (
-                                                <ActivityItem key={act.id}>
-                                                    <ActivityLeft>
-                                                        <span>📋</span>
-                                                        <span>{act.description}</span>
-                                                    </ActivityLeft>
-                                                    <ActivityDate>
-                                                        {new Date(act.createdAt).toLocaleDateString("es-BO")}
-                                                    </ActivityDate>
-                                                </ActivityItem>
-                                            ))}
-                                        </ActivityList>
-                                    </div>
-                                </DashboardBottom>
-                            </>
+                                <StatCard $dark>
+                                    <StatValue>
+                                        {comprasRealizadas}
+                                    </StatValue>
+
+                                    <StatLabel>
+                                        Compras realizadas
+                                    </StatLabel>
+                                </StatCard>
+
+                                <StatCard>
+                                    <StatValue>
+                                        {formatBs(ticketPromedio)}
+                                    </StatValue>
+
+                                    <StatLabel>
+                                        Ticket promedio
+                                    </StatLabel>
+                                </StatCard>
+
+                                <StatCard $dark>
+                                    <StatValue>
+                                        {ultimaCompra ?? "—"}
+                                    </StatValue>
+
+                                    <StatLabel>
+                                        Última compra
+                                    </StatLabel>
+                                </StatCard>
+                            </StatsGrid>
                         )}
                     </Card>
 
-                    {/* COMPRAS */}
+                    {/* ACTIVIDADES */}
                     <Card>
                         <CardHeader>
-                            <CardTitle><RedDot />Compras</CardTitle>
+                            <CardTitle>
+                                <RedDot />
+                                Actividades del cliente
+                            </CardTitle>
                         </CardHeader>
 
                         <TableWrapper>
                             <Table>
                                 <thead>
                                     <tr>
-                                        <Th>ID</Th>
-                                        <Th>Vendedor</Th>
-                                        <Th>Sucursal</Th>
-                                        <Th>Total</Th>
+                                        <Th>Código</Th>
                                         <Th>Fecha</Th>
+                                        <Th>Tipo</Th>
+                                        <Th>Monto</Th>
+                                        <Th>Estado</Th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
-                                    {customer?.sales?.map((s) => (
-                                        <tr key={s.id}>
-                                            <Td>#{s.id}</Td>
-                                            <Td>{s.employee ? `${s.employee.name} ${s.employee.lastName}` : "—"}</Td>
-                                            <Td>{s.location?.name ?? "—"}</Td>
-                                            <Td>{formatBs(s.total)}</Td>
-                                            <Td>{new Date(s.date).toLocaleDateString("es-BO")}</Td>
-                                        </tr>
-                                    ))}
+                                    {[
+                                        ...(customer?.sales ?? []).map((s) => ({
+                                            id: s.id,
+                                            code: s.code,
+                                            tipo: "Compra",
+                                            empleado: s.employee,
+                                            sucursal: s.location?.name,
+                                            total: s.total,
+                                            estado: "Realizado",
+                                            fecha: s.date,
+                                        })),
+                                        ...(cotizaciones ?? []).map((q) => ({
+                                            id: q.id,
+                                            code: q.code,
+                                            tipo: "Cotización",
+                                            empleado: q.employee,
+                                            sucursal: q.location?.name,
+                                            total: q.total,
+                                            estado: q.status,
+                                            fecha: q.createdAt,
+                                        })),
+                                    ]
+                                        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+                                        .slice(0, 7)
+                                        .map((item) => (
+                                            <tr key={`${item.tipo}-${item.id}`}>
+                                                <Td>{item.code}</Td>
+                                                <Td>{new Date(item.fecha).toLocaleDateString("es-BO")}</Td>
+                                                <Td>{item.tipo}</Td>
+                                                <Td>{formatBs(item.total)}</Td>
+                                                <Td><EstadoBadge estado={item.estado} /></Td>
+                                            </tr>
+                                        ))
+                                    }
                                 </tbody>
                             </Table>
                         </TableWrapper>
+                    </Card>
+                </Column>
+
+                {/* RIGHT */}
+                <Column>
+
+                    {/* CHART */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                <RedDot />
+                                Compras por mes
+                            </CardTitle>
+                        </CardHeader>
+
+                        <ResponsiveContainer
+                            width="100%"
+                            height={320}
+                        >
+                            <LineChart data={ventasPorMes}>
+                                <XAxis
+                                    dataKey="mes"
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+
+                                <Tooltip />
+
+                                <Line
+                                    type="monotone"
+                                    dataKey="total"
+                                    stroke="#fb0404"
+                                    strokeWidth={3}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </Card>
+
+                    {/* MAPS */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                <RedDot />
+                                Maps
+                            </CardTitle>
+                        </CardHeader>
+
+                        <Map />
                     </Card>
                 </Column>
             </Layout>

@@ -29,7 +29,6 @@ import {
     TotalLabel,
     TotalValue,
     ClearFiltersButton,
-    // Nuevos estilos del modal y chip
     ConvertModalInputStyle,
     ConvertModalLabelStyle,
     ConvertModalButton,
