@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import GeneralDataStep from "./importationSteps/GeneralDataStep";
 import {
   ArrowLeft,
   Check,
@@ -12,7 +13,6 @@ import {
   WizardHeaderLeft,
   WizardBackButton,
   WizardTitle,
-  WizardSubtitle,
   StepperWrapper,
   StepItem,
   StepCircle,
@@ -39,6 +39,20 @@ const STEPS = [
 
 function ImportationWizard({ onCancel, onSubmit }) {
   const [currentStep, setCurrentStep] = useState(0);
+  // estado y funcion del contenido los pasos
+  const [generalData, setGeneralData] = useState({
+    supplier: "",
+    reference: "",
+    date: "",
+    officialExchangeRate: "",
+    bankExchangeRate: "",
+  });
+  const handleGeneralDataChange = (field, value) => {
+    setGeneralData((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
 
   const handleNextStep = () => {
     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
@@ -54,18 +68,20 @@ function ImportationWizard({ onCancel, onSubmit }) {
 
   const handleSubmit = () => {
     const payload = {
-      message: "Aquí luego irá toda la información de la importación",
+      generalData,
+      message: "Aquí luego irá toda la información de productos, gastos y resumen",
     };
-
     onSubmit?.(payload);
   };
 
   const renderStepContent = () => {
+    // paso -> datos generales
     if (currentStep === 0) {
       return (
-        <StepPanel>
-          
-        </StepPanel>
+        <GeneralDataStep
+          formData={generalData}
+          onChange={handleGeneralDataChange}
+        />
       );
     }
 
@@ -102,9 +118,6 @@ function ImportationWizard({ onCancel, onSubmit }) {
 
           <div>
             <WizardTitle>Nueva importación</WizardTitle>
-            <WizardSubtitle>
-              Configura paso a paso la importación y sus gastos
-            </WizardSubtitle>
           </div>
         </WizardHeaderLeft>
       </WizardHeader>
