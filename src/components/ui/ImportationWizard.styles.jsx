@@ -179,8 +179,22 @@ export const StepPanel = styled.section`
   }
 `;
 
+// estilos de cabecera, titulo, boton
+export const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+
+  @media (max-width: 700px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
 export const StepPanelTitle = styled.h3`
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: ${theme.colors.textPrimary};
@@ -192,6 +206,27 @@ export const StepPanelText = styled.p`
   font-size: 15px;
   line-height: 1.6;
   color: ${theme.colors.textSecondary};
+`;
+
+export const AddButton = styled.button`
+  height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(242, 12, 31, 0.08);
+  color: ${theme.colors.primary};
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(242, 12, 31, 0.12);
+  }
 `;
 
 export const StepPreviewGrid = styled.div`
@@ -316,7 +351,7 @@ export const StepPrimaryButton = styled.button`
   }
 `;
 
-/* ESTILOS DEL CONTENIDO DE LPOS PASOS */
+/* ESTILOS DEL CONTENIDO DE LOS PASOS */
 export const WizardFormGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -372,4 +407,124 @@ export const WizardHelperText = styled.span`
   font-size: 12px;
   line-height: 1.45;
   color: ${theme.colors.textSecondary};
+`;
+
+/* tabla */
+export const TableWrapper = styled.div`
+  width: 100%;
+  border: 1px solid #eef0f3;
+  border-radius: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: ${theme.colors.background};
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.38);
+    border-radius: 999px;
+  }
+`;
+
+export const TableHeader = styled.div`
+  min-width: 1180px;
+  display: grid;
+  grid-template-columns: 1.1fr 1.5fr 0.9fr 1fr 1fr 0.9fr 44px;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #eef0f3;
+  font-size: 13px;
+  font-weight: 800;
+  color: #475569;
+`;
+
+export const TableRow = styled.div`
+  min-width: 1180px;
+  display: grid;
+  grid-template-columns: 1.1fr 1.5fr 0.9fr 1fr 1fr 0.9fr 44px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: ${theme.colors.textSecondary};
+  }
+`;
+
+export const IconButton = styled.button`
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    color: ${({ disabled }) => (disabled ? "#94a3b8" : theme.colors.primary)};
+    background: ${({ disabled }) =>
+      disabled ? "transparent" : "rgba(242, 12, 31, 0.08)"};
+    transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
+  }
+
+  &:active {
+    transform: ${({ disabled }) => (disabled ? "none" : "scale(0.96)")};
+  }
+`;
+
+export const TotalsBar = styled.div`
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  span {
+    font-size: 15px;
+    color: ${theme.colors.textSecondary};
+  }
+
+  strong {
+    font-size: 16px;
+    font-weight: 700;
+    color: ${theme.colors.text};
+  }
+
+  @media (max-width: 700px) {
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
 `;

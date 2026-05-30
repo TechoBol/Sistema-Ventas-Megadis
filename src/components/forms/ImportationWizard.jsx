@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import GeneralDataStep from "./importationSteps/GeneralDataStep";
+import ProductsStep from "./importationSteps/ProductsStep";
 import {
   ArrowLeft,
   Check,
@@ -39,7 +40,7 @@ const STEPS = [
 
 function ImportationWizard({ onCancel, onSubmit }) {
   const [currentStep, setCurrentStep] = useState(0);
-  // estado y funcion del contenido los pasos
+  // estado de los pasos
   const [generalData, setGeneralData] = useState({
     supplier: "",
     reference: "",
@@ -47,6 +48,15 @@ function ImportationWizard({ onCancel, onSubmit }) {
     officialExchangeRate: "",
     bankExchangeRate: "",
   });
+  const [products, setProducts] = useState([
+    {
+      code: "",
+      productName: "",
+      quantity: "",
+      priceUsd: "",
+    },
+  ]);
+  // funciones del contenido los pasos
   const handleGeneralDataChange = (field, value) => {
     setGeneralData((current) => ({
       ...current,
@@ -69,7 +79,8 @@ function ImportationWizard({ onCancel, onSubmit }) {
   const handleSubmit = () => {
     const payload = {
       generalData,
-      message: "Aquí luego irá toda la información de productos, gastos y resumen",
+      products,
+      message: "Aquí luego irá toda la información de gastos y resumen",
     };
     onSubmit?.(payload);
   };
@@ -84,26 +95,69 @@ function ImportationWizard({ onCancel, onSubmit }) {
         />
       );
     }
-
+    // paso -> productos
     if (currentStep === 1) {
       return (
-        <StepPanel>
-          
-        </StepPanel>
+        <ProductsStep
+          products={products}
+          onChangeProducts={setProducts}
+        />
       );
     }
 
     if (currentStep === 2) {
       return (
         <StepPanel>
-          
+          <StepPanelTitle>Gastos de importación</StepPanelTitle>
+          <StepPanelText>
+            Aquí se cargarán fletes, seguros, gastos portuarios y demás costos
+            necesarios para distribuirlos entre los productos.
+          </StepPanelText>
+
+          <StepPreviewGrid>
+            <StepPreviewCard>
+              <strong>Fletes</strong>
+              <span>Registro de fletes relacionados a la importación.</span>
+            </StepPreviewCard>
+
+            <StepPreviewCard>
+              <strong>Seguros</strong>
+              <span>Registro de seguros aplicados a la importación.</span>
+            </StepPreviewCard>
+
+            <StepPreviewCard>
+              <strong>Gastos portuarios</strong>
+              <span>Registro de gastos asociados al puerto o aduana.</span>
+            </StepPreviewCard>
+          </StepPreviewGrid>
         </StepPanel>
       );
     }
 
     return (
       <StepPanel>
-        
+        <StepPanelTitle>Resumen</StepPanelTitle>
+        <StepPanelText>
+          Aquí se mostrará el resumen antes de guardar: productos, cantidades,
+          subtotales, gastos, distribución y costo final estimado.
+        </StepPanelText>
+
+        <StepPreviewGrid>
+          <StepPreviewCard>
+            <strong>Validación final</strong>
+            <span>Revisión general de la importación antes de guardarla.</span>
+          </StepPreviewCard>
+
+          <StepPreviewCard>
+            <strong>Total importación</strong>
+            <span>Resumen de productos, gastos y cálculos principales.</span>
+          </StepPreviewCard>
+
+          <StepPreviewCard>
+            <strong>Guardar</strong>
+            <span>Confirmación final del registro de importación.</span>
+          </StepPreviewCard>
+        </StepPreviewGrid>
       </StepPanel>
     );
   };
@@ -115,7 +169,6 @@ function ImportationWizard({ onCancel, onSubmit }) {
           <WizardBackButton type="button" onClick={onCancel}>
             <ArrowLeft size={20} />
           </WizardBackButton>
-
           <div>
             <WizardTitle>Nueva importación</WizardTitle>
           </div>
@@ -157,7 +210,6 @@ function ImportationWizard({ onCancel, onSubmit }) {
         <StepSecondaryButton type="button" onClick={onCancel}>
           Cancelar
         </StepSecondaryButton>
-
         <StepActionsRight>
           {currentStep > 0 && (
             <StepSecondaryButton type="button" onClick={handlePrevStep}>
@@ -165,7 +217,6 @@ function ImportationWizard({ onCancel, onSubmit }) {
               Anterior
             </StepSecondaryButton>
           )}
-
           {currentStep < STEPS.length - 1 ? (
             <StepPrimaryButton type="button" onClick={handleNextStep}>
               Siguiente

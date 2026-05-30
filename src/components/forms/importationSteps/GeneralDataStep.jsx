@@ -1,6 +1,7 @@
 import React from "react";
 import {
   StepPanel,
+  SectionHeader,
   StepPanelTitle,
   WizardFormGrid,
   WizardField,
@@ -12,7 +13,9 @@ import {
 function GeneralDataStep({ formData, onChange }) {
   return (
     <StepPanel>
-      <StepPanelTitle>Datos generales</StepPanelTitle>
+      <SectionHeader>
+        <StepPanelTitle>Datos generales</StepPanelTitle>
+      </SectionHeader>
 
       <WizardFormGrid>
         <WizardField>
