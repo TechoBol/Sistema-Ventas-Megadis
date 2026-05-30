@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAmazonS3 } from "../hooks/useAmazonS3";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 import {
     LineChart,
     Line,
@@ -74,6 +79,10 @@ export default function DetailCustomer() {
     const debounceRef = useRef(null);
     const inicializado = useRef(false);
     const [tabActiva, setTabActiva] = useState("compras");
+    const { getFileUrl } = useAmazonS3();
+    const [pdfModal, setPdfModal] = useState(false);
+    const [pdfBlobUrl, setPdfBlobUrl] = useState("");
+    const [numPages, setNumPages] = useState(null);
 
     useEffect(() => {
         if (!inicializado.current && customer) {
@@ -149,6 +158,28 @@ export default function DetailCustomer() {
                 {estadoLabel[estado] ?? estado}
             </span>
         );
+    };
+
+    const handleViewPDF = async (pdfUrl) => {
+        try {
+            if (!pdfUrl) return;
+            const signedUrl = await getFileUrl(pdfUrl);
+            const response = await fetch(signedUrl);
+            if (!response.ok) throw new Error("No se pudo descargar el PDF");
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            setPdfBlobUrl(blobUrl);
+            setPdfModal(true);
+        } catch (err) {
+            console.error("Error al abrir PDF:", err);
+        }
+    };
+
+    const handleClosePdf = () => {
+        setPdfModal(false);
+        if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+        setPdfBlobUrl("");
+        setNumPages(null);
     };
 
     return (
@@ -407,6 +438,7 @@ export default function DetailCustomer() {
                                         ...(customer?.sales ?? []).map((s) => ({
                                             id: s.id,
                                             code: s.code,
+                                            pdfUrl: s.pdfUrl,
                                             tipo: "Compra",
                                             empleado: s.employee,
                                             sucursal: s.location?.name,
@@ -417,6 +449,7 @@ export default function DetailCustomer() {
                                         ...(cotizaciones ?? []).map((q) => ({
                                             id: q.id,
                                             code: q.code,
+                                            pdfUrl: q.pdfUrl,
                                             tipo: "Cotización",
                                             empleado: q.employee,
                                             sucursal: q.location?.name,
@@ -428,7 +461,10 @@ export default function DetailCustomer() {
                                         .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
                                         .slice(0, 7)
                                         .map((item) => (
-                                            <tr key={`${item.tipo}-${item.id}`}>
+                                            <tr key={`${item.tipo}-${item.id}`}
+                                                onClick={() => item.pdfUrl && handleViewPDF(item.pdfUrl)}
+                                                style={{ cursor: item.pdfUrl ? "pointer" : "default" }}
+                                            >
                                                 <Td>{item.code}</Td>
                                                 <Td>{new Date(item.fecha).toLocaleDateString("es-BO")}</Td>
                                                 <Td>{item.tipo}</Td>
@@ -496,6 +532,90 @@ export default function DetailCustomer() {
                     </Card>
                 </Column>
             </Layout>
+
+            {pdfModal && (
+                <div
+                    onClick={handleClosePdf}
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        background: "rgba(0,0,0,0.6)",
+                        zIndex: 1000,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: "#f5f5f5",
+                            borderRadius: "12px",
+                            width: "90%",
+                            maxWidth: "700px",
+                            maxHeight: "90vh",
+                            display: "flex",
+                            flexDirection: "column",
+                            overflow: "hidden",
+                            position: "relative",
+                        }}
+                    >
+                        {/* Header */}
+                        <div style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "16px 20px",
+                            borderBottom: "1px solid #e5e7eb",
+                            background: "#fff",
+                        }}>
+                            <span style={{ fontWeight: "600", fontSize: "15px" }}>
+                                Detalle del documento
+                            </span>
+                            <button
+                                onClick={handleClosePdf}
+                                style={{
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: "20px",
+                                    cursor: "pointer",
+                                    color: "#6b7280",
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* PDF */}
+                        <div style={{
+                            overflowY: "auto",
+                            padding: "20px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                        }}>
+                            {pdfBlobUrl && (
+                                <Document
+                                    file={pdfBlobUrl}
+                                    onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                                    loading={<div>Cargando PDF...</div>}
+                                    error={<div>Error cargando PDF</div>}
+                                >
+                                    {Array.from(new Array(numPages), (_, i) => (
+                                        <Page
+                                            key={`page_${i + 1}`}
+                                            pageNumber={i + 1}
+                                            width={600}
+                                            renderTextLayer
+                                            renderAnnotationLayer
+                                        />
+                                    ))}
+                                </Document>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </Wrapper>
     );
 }
