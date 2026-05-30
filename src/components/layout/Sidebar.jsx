@@ -14,15 +14,16 @@ import {
   UserCog,
   X,
   FileText,
-  ChevronDown,DollarSign
+  ChevronDown,
+  DollarSign,
 } from "lucide-react";
 
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import MenuIcon from "@mui/icons-material/Menu";
 import Tooltip from "@mui/material/Tooltip";
-
 import { NavLink, useLocation } from "react-router-dom";
 
+import { usePermissions } from "../../hooks/usePermissions";
 import { actionTooltipProps } from "../ui/DataTable.styles";
 
 import {
@@ -51,9 +52,11 @@ const sidebarSections = [
         label: "Dashboard",
         icon: LayoutDashboard,
         path: "/dashboard",
+        permission: "canViewDashboard",
       },
     ],
   },
+
   {
     title: "Inventario",
     items: [
@@ -61,14 +64,17 @@ const sidebarSections = [
         label: "Productos",
         icon: Package,
         path: "/products",
+        permission: "canViewProducts",
       },
       {
         label: "Kardex FV",
         icon: ClipboardList,
         path: "/kardex",
+        permission: "canManageInventory",
       },
     ],
   },
+
   {
     title: "Ventas",
     items: [
@@ -76,24 +82,29 @@ const sidebarSections = [
         label: "Venta",
         icon: ShoppingCart,
         path: "/cart",
+        permission: "canSell",
       },
       {
         label: "Recibos / Facturas",
         icon: ReceiptText,
         path: "/receipts",
+        permission: "canViewReceipts",
       },
       {
-      label: "Cotizaciones",
-      icon: FileText,
-      path: "/quotations",
-    },
+        label: "Cotizaciones",
+        icon: FileText,
+        path: "/quotations",
+        permission: "canViewQuotations",
+      },
       {
         label: "Matriz de Ventas",
         icon: ClipboardMinus,
         path: "/sales-matrix",
+        permission: "canManageSales",
       },
     ],
   },
+
   {
     title: "Administración",
     items: [
@@ -101,29 +112,35 @@ const sidebarSections = [
         label: "Márgenes y Utilidades",
         icon: BarChart3,
         path: "/profits",
+        permission: "canViewProfits", // SOLO ADMIN
       },
       {
         label: "Clientes",
         icon: Users,
         path: "/customer",
+        permission: "canViewCustomers",
       },
       {
         label: "Costos / Importaciones",
         icon: DollarSign,
         path: "/costs",
+        permission: "canManageCosts",
       },
       {
         label: "Sucursales",
         icon: Building2,
         path: "/locations",
+        permission: "canManageBranches",
       },
       {
         label: "Transferencias",
         icon: Truck,
         path: "/transfers",
+        permission: "canManageTransfers",
       },
     ],
   },
+
   {
     title: "Configuración",
     items: [
@@ -131,10 +148,12 @@ const sidebarSections = [
         label: "Usuarios",
         icon: UserCog,
         path: "/users",
+        permission: "canManageUsers",
       },
       {
         label: "Sistema",
         icon: Settings,
+        permission: "canManageRoles",
         children: [
           {
             label: "Roles",
@@ -150,13 +169,9 @@ const sidebarSections = [
   },
 ];
 
-function Sidebar({
-  isOpen,
-  isCollapsed,
-  onClose,
-  onToggleCollapse,
-}) {
+function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   const location = useLocation();
+  const permissions = usePermissions();
 
   const defaultOpenMenus = useMemo(() => {
     const openMenus = {};
@@ -164,7 +179,7 @@ function Sidebar({
     sidebarSections.forEach((section) => {
       section.items.forEach((item) => {
         const hasActiveChild = item.children?.some(
-          (child) => child.path === location.pathname
+          (child) => child.path === location.pathname,
         );
 
         if (hasActiveChild) {
@@ -193,26 +208,30 @@ function Sidebar({
     }));
   };
 
+  // 🔥 FILTRO DE PERMISOS
+  const filteredSections = useMemo(() => {
+    return sidebarSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => {
+          if (!item.permission) return true;
+          return permissions[item.permission];
+        }),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [permissions]);
+
   return (
-    <SidebarWrapper
-      $isOpen={isOpen}
-      $isCollapsed={isCollapsed}
-    >
+    <SidebarWrapper $isOpen={isOpen} $isCollapsed={isCollapsed}>
       <SidebarHeader $isCollapsed={isCollapsed}>
-        <Brand>
-          {!isCollapsed && <BrandText>Megadis</BrandText>}
-        </Brand>
+        <Brand>{!isCollapsed && <BrandText>Megadis</BrandText>}</Brand>
 
         <CollapseButton
           type="button"
           $isCollapsed={isCollapsed}
           onClick={onToggleCollapse}
         >
-          {isCollapsed ? (
-            <MenuIcon size={18} />
-          ) : (
-            <MenuOpenIcon size={18} />
-          )}
+          {isCollapsed ? <MenuIcon size={18} /> : <MenuOpenIcon size={18} />}
         </CollapseButton>
 
         <CloseButton type="button" onClick={onClose}>
@@ -221,23 +240,16 @@ function Sidebar({
       </SidebarHeader>
 
       <NavContent $isCollapsed={isCollapsed}>
-        {sidebarSections.map((section) => (
+        {filteredSections.map((section) => (
           <NavSection key={section.title}>
-            {!isCollapsed && (
-              <SectionTitle>{section.title}</SectionTitle>
-            )}
+            {!isCollapsed && <SectionTitle>{section.title}</SectionTitle>}
 
             {section.items.map((item) => {
               const Icon = item.icon;
-
               const hasChildren = Boolean(item.children?.length);
-
-              const isSubmenuOpen = Boolean(
-                openMenus[item.label]
-              );
-
+              const isSubmenuOpen = Boolean(openMenus[item.label]);
               const hasActiveChild = item.children?.some(
-                (child) => child.path === location.pathname
+                (child) => child.path === location.pathname,
               );
 
               if (hasChildren) {
@@ -252,21 +264,14 @@ function Sidebar({
                         type="button"
                         $active={hasActiveChild}
                         $isCollapsed={isCollapsed}
-                        onClick={() =>
-                          toggleSubmenu(item.label)
-                        }
+                        onClick={() => toggleSubmenu(item.label)}
                       >
                         <Icon size={18} />
 
                         {!isCollapsed && (
                           <>
-                            <NavItemText>
-                              {item.label}
-                            </NavItemText>
-
-                            <ToggleIcon
-                              $isOpen={isSubmenuOpen}
-                            >
+                            <NavItemText>{item.label}</NavItemText>
+                            <ToggleIcon $isOpen={isSubmenuOpen}>
                               <ChevronDown size={16} />
                             </ToggleIcon>
                           </>
@@ -280,18 +285,12 @@ function Sidebar({
                           <NavLink
                             key={child.label}
                             to={child.path}
-                            style={{
-                              textDecoration: "none",
-                            }}
+                            style={{ textDecoration: "none" }}
                             onClick={closeOnMobile}
                           >
                             {({ isActive }) => (
-                              <SubNavItem
-                                $active={isActive}
-                              >
-                                <SubNavItemText>
-                                  {child.label}
-                                </SubNavItemText>
+                              <SubNavItem $active={isActive}>
+                                <SubNavItemText>{child.label}</SubNavItemText>
                               </SubNavItem>
                             )}
                           </NavLink>
@@ -314,16 +313,10 @@ function Sidebar({
                       title={isCollapsed ? item.label : ""}
                       {...actionTooltipProps}
                     >
-                      <NavItem
-                        $active={isActive}
-                        $isCollapsed={isCollapsed}
-                      >
+                      <NavItem $active={isActive} $isCollapsed={isCollapsed}>
                         <Icon size={18} />
-
                         {!isCollapsed && (
-                          <NavItemText>
-                            {item.label}
-                          </NavItemText>
+                          <NavItemText>{item.label}</NavItemText>
                         )}
                       </NavItem>
                     </Tooltip>

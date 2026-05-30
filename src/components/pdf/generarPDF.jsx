@@ -115,18 +115,18 @@ const numeroALetras = (num) => {
 // CABECERA EMPRESA
 // =====================================================
 
-const drawEmpresa = (doc) => {
+const drawEmpresa = (doc, venta) => {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
 
-  doc.text("TECHO BOL S.R.L.", 14, 18);
+  doc.text("MEGADIS S.R.L.", 14, 18);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
 
-  doc.text("Av. La Juventud s/n Zona El Abra - Cochabamba - Bolivia", 14, 28);
+  doc.text(venta.location?.address || "Dirección no registrada", 14, 28);
 
-  doc.text("Teléfono: 69415220", 14, 34);
+  doc.text("Teléfono: 69417829", 14, 34);
 
   doc.text("Cochabamba - Bolivia", 14, 40);
 };
@@ -308,7 +308,7 @@ const generarNotaEntrega = (doc, venta, copia) => {
 
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  drawEmpresa(doc);
+  drawEmpresa(doc , venta);
 
   // =====================================================
   // TITULO
@@ -349,7 +349,11 @@ const generarNotaEntrega = (doc, venta, copia) => {
 
   doc.text(venta.customer?.code || "-", 45, y);
 
-  doc.text(venta.employee?.name +" "+ venta.employee?.lastName || "-", 105, y);
+  doc.text(
+    venta.employee?.name + " " + venta.employee?.lastName || "-",
+    105,
+    y,
+  );
 
   doc.text(venta.code || "-", 175, y);
 

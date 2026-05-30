@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Search, Plus, Eye } from "lucide-react";
-
 import DataTable from "../components/table/DataTable";
-import ImportationForm from "../components/forms/ImportationForm";
+import ImportationWizard from "../components/forms/ImportationWizard";
 
 import {
   PageSurface,
@@ -16,23 +15,12 @@ import {
   PrimaryActionButton,
 } from "../components/ui/Page.styles";
 
-const fechaHoy = () => {
-  const fecha = new Date().toLocaleDateString("es-BO", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  return fecha.charAt(0).toUpperCase() + fecha.slice(1);
-};
-
 const mockImports = [
   {
     id: 1,
     supplier: "Proveedor Norte",
     reference: "IMP-2026-001",
-    date: "2026-05-18",
+    date: "2026-05-16",
     quantity: 120,
     totalUsd: 3500,
     products: 8,
@@ -41,7 +29,7 @@ const mockImports = [
     id: 2,
     supplier: "Importadora Central",
     reference: "IMP-2026-002",
-    date: "2026-05-20",
+    date: "2026-05-18",
     quantity: 85,
     totalUsd: 2140.5,
     products: 5,
@@ -50,12 +38,20 @@ const mockImports = [
     id: 3,
     supplier: "Distribuidora Andes",
     reference: "IMP-2026-003",
-    date: "2026-05-22",
+    date: "2026-05-20",
     quantity: 240,
     totalUsd: 7200,
     products: 12,
   },
 ];
+
+const fechaHoy = () =>
+  new Date().toLocaleDateString("es-BO", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
 const formatUsd = (value) =>
   `$ ${Number(value || 0).toLocaleString("es-BO", {
@@ -74,18 +70,19 @@ const formatDate = (value) => {
 
 function Costs() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewState, setViewState] = useState({
-    mode: "list",
-    selectedImportation: null,
-  });
-
+  const [isCreating, setIsCreating] = useState(false);
   const filteredImports = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
-
     if (!value) return mockImports;
-
     return mockImports.filter((item) =>
-      [item.supplier, item.reference, item.date, item.quantity, item.totalUsd]
+      [
+        item.supplier,
+        item.reference,
+        item.date,
+        item.quantity,
+        item.totalUsd,
+        item.products,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(value)
@@ -118,7 +115,6 @@ function Costs() {
         headerName: "Cantidad",
         flex: 0.8,
         minWidth: 120,
-        type: "number",
       },
       {
         field: "totalUsd",
@@ -132,35 +128,10 @@ function Costs() {
         headerName: "Productos",
         flex: 0.9,
         minWidth: 130,
-        valueFormatter: (value) => Number(value || 0),
       },
     ],
     []
   );
-
-  const openCreateForm = () => {
-    setViewState({
-      mode: "create",
-      selectedImportation: null,
-    });
-  };
-
-  const backToList = () => {
-    setViewState({
-      mode: "list",
-      selectedImportation: null,
-    });
-  };
-
-  const handleSubmitImportation = async (formData) => {
-    console.log("Guardar importación:", formData);
-
-    // Después aquí llamas al servicio real:
-    // const created = await createImportation(formData);
-    // if (created) backToList();
-
-    backToList();
-  };
 
   const importActions = useMemo(
     () => [
@@ -176,53 +147,65 @@ function Costs() {
     []
   );
 
-  const isFormView = viewState.mode === "create";
+  const handleOpenCreate = () => {
+    setIsCreating(true);
+  };
+
+  const handleCloseCreate = () => {
+    setIsCreating(false);
+  };
+
+  const handleSaveImportation = (payload) => {
+    console.log("Guardar importación:", payload);
+    setIsCreating(false);
+  };
+
+  if (isCreating) {
+    return (
+      <PageSurface>
+        <PageWrapper>
+          <ImportationWizard
+            onCancel={handleCloseCreate}
+            onSubmit={handleSaveImportation}
+          />
+        </PageWrapper>
+      </PageSurface>
+    );
+  }
 
   return (
     <PageSurface>
       <PageWrapper>
-        {!isFormView ? (
-          <>
-            <HeaderTitle>
-              <Title>Importaciones</Title>
-              <Subtitle>{fechaHoy()}</Subtitle>
-            </HeaderTitle>
+        <HeaderTitle>
+          <Title>Importaciones</Title>
+          <Subtitle>{fechaHoy()}</Subtitle>
+        </HeaderTitle>
 
-            <Toolbar>
-              <SearchBox>
-                <Search size={18} />
-                <SearchInput
-                  type="text"
-                  placeholder="Buscar proveedor, referencia o fecha"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                />
-              </SearchBox>
-
-              <PrimaryActionButton type="button" onClick={openCreateForm}>
-                <Plus size={17} />
-                Añadir importación
-              </PrimaryActionButton>
-            </Toolbar>
-
-            <DataTable
-              rows={filteredImports}
-              columns={importColumns}
-              actions={importActions}
-              pageSize={7}
-              pageSizeOptions={[7, 10, 20]}
-              noRowsLabel="No hay importaciones registradas"
+        <Toolbar>
+          <SearchBox>
+            <Search size={18} />
+            <SearchInput
+              type="text"
+              placeholder="Buscar proveedor, referencia o fecha"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
             />
-          </>
-        ) : (
-          <ImportationForm
-            mode={viewState.mode}
-            initialData={viewState.selectedImportation}
-            loading={false}
-            onBack={backToList}
-            onSubmit={handleSubmitImportation}
-          />
-        )}
+          </SearchBox>
+
+          <PrimaryActionButton type="button" onClick={handleOpenCreate}>
+            <Plus size={17} />
+            Añadir importación
+          </PrimaryActionButton>
+        </Toolbar>
+
+        <DataTable
+          rows={filteredImports}
+          columns={importColumns}
+          actions={importActions}
+          pageSize={7}
+          pageSizeOptions={[7, 10, 20]}
+          noRowsLabel="No hay importaciones registradas"
+        />
       </PageWrapper>
     </PageSurface>
   );

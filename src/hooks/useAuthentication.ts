@@ -36,18 +36,21 @@ const useAuthentication = () => {
       }
       // GUARDAR DATOS
       setFullName(`${response.name} ${response.lastName}`);
-      setLevel(response.userLevel);
       setToken(response.token);
       setRole(response.role);
       setLevel(response.level);
       setLocation(response.location);
       changeLogInState();
-
+      console.log(response)
       // TOAST
       successToast("¡Bienvenido!");
-
+      const level = Number(response.level);
       // REDIRECCIÓN
-      navigate("/Inventory");
+      if (level === 4) {
+        navigate("/products");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       console.error("Error en login:", error);
       errorToast("Ocurrió un error inesperado");

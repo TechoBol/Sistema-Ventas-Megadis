@@ -23,6 +23,7 @@ export const useCart = () => {
       phone: string;
       whatsapp: string;
       originChannel: string;
+      occupation?: string;
       address: string;
       latitude: number | null;
       longitude: number | null;
@@ -47,8 +48,19 @@ export const useCart = () => {
       // 🔥 COTIZACIÓN — flujo separado
       // =====================================================
       if (data.mode === "cotizacion") {
+        const addBusinessDays = (startDate: Date, days: number): Date => {
+          const result = new Date(startDate);
+          let added = 0;
+          while (added < days) {
+            result.setDate(result.getDate() + 1);
+            const dow = result.getDay(); // 0 = domingo, 6 = sábado
+            if (dow !== 0) added++; // saltamos solo domingo
+          }
+          return result;
+        };
+
         const expiresAt = data.validityDays
-          ? new Date(Date.now() + data.validityDays * 24 * 60 * 60 * 1000).toISOString()
+          ? addBusinessDays(new Date(), data.validityDays).toISOString()
           : null;
 
         const payload = {
@@ -61,6 +73,7 @@ export const useCart = () => {
           phone: data.phone,
           whatsapp: data.whatsapp,
           originChannel: data.originChannel,
+          occupation: data.occupation || null,
           address: data.address,
           latitude: data.latitude,
           longitude: data.longitude,
@@ -72,7 +85,7 @@ export const useCart = () => {
 
         const result = await createQuotationService(payload, token);
         const quotation = result.quotation;
-
+        console.log(quotation)
         // PDF cotización
         const pdfBlob = generarDocumentoCotizacion_(quotation);
         const file = new File([pdfBlob], `${quotation.code}.pdf`, {
@@ -94,12 +107,11 @@ export const useCart = () => {
         total,
         locationId: location.id,
         metodoPago: data.paymentMethod,
-        ci: data.nitCi,
       };
 
       const venta = await createSaleService(payload, token);
       const sale = venta.sale;
-
+      console.log(sale)
       // 1. PDF nota de venta
       const pdfBlob = generarDocumentoVenta(sale);
       const file = new File([pdfBlob], `venta_${sale.code}.pdf`, {
@@ -157,7 +169,3 @@ export const useCart = () => {
     error,
   };
 };
-
-function uploadPDFCotizacion(file: File, code: any) {
-  throw new Error("Function not implemented.");
-}
