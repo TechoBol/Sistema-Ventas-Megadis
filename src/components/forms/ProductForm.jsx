@@ -253,6 +253,44 @@ function ProductForm({ onBack, product = null }) {
   }, [form.values.baseUnitCode]);
 
   const [applyInventory, setApplyInventory] = useState(false);
+  const defaultIndex = productUnits.findIndex((u) => u.isDefault);
+  const customRound = (value) => {
+    const decimal = value - Math.floor(value);
+
+    if (decimal > 0.5) {
+      return Math.ceil(value);
+    }
+
+    return Math.floor(value);
+  };
+  useEffect(() => {
+    if (!applyInventory) return;
+
+    const cost = Number(form.values.cost);
+
+    if (!cost || cost <= 0) return;
+
+    const IVA_RATE = 0.1494;
+    const MARGIN = 1.5;
+
+    const basePrice = cost * (1 + IVA_RATE);
+    const rawSalePrice = basePrice * MARGIN;
+
+    const salePrice = customRound(rawSalePrice);
+
+    setProductUnits((prev) =>
+      prev.map((item) => {
+        if (item.isDefault) {
+          return {
+            ...item,
+            salePrice,
+          };
+        }
+
+        return item;
+      }),
+    );
+  }, [form.values.cost, applyInventory]);
   return (
     <FormWrapper>
       <HeaderLeft>
@@ -414,6 +452,7 @@ function ProductForm({ onBack, product = null }) {
                         type="number"
                         placeholder="0"
                         value={item.salePrice}
+                        disabled={item.isDefault}
                         onChange={(e) =>
                           updateFormat(index, "salePrice", e.target.value)
                         }

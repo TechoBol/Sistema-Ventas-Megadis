@@ -119,14 +119,14 @@ const drawEmpresa = (doc) => {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
 
-  doc.text("TECHO BOL S.R.L.", 14, 18);
+  doc.text("MEGADIS S.R.L.", 14, 18);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
 
-  doc.text("Av. La Juventud s/n Zona El Abra - Cochabamba - Bolivia", 14, 28);
+  doc.text("Av. 9 de Abril Nro. 1806 Zona Alalay Norte - Cochabamba - Bolivia", 14, 28);
 
-  doc.text("Teléfono: 69415220", 14, 34);
+  doc.text("Teléfono: 69417829", 14, 34);
 
   doc.text("Cochabamba - Bolivia", 14, 40);
 };

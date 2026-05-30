@@ -74,7 +74,7 @@ export const useCart = () => {
 
         const result = await createQuotationService(payload, token);
         const quotation = result.quotation;
-
+        console.log(quotation)
         // PDF cotización
         const pdfBlob = generarDocumentoCotizacion_(quotation);
         const file = new File([pdfBlob], `${quotation.code}.pdf`, {
@@ -100,7 +100,7 @@ export const useCart = () => {
 
       const venta = await createSaleService(payload, token);
       const sale = venta.sale;
-
+      console.log(sale)
       // 1. PDF nota de venta
       const pdfBlob = generarDocumentoVenta(sale);
       const file = new File([pdfBlob], `venta_${sale.code}.pdf`, {
@@ -158,7 +158,3 @@ export const useCart = () => {
     error,
   };
 };
-
-function uploadPDFCotizacion(file: File, code: any) {
-  throw new Error("Function not implemented.");
-}

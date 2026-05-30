@@ -5,14 +5,19 @@ import autoTable from "jspdf-autotable";
 // CABECERA EMPRESA
 // =====================================================
 
-const drawEmpresa = (doc) => {
+const drawEmpresa = (doc, cotizacion) => {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
-  doc.text("TECHO BOL S.R.L.", 14, 18);
+
+  doc.text("MEGADIS S.R.L.", 14, 18);
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.text("Av. La Juventud s/n Zona El Abra - Cochabamba - Bolivia", 14, 28);
-  doc.text("Teléfono: 69415220", 14, 34);
+
+  // 🔥 AQUÍ la dirección de la sucursal
+  doc.text(cotizacion.location?.address || "Dirección no registrada", 14, 28);
+
+  doc.text("Teléfono: 69417829", 14, 34);
   doc.text("Cochabamba - Bolivia", 14, 40);
 };
 
@@ -33,7 +38,17 @@ const drawTablaProductos = (doc, cotizacion, startY) => {
 
   autoTable(doc, {
     startY,
-    head: [["CÓDIGO", "CANT.", "UNIDAD", "DESCRIPCIÓN", "P. UNIT.", "DESC.", "SUBTOTAL"]],
+    head: [
+      [
+        "CÓDIGO",
+        "CANT.",
+        "UNIDAD",
+        "DESCRIPCIÓN",
+        "P. UNIT.",
+        "DESC.",
+        "SUBTOTAL",
+      ],
+    ],
     body,
     theme: "plain",
     styles: { fontSize: 8, cellPadding: 3, textColor: [0, 0, 0] },
@@ -58,10 +73,20 @@ const drawTablaProductos = (doc, cotizacion, startY) => {
       doc.setLineWidth(0.2);
       if (row.section === "head") {
         doc.line(cell.x, cell.y, cell.x + cell.width, cell.y);
-        doc.line(cell.x, cell.y + cell.height, cell.x + cell.width, cell.y + cell.height);
+        doc.line(
+          cell.x,
+          cell.y + cell.height,
+          cell.x + cell.width,
+          cell.y + cell.height,
+        );
       }
       if (row.section === "body") {
-        doc.line(cell.x, cell.y + cell.height, cell.x + cell.width, cell.y + cell.height);
+        doc.line(
+          cell.x,
+          cell.y + cell.height,
+          cell.x + cell.width,
+          cell.y + cell.height,
+        );
       }
     },
   });
@@ -82,22 +107,47 @@ const drawTotales = (doc, cotizacion, finalY) => {
 
   doc.setLineWidth(0.2);
   doc.rect(boxX, boxY, labelWidth + valueWidth, rowHeight * 3);
-  doc.line(boxX, boxY + rowHeight, boxX + labelWidth + valueWidth, boxY + rowHeight);
-  doc.line(boxX, boxY + rowHeight * 2, boxX + labelWidth + valueWidth, boxY + rowHeight * 2);
+  doc.line(
+    boxX,
+    boxY + rowHeight,
+    boxX + labelWidth + valueWidth,
+    boxY + rowHeight,
+  );
+  doc.line(
+    boxX,
+    boxY + rowHeight * 2,
+    boxX + labelWidth + valueWidth,
+    boxY + rowHeight * 2,
+  );
   doc.line(boxX + labelWidth, boxY, boxX + labelWidth, boxY + rowHeight * 3);
 
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
 
   doc.text("SUBTOTAL Bs", boxX + 5, boxY + 5.5);
-  doc.text(Number(cotizacion.subtotal).toFixed(2), boxX + labelWidth + valueWidth - 4, boxY + 5.5, { align: "right" });
+  doc.text(
+    Number(cotizacion.subtotal).toFixed(2),
+    boxX + labelWidth + valueWidth - 4,
+    boxY + 5.5,
+    { align: "right" },
+  );
 
   doc.text("DESCUENTO Bs", boxX + 4, boxY + 13.5);
-  doc.text(Number(cotizacion.discount).toFixed(2), boxX + labelWidth + valueWidth - 4, boxY + 13.5, { align: "right" });
+  doc.text(
+    Number(cotizacion.discount).toFixed(2),
+    boxX + labelWidth + valueWidth - 4,
+    boxY + 13.5,
+    { align: "right" },
+  );
 
   doc.setFont("helvetica", "bold");
   doc.text("TOTAL Bs", boxX + 8, boxY + 21.5);
-  doc.text(Number(cotizacion.total).toFixed(2), boxX + labelWidth + valueWidth - 4, boxY + 21.5, { align: "right" });
+  doc.text(
+    Number(cotizacion.total).toFixed(2),
+    boxX + labelWidth + valueWidth - 4,
+    boxY + 21.5,
+    { align: "right" },
+  );
 
   return boxY;
 };
@@ -109,7 +159,7 @@ const drawTotales = (doc, cotizacion, finalY) => {
 const generarDocumentoCotizacion = (doc, cotizacion) => {
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  drawEmpresa(doc);
+  drawEmpresa(doc, cotizacion);
 
   // ── Título ──
   doc.setFont("helvetica", "bold");
@@ -130,8 +180,11 @@ const generarDocumentoCotizacion = (doc, cotizacion) => {
   doc.text("Fecha:", 150, y);
   doc.setFont("helvetica", "normal");
   doc.text(
-    `${cotizacion.employee?.name || ""} ${cotizacion.employee?.lastName || ""}`.trim() || "-",
-    35, y
+    `${cotizacion.employee?.name || ""} ${
+      cotizacion.employee?.lastName || ""
+    }`.trim() || "-",
+    35,
+    y,
   );
   doc.text(cotizacion.location?.name || "-", 105, y);
   doc.text(new Date(cotizacion.createdAt).toLocaleDateString("es-BO"), 163, y);
@@ -156,7 +209,8 @@ const generarDocumentoCotizacion = (doc, cotizacion) => {
     cotizacion.expiresAt
       ? new Date(cotizacion.expiresAt).toLocaleDateString("es-BO")
       : "Sin vencimiento",
-    40, y
+    40,
+    y,
   );
 
   // Fila 4 — notas
@@ -179,7 +233,8 @@ const generarDocumentoCotizacion = (doc, cotizacion) => {
   doc.setTextColor(120, 120, 120);
   doc.text(
     "* Esta cotización es válida hasta la fecha indicada. Los precios están sujetos a disponibilidad de stock.",
-    14, boxY + 38
+    14,
+    boxY + 38,
   );
   doc.setTextColor(0, 0, 0);
 

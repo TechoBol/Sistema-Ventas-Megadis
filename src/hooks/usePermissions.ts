@@ -3,37 +3,46 @@ import { useLoginStore } from "../components/store/loginStore";
 export const usePermissions = () => {
   const { level } = useLoginStore();
 
-  const lvl = Number(level); // por si acaso
+  const lvl = Number(level);
+
+  const isAdmin = lvl === 1;
+  const isSeller = lvl === 4;
 
   return {
     level: lvl,
 
-    // 🔥 SUPER ADMIN
-    isAdmin: [1 , 4].includes(lvl),
-
-    // 📊 VISIBILIDAD (todos ven todo)
+    isAdmin,
+    isSeller,
+    canViewDashboard: isAdmin,
+    // 📊 VISIBILIDAD
     canView: true,
 
-    // 🛠 GESTIÓN
-    canManageBranches:  [1 , 4].includes(lvl),
-    canManageInventaryFisico:  [1 , 4].includes(lvl),
-    canManageEmployees: [1, 2 , 4].includes(lvl),
-    canManageRoles: [1 , 4].includes(lvl),
-    canManageLines: [1, 2 , 4].includes(lvl),
-    canManageTransfers: [1, 2 , 4].includes(lvl),
-    canApproveTransfers: [1, 2].includes(lvl),
-    canCreateTransfers: [1, 2].includes(lvl),
-    canManageLinesAdmin: [1, 2].includes(lvl),
-    canManageDateSale : [1, 2].includes(lvl),
-    // 💰 VENTAS
-    canManageSales: [1, 2, 3 , 4].includes(lvl),
-    canSell: [1, 2, 3].includes(lvl),
+    // 🛒 VENTAS / NEGOCIO (lo importante para tu sistema)
+    canManageSales: isAdmin || isSeller,
+    canSell: isAdmin || isSeller,
 
     // 📦 PRODUCTOS
-    canCreateProduct: [1, 2].includes(lvl),
-    canEditProduct: [1, 2].includes(lvl),
+    canViewProducts: true,
+    canCreateProduct: isAdmin,
+    canEditProduct: isAdmin,
 
-    // 👀 SOLO LECTURA
-    isReadOnly: lvl === 4,
+    // 👥 CLIENTES
+    canViewCustomers: true,
+    canManageCustomers: isAdmin,
+
+    // 🧾 DOCUMENTOS
+    canViewReceipts: true,
+    canViewQuotations: true,
+
+    // 🛠 ADMINISTRACIÓN
+    canManageUsers: isAdmin,
+    canManageRoles: isAdmin,
+    canManageBranches: isAdmin,
+    canManageInventory: isAdmin,
+    canManageTransfers: isAdmin,
+    canManageCosts: isAdmin,
+
+    // 👀 SOLO LECTURA PARA VENDEDOR
+    isReadOnly: isSeller,
   };
 };

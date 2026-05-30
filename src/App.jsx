@@ -22,46 +22,180 @@ import Roles from "./pages/Roles";
 import InventoryFisico from "./pages/InventoryFisico";
 import MatrizVenta from "./pages/MatrizVenta";
 import Brands from "./pages/Brands";
-import Quotations from "./pages/Quotations"; 
+import Quotations from "./pages/Quotations";
+
+import { ProtectedRoute } from "./routes/ProtectedRoute.jsx";
 
 const queryClient = new QueryClient();
 
 function App() {
-  const { isLoggedIn } = useLoginStore();
+  const { isLoggedIn, level } = useLoginStore();
 
   return (
     <QueryClientProvider client={queryClient}>
       <GlobalStyle />
 
       <Routes>
+        {/* LOGIN */}
         <Route
           path="/login"
           element={isLoggedIn ? <Navigate to="/dashboard" /> : <Login />}
         />
 
+        {/* APP PROTECTED */}
         {isLoggedIn && (
           <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/receipts" element={<Receipts />} />
-            <Route path="/profits" element={<MarginProfit />} />
-            <Route path="/customer" element={<Customer />} />
-            <Route path="/customer/:id" element={<DetailCustomer />} />
-            <Route path="/costs" element={<Costs />} />
-            <Route path="/locations" element={<Locations />} />
-            <Route path="/transfers" element={<Transfer />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/roles" element={<Roles />} />
-            <Route path="/kardex" element={<InventoryFisico />} />
-            <Route path="/sales-matrix" element={<MatrizVenta />} />
-            <Route path="/brands" element={<Brands />} />
-            <Route path="/quotations" element={<Quotations />} />
+            {/* 👨‍💼 ADMIN ONLY */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/roles"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <Roles />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/profits"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <MarginProfit />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/locations"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <Locations />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/transfers"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <Transfer />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/costs"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <Costs />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/kardex"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <InventoryFisico />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/sales-matrix"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <MatrizVenta />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/brands"
+              element={
+                <ProtectedRoute allowedLevels={[1]}>
+                  <Brands />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 👨‍💼👨‍🔧 ADMIN + VENDEDOR */}
+            <Route
+              path="/products"
+              element={
+                <ProtectedRoute allowedLevels={[1, 4]}>
+                  <Products />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute allowedLevels={[1, 4]}>
+                  <Cart />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/receipts"
+              element={
+                <ProtectedRoute allowedLevels={[1, 4]}>
+                  <Receipts />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/quotations"
+              element={
+                <ProtectedRoute allowedLevels={[1, 4]}>
+                  <Quotations />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/customer"
+              element={
+                <ProtectedRoute allowedLevels={[1, 4]}>
+                  <Customer />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/customer/:id"
+              element={
+                <ProtectedRoute allowedLevels={[1, 4]}>
+                  <DetailCustomer />
+                </ProtectedRoute>
+              }
+            />
           </Route>
         )}
 
+        {/* FALLBACK */}
         {!isLoggedIn && <Route path="*" element={<Navigate to="/login" />} />}
-        {isLoggedIn && <Route path="*" element={<Navigate to="/dashboard" />} />}
+        {isLoggedIn && <Route path="*" element={<Navigate to="/products" />} />}
       </Routes>
     </QueryClientProvider>
   );
