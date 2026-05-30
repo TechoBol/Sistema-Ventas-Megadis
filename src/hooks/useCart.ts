@@ -23,6 +23,7 @@ export const useCart = () => {
       phone: string;
       whatsapp: string;
       originChannel: string;
+      occupation?: string;
       address: string;
       latitude: number | null;
       longitude: number | null;
@@ -61,6 +62,7 @@ export const useCart = () => {
           phone: data.phone,
           whatsapp: data.whatsapp,
           originChannel: data.originChannel,
+          occupation: data.occupation || null,
           address: data.address,
           latitude: data.latitude,
           longitude: data.longitude,
@@ -94,7 +96,6 @@ export const useCart = () => {
         total,
         locationId: location.id,
         metodoPago: data.paymentMethod,
-        ci: data.nitCi,
       };
 
       const venta = await createSaleService(payload, token);

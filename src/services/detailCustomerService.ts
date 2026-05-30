@@ -1,5 +1,6 @@
 import { cerrarSesion } from "./CerrarSesion";
 import type { CustomerDetail } from "../components/models/Client";
+import { CustomerQuote } from "../hooks/useDetailCustomer";
 
 const API = import.meta.env.VITE_API_DOMAIN;
 
@@ -53,4 +54,8 @@ export const detailCustomerService = {
     apiFetch(`/customer/${id}/notes/${noteId}`, token, {
       method: "DELETE",
     }),
+
+  getCotizaciones: (id: string, token: string): Promise<CustomerQuote[]> => {
+    return apiFetch<CustomerQuote[]>(`/quotations/customer/${id}`, token);
+  },
 };

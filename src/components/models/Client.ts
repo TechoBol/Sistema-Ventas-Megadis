@@ -22,6 +22,7 @@ export interface CustomerNote {
 
 export interface CustomerSale {
   id: number;
+  code: string; 
   date: string;
   total: number;
   typeSale: string | null;
