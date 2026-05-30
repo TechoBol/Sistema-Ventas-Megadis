@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import GeneralDataStep from "./importationSteps/GeneralDataStep";
+import ProductsStep from "./importationSteps/ProductsStep";
+import ExpensesStep from "./importationSteps/ExpensesStep";
 import {
   ArrowLeft,
   Check,
@@ -12,7 +15,6 @@ import {
   WizardHeaderLeft,
   WizardBackButton,
   WizardTitle,
-  WizardSubtitle,
   StepperWrapper,
   StepItem,
   StepCircle,
@@ -39,6 +41,35 @@ const STEPS = [
 
 function ImportationWizard({ onCancel, onSubmit }) {
   const [currentStep, setCurrentStep] = useState(0);
+  // estado de los pasos
+  const [generalData, setGeneralData] = useState({
+    supplier: "",
+    reference: "",
+    date: "",
+    officialExchangeRate: "",
+    bankExchangeRate: "",
+  });
+  const [products, setProducts] = useState([
+    {
+      code: "",
+      productName: "",
+      quantity: "",
+      priceUsd: "",
+    },
+  ]);
+  const [expenses, setExpenses] = useState({
+    freights: [{ name: "", amount: "" }],
+    insurances: [{ name: "", amount: "" }],
+    portCosts: [{ name: "", amount: "" }],
+    otherCosts: [{ name: "", amount: "" }],
+  });
+  // funciones del contenido los pasos
+  const handleGeneralDataChange = (field, value) => {
+    setGeneralData((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
 
   const handleNextStep = () => {
     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
@@ -54,34 +85,40 @@ function ImportationWizard({ onCancel, onSubmit }) {
 
   const handleSubmit = () => {
     const payload = {
-      message: "Aquí luego irá toda la información de la importación",
+      generalData,
+      products,
+      expenses,
+      message: "Aquí luego irá el resumen y cálculo final",
     };
-
     onSubmit?.(payload);
   };
 
   const renderStepContent = () => {
+    // paso -> datos generales
     if (currentStep === 0) {
       return (
-        <StepPanel>
-          
-        </StepPanel>
+        <GeneralDataStep
+          formData={generalData}
+          onChange={handleGeneralDataChange}
+        />
       );
     }
-
+    // paso -> productos
     if (currentStep === 1) {
       return (
-        <StepPanel>
-          
-        </StepPanel>
+        <ProductsStep
+          products={products}
+          onChangeProducts={setProducts}
+        />
       );
     }
-
+    // paso -> gastos importacion
     if (currentStep === 2) {
       return (
-        <StepPanel>
-          
-        </StepPanel>
+        <ExpensesStep
+          expenses={expenses}
+          onChangeExpenses={setExpenses}
+        />
       );
     }
 
@@ -99,12 +136,8 @@ function ImportationWizard({ onCancel, onSubmit }) {
           <WizardBackButton type="button" onClick={onCancel}>
             <ArrowLeft size={20} />
           </WizardBackButton>
-
           <div>
             <WizardTitle>Nueva importación</WizardTitle>
-            <WizardSubtitle>
-              Configura paso a paso la importación y sus gastos
-            </WizardSubtitle>
           </div>
         </WizardHeaderLeft>
       </WizardHeader>
@@ -144,7 +177,6 @@ function ImportationWizard({ onCancel, onSubmit }) {
         <StepSecondaryButton type="button" onClick={onCancel}>
           Cancelar
         </StepSecondaryButton>
-
         <StepActionsRight>
           {currentStep > 0 && (
             <StepSecondaryButton type="button" onClick={handlePrevStep}>
@@ -152,7 +184,6 @@ function ImportationWizard({ onCancel, onSubmit }) {
               Anterior
             </StepSecondaryButton>
           )}
-
           {currentStep < STEPS.length - 1 ? (
             <StepPrimaryButton type="button" onClick={handleNextStep}>
               Siguiente

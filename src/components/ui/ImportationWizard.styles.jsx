@@ -3,13 +3,10 @@ import { theme } from "./Theme";
 
 export const WizardCard = styled.section`
   width: 100%;
-
   background: ${theme.colors.background};
   border-radius: 28px;
-
   padding: 34px 38px;
   box-sizing: border-box;
-
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
 
   @media (max-width: 700px) {
@@ -23,8 +20,7 @@ export const WizardHeader = styled.header`
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-
-  margin-bottom: 36px;
+  margin-bottom: 20px;
 `;
 
 export const WizardHeaderLeft = styled.div`
@@ -34,19 +30,15 @@ export const WizardHeaderLeft = styled.div`
 `;
 
 export const WizardBackButton = styled.button`
-  width: 52px;
-  height: 52px;
-
+  width: 38px;
+  height: 38px;
   border: none;
-  border-radius: 16px;
-
-  background: #f8fafc;
+  border-radius: 12px;
+  background: ${theme.colors.surface};
   color: ${theme.colors.text};
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   cursor: pointer;
 
   transition:
@@ -75,27 +67,14 @@ export const WizardTitle = styled.h2`
   }
 `;
 
-export const WizardSubtitle = styled.p`
-  margin: 6px 0 0;
-  font-size: 14px;
-  font-weight: 500;
-
-  color: ${theme.colors.textSecondary};
-`;
-
 export const StepperWrapper = styled.div`
   width: 100%;
-
   display: flex;
   align-items: flex-start;
-
-  margin-bottom: 38px;
-
+  margin-bottom: 20px;
   overflow-x: auto;
   overflow-y: hidden;
-
   padding: 4px 0 10px;
-
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
 
@@ -130,26 +109,19 @@ export const StepItem = styled.div`
 export const StepCircle = styled.button`
   width: 44px;
   height: 44px;
-
   border-radius: 50%;
-
   border: 2px solid
     ${({ $active, $completed }) =>
       $active || $completed ? theme.colors.primary : "#d9e1ea"};
-
   background: ${({ $active, $completed }) =>
     $active || $completed ? theme.colors.primary : "#edf2f7"};
-
   color: ${({ $active, $completed }) =>
     $active || $completed ? "#ffffff" : "#8c99ad"};
-
   font-size: 15px;
   font-weight: 500;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   cursor: pointer;
 
   box-shadow: ${({ $active }) =>
@@ -174,10 +146,8 @@ export const StepCircle = styled.button`
 export const StepLabel = styled.span`
   font-size: 13px;
   font-weight: ${({ $active }) => ($active ? 700 : 600)};
-
   color: ${({ $active }) =>
     $active ? theme.colors.text : theme.colors.textSecondary};
-
   text-align: center;
   white-space: nowrap;
 `;
@@ -186,12 +156,9 @@ export const StepConnector = styled.div`
   flex: 1;
   min-width: 90px;
   height: 2px;
-
   margin-top: 21px;
-
   background: ${({ $completed }) =>
     $completed ? theme.colors.primary : "#e5eaf1"};
-
   flex-shrink: 0;
 `;
 
@@ -201,13 +168,10 @@ export const StepContent = styled.div`
 
 export const StepPanel = styled.section`
   width: 100%;
-
   background: #fcfcfd;
-
   border: 1px solid #eef0f3;
   border-radius: 22px;
-
-  padding: 28px 30px;
+  padding: 24px 26px;
   box-sizing: border-box;
 
   @media (max-width: 700px) {
@@ -215,22 +179,54 @@ export const StepPanel = styled.section`
   }
 `;
 
-export const StepPanelTitle = styled.h3`
-  margin: 0 0 12px;
+// estilos de cabecera, titulo, boton
+export const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
 
-  font-size: 24px;
-  font-weight: 800;
-
-  color: ${theme.colors.text};
+  @media (max-width: 700px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
+export const StepPanelTitle = styled.h3`
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: ${theme.colors.textPrimary};
+`;
+
+/* *************************************** */
 export const StepPanelText = styled.p`
   margin: 0 0 24px;
-
   font-size: 15px;
   line-height: 1.6;
-
   color: ${theme.colors.textSecondary};
+`;
+
+export const AddButton = styled.button`
+  height: 38px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(242, 12, 31, 0.08);
+  color: ${theme.colors.primary};
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(242, 12, 31, 0.12);
+  }
 `;
 
 export const StepPreviewGrid = styled.div`
@@ -249,15 +245,11 @@ export const StepPreviewGrid = styled.div`
 
 export const StepPreviewCard = styled.div`
   min-height: 92px;
-
   background: ${theme.colors.background};
-
   border: 1px solid #eef0f3;
   border-radius: 18px;
-
   padding: 18px;
   box-sizing: border-box;
-
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -277,12 +269,10 @@ export const StepPreviewCard = styled.div`
 
 export const StepActions = styled.div`
   margin-top: 24px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-
   flex-wrap: wrap;
 
   @media (max-width: 700px) {
@@ -306,21 +296,16 @@ export const StepActionsRight = styled.div`
 export const StepSecondaryButton = styled.button`
   height: 46px;
   padding: 0 18px;
-
   border: none;
   border-radius: 14px;
-
   background: #f4f6f9;
   color: ${theme.colors.text};
-
   font-size: 14px;
   font-weight: 700;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-
   cursor: pointer;
 
   transition:
@@ -340,25 +325,18 @@ export const StepSecondaryButton = styled.button`
 export const StepPrimaryButton = styled.button`
   height: 46px;
   padding: 0 20px;
-
   border: none;
   border-radius: 14px;
-
   background: ${theme.colors.primary};
   color: #ffffff;
-
   font-size: 14px;
   font-weight: 700;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-
   cursor: pointer;
-
   box-shadow: 0 10px 22px rgba(242, 12, 31, 0.18);
-
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease;
@@ -370,5 +348,321 @@ export const StepPrimaryButton = styled.button`
 
   &:active {
     transform: scale(0.98);
+  }
+`;
+
+/* ESTILOS DEL CONTENIDO DE LOS PASOS */
+export const WizardFormGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px 24px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const WizardField = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+`;
+
+export const WizardLabel = styled.label`
+  font-size: 15px;
+  font-weight: 700;
+  color: #334155;
+`;
+
+export const WizardInput = styled.input`
+  width: 100%;
+  height: 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0 15px;
+  box-sizing: border-box;
+  background: ${theme.colors.background};
+  color: ${theme.colors.text};
+  font-size: 14px;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &::placeholder {
+    color: ${theme.colors.textMuted || "#94a3b8"};
+  }
+
+  &:focus {
+    border-color: #cbd5e1;
+    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.04);
+  }
+`;
+
+export const WizardHelperText = styled.span`
+  font-size: 12px;
+  line-height: 1.45;
+  color: ${theme.colors.textSecondary};
+`;
+
+/* tabla */
+export const TableWrapper = styled.div`
+  width: 100%;
+  border: 1px solid #eef0f3;
+  border-radius: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: ${theme.colors.background};
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.38);
+    border-radius: 999px;
+  }
+`;
+
+export const TableHeader = styled.div`
+  min-width: 1180px;
+  display: grid;
+  grid-template-columns: 1.1fr 1.5fr 0.9fr 1fr 1fr 0.9fr 44px;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #eef0f3;
+  font-size: 13px;
+  font-weight: 800;
+  color: #475569;
+`;
+
+export const TableRow = styled.div`
+  min-width: 1180px;
+  display: grid;
+  grid-template-columns: 1.1fr 1.5fr 0.9fr 1fr 1fr 0.9fr 44px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: ${theme.colors.textSecondary};
+  }
+`;
+
+export const IconButton = styled.button`
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    color: ${({ disabled }) => (disabled ? "#94a3b8" : theme.colors.primary)};
+    background: ${({ disabled }) =>
+      disabled ? "transparent" : "rgba(242, 12, 31, 0.08)"};
+    transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
+  }
+
+  &:active {
+    transform: ${({ disabled }) => (disabled ? "none" : "scale(0.96)")};
+  }
+`;
+
+export const TotalsBar = styled.div`
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  span {
+    font-size: 15px;
+    color: ${theme.colors.textSecondary};
+  }
+
+  strong {
+    font-size: 16px;
+    font-weight: 700;
+    color: ${theme.colors.text};
+  }
+
+  @media (max-width: 700px) {
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+`;
+
+// paso gastos importacion
+export const ExpensesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+
+  @media (max-width: 1050px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const ExpenseCard = styled.section`
+  width: 100%;
+  background: ${theme.colors.background};
+  border: 1px solid #eef0f3;
+  border-radius: 18px;
+  padding: 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+`;
+
+export const ExpenseCardHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+
+  p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: ${theme.colors.textSecondary};
+  }
+
+  @media (max-width: 620px) {
+    flex-direction: column;
+  }
+`;
+
+export const ExpenseTitle = styled.h4`
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: ${theme.colors.text};
+`;
+
+export const ExpenseRows = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+export const ExpenseRow = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(120px, 0.8fr) 40px;
+  gap: 10px;
+  align-items: center;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const ExpenseTotal = styled.div`
+  padding-top: 12px;
+  border-top: 1px solid #eef0f3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  span {
+    font-size: 13px;
+    font-weight: 700;
+    color: ${theme.colors.textSecondary};
+  }
+
+  strong {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${theme.colors.text};
+  }
+`;
+
+export const ExpensesSummary = styled.div`
+  margin-top: 22px;
+  background: #f8fafc;
+  border: 1px solid #eef0f3;
+  border-radius: 18px;
+  padding: 18px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    padding: 14px;
+    border-radius: 14px;
+    background: ${theme.colors.background};
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: 700;
+    color: ${theme.colors.textSecondary};
+  }
+
+  strong {
+    font-size: 15px;
+    font-weight: 900;
+    color: ${theme.colors.text};
+  }
+
+  .highlight {
+    background: rgba(242, 12, 31, 0.08);
+
+    span,
+    strong {
+      color: ${theme.colors.primary};
+    }
+  }
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
   }
 `;
