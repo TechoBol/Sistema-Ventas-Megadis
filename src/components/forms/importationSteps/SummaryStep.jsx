@@ -14,26 +14,26 @@ import {
   SummaryTableFooter,
 } from "../../ui/ImportationWizard.styles";
 
-const roundToTwoDecimals = (value) => {
-  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+const roundToFourDecimals = (value) => {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 10000) / 10000;
 };
 
 const formatUsd = (value) =>
-  `${Number(value || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} USD`;
+  `$ ${Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  })}`;
 
 const formatBs = (value) =>
   `Bs ${Number(value || 0).toLocaleString("es-BO", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
   })}`;
 
 const formatQuantity = (value) =>
   Number(value || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
   });
 
 const formatFactor = (value) =>
@@ -45,17 +45,19 @@ const formatFactor = (value) =>
 function SummaryStep({ generalData, products, expenses }) {
   const officialExchangeRate = Number(generalData.officialExchangeRate || 0);
 
+  // Subtotal USD = Cantidad base * Precio USD
   const getProductSubtotal = (product) => {
-    const quantity = Number(product.quantity || 0);
+    const baseQuantity = Number(product.baseQuantity || 0);
     const priceUsd = Number(product.priceUsd || 0);
 
-    return roundToTwoDecimals(quantity * priceUsd);
+    return roundToFourDecimals(baseQuantity * priceUsd);
   };
 
+  // Total por grupo de gastos = suma de montos del grupo
   const getSectionTotal = (items = []) => {
     const total = items.reduce((acc, item) => acc + Number(item.amount || 0), 0);
 
-    return roundToTwoDecimals(total);
+    return roundToFourDecimals(total);
   };
 
   const totals = useMemo(() => {
@@ -64,8 +66,8 @@ function SummaryStep({ generalData, products, expenses }) {
       0
     );
 
-    const totalQuantity = products.reduce(
-      (acc, product) => acc + Number(product.quantity || 0),
+    const totalBaseQuantity = products.reduce(
+      (acc, product) => acc + Number(product.baseQuantity || 0),
       0
     );
 
@@ -74,21 +76,21 @@ function SummaryStep({ generalData, products, expenses }) {
     const totalPortCosts = getSectionTotal(expenses.portCosts);
     const totalOtherCosts = getSectionTotal(expenses.otherCosts);
 
-    const totalExpensesUsd = roundToTwoDecimals(
+    const totalExpensesUsd = roundToFourDecimals(
       totalFreights + totalInsurances + totalPortCosts + totalOtherCosts
     );
 
-    const totalEstimatedUsd = roundToTwoDecimals(
+    const totalEstimatedUsd = roundToFourDecimals(
       totalProductsUsd + totalExpensesUsd
     );
 
-    const totalEstimatedBs = roundToTwoDecimals(
+    const totalEstimatedBs = roundToFourDecimals(
       totalEstimatedUsd * officialExchangeRate
     );
 
     return {
-      totalProductsUsd: roundToTwoDecimals(totalProductsUsd),
-      totalQuantity,
+      totalProductsUsd: roundToFourDecimals(totalProductsUsd),
+      totalBaseQuantity,
       totalFreights,
       totalInsurances,
       totalPortCosts,
@@ -101,38 +103,55 @@ function SummaryStep({ generalData, products, expenses }) {
 
   const productSummary = useMemo(() => {
     return products.map((product, index) => {
-      const quantity = Number(product.quantity || 0);
+      const baseQuantity = Number(product.baseQuantity || 0);
+      const referenceQuantity = Number(product.referenceQuantity || 0);
       const subtotalUsd = getProductSubtotal(product);
 
+      // Factor = Subtotal USD del producto / Total USD general
       const factor =
         totals.totalProductsUsd > 0 ? subtotalUsd / totals.totalProductsUsd : 0;
 
       const gaPercent = Number(product.gaPercent || 0);
       const gaRate = gaPercent / 100;
 
-      const assignedExpenseUsd = roundToTwoDecimals(
+      // Gasto asignado = Total gastos importación * Factor
+      const assignedExpenseUsd = roundToFourDecimals(
         totals.totalExpensesUsd * factor
       );
 
-      const cifUsd = roundToTwoDecimals(subtotalUsd + assignedExpenseUsd);
-      const gaUsd = roundToTwoDecimals(cifUsd * gaRate);
-      const estimatedTotalUsd = roundToTwoDecimals(cifUsd + gaUsd);
+      // CIF estimado = Subtotal USD + gasto asignado
+      const cifUsd = roundToFourDecimals(subtotalUsd + assignedExpenseUsd);
+
+      // GA USD = CIF estimado * GA %
+      const gaUsd = roundToFourDecimals(cifUsd * gaRate);
+
+      // Costo total estimado = CIF estimado + GA
+      const estimatedTotalUsd = roundToFourDecimals(cifUsd + gaUsd);
+
+      // Para costo unitario por ahora usamos cantidad referencial si existe;
+      // si no existe, usamos cantidad base.
+      const quantityForUnitCost = referenceQuantity || baseQuantity;
 
       const estimatedUnitUsd =
-        quantity > 0 ? roundToTwoDecimals(estimatedTotalUsd / quantity) : 0;
+        quantityForUnitCost > 0
+          ? roundToFourDecimals(estimatedTotalUsd / quantityForUnitCost)
+          : 0;
 
-      const estimatedTotalBs = roundToTwoDecimals(
+      const estimatedTotalBs = roundToFourDecimals(
         estimatedTotalUsd * officialExchangeRate
       );
 
       const estimatedUnitBs =
-        quantity > 0 ? roundToTwoDecimals(estimatedTotalBs / quantity) : 0;
+        quantityForUnitCost > 0
+          ? roundToFourDecimals(estimatedTotalBs / quantityForUnitCost)
+          : 0;
 
       return {
         id: index + 1,
-        code: product.code || "-",
         productName: product.productName || "Sin nombre",
-        quantity,
+        baseQuantity,
+        referenceQuantity,
+        quantityForUnitCost,
         subtotalUsd,
         factor,
         gaPercent,
@@ -170,8 +189,8 @@ function SummaryStep({ generalData, products, expenses }) {
         </SummaryCard>
 
         <SummaryCard>
-          <span>Cantidad total</span>
-          <strong>{formatQuantity(totals.totalQuantity)}</strong>
+          <span>Cantidad base total</span>
+          <strong>{formatQuantity(totals.totalBaseQuantity)}</strong>
         </SummaryCard>
 
         <SummaryCard>
@@ -202,9 +221,9 @@ function SummaryStep({ generalData, products, expenses }) {
       <SummaryTableWrapper>
         <SummaryTable>
           <SummaryTableHead>
-            <span>Código</span>
             <span>Producto</span>
-            <span>Cantidad</span>
+            <span>Cant. ref.</span>
+            <span>Cant. base</span>
             <span>Subtotal USD</span>
             <span>Factor</span>
             <span>Gasto asignado</span>
@@ -219,34 +238,48 @@ function SummaryStep({ generalData, products, expenses }) {
 
           {productSummary.map((item) => (
             <SummaryTableRow key={item.id}>
-              <SummaryTableCell>{item.code}</SummaryTableCell>
               <SummaryTableCell>{item.productName}</SummaryTableCell>
-              <SummaryTableCell>{formatQuantity(item.quantity)}</SummaryTableCell>
+
+              <SummaryTableCell>
+                {item.referenceQuantity > 0
+                  ? formatQuantity(item.referenceQuantity)
+                  : "-"}
+              </SummaryTableCell>
+
+              <SummaryTableCell>
+                {formatQuantity(item.baseQuantity)}
+              </SummaryTableCell>
+
               <SummaryTableCell>{formatUsd(item.subtotalUsd)}</SummaryTableCell>
+
               <SummaryTableCell>{formatFactor(item.factor)}</SummaryTableCell>
+
               <SummaryTableCell>
                 {formatUsd(item.assignedExpenseUsd)}
               </SummaryTableCell>
-              <SummaryTableCell>
-                {formatUsd(item.cifUsd)}
-              </SummaryTableCell>
+
+              <SummaryTableCell>{formatUsd(item.cifUsd)}</SummaryTableCell>
+
               <SummaryTableCell>
                 {Number(item.gaPercent || 0).toFixed(2)}%
               </SummaryTableCell>
-              <SummaryTableCell>
-                {formatUsd(item.gaUsd)}
-              </SummaryTableCell>
+
+              <SummaryTableCell>{formatUsd(item.gaUsd)}</SummaryTableCell>
+
               <SummaryTableCell>
                 <strong>{formatUsd(item.estimatedTotalUsd)}</strong>
               </SummaryTableCell>
+
               <SummaryTableCell>
                 <strong>{formatUsd(item.estimatedUnitUsd)}</strong>
               </SummaryTableCell>
+
               <SummaryTableCell>
                 {officialExchangeRate > 0
                   ? formatBs(item.estimatedTotalBs)
                   : "-"}
               </SummaryTableCell>
+
               <SummaryTableCell>
                 {officialExchangeRate > 0
                   ? formatBs(item.estimatedUnitBs)
@@ -256,12 +289,15 @@ function SummaryStep({ generalData, products, expenses }) {
           ))}
 
           <SummaryTableFooter>
-            <span></span>
             <span>Total</span>
-            <span>{formatQuantity(totals.totalQuantity)}</span>
+            <span></span>
+            <span>{formatQuantity(totals.totalBaseQuantity)}</span>
             <span>{formatUsd(totals.totalProductsUsd)}</span>
             <span></span>
             <span>{formatUsd(totals.totalExpensesUsd)}</span>
+            <span></span>
+            <span></span>
+            <span></span>
             <span>{formatUsd(totals.totalEstimatedUsd)}</span>
             <span></span>
             <span>

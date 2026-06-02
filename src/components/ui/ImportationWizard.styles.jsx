@@ -429,7 +429,7 @@ export const TableWrapper = styled.div`
 export const TableHeader = styled.div`
   min-width: 1320px;
   display: grid;
-  grid-template-columns: 1.1fr 1.5fr 0.9fr 1fr 0.9fr 1fr 0.7fr 44px;
+  grid-template-columns: 1.7fr 1fr 1fr 1fr 1fr 0.9fr 0.7fr 44px;
   gap: 14px;
   padding: 14px 16px;
   background: #f8fafc;
@@ -442,7 +442,7 @@ export const TableHeader = styled.div`
 export const TableRow = styled.div`
   min-width: 1320px;
   display: grid;
-  grid-template-columns: 1.1fr 1.5fr 0.9fr 1fr 0.9fr 1fr 0.7fr 44px;
+  grid-template-columns: 1.7fr 1fr 1fr 1fr 1fr 0.9fr 0.7fr 44px;
   align-items: center;
   gap: 14px;
   padding: 12px 16px;
@@ -451,7 +451,7 @@ export const TableRow = styled.div`
   &:last-child {
     border-bottom: none;
   }
-  
+
   strong {
     font-size: 14px;
     font-weight: 600;

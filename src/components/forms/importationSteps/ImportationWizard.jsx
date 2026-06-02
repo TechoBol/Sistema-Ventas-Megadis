@@ -51,9 +51,9 @@ function ImportationWizard({ onCancel, onSubmit }) {
   });
   const [products, setProducts] = useState([
     {
-      code: "",
       productName: "",
-      quantity: "",
+      baseQuantity: "",
+      referenceQuantity: "",
       priceUsd: "",
       gaPercent: "",
     },
