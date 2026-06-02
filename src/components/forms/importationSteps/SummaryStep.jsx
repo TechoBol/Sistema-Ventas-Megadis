@@ -296,7 +296,7 @@ function SummaryStep({ generalData, products, expenses }) {
           <SummaryTableHead>
             <span>Producto</span>
             <span>Factor</span>
-            <span>Commodities Bs</span>
+            <span>Mercacía Bs</span>
             <span>Fletes Bs</span>
             <span>Seguro Bs</span>
             <span>Gastos portuarios Bs</span>
