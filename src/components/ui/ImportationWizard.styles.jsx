@@ -804,3 +804,187 @@ export const SummaryTableFooter = styled.div`
     align-items: center;
   }
 `;
+
+// gastos adicionales
+export const WizardSelect = styled.select`
+  width: 100%;
+  height: 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0 15px;
+  box-sizing: border-box;
+  background: ${theme.colors.background};
+  color: ${theme.colors.text};
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: #cbd5e1;
+    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.04);
+  }
+`;
+
+export const AdditionalCostsIntro = styled.p`
+  margin: 8px 0 0;
+  max-width: 860px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: ${theme.colors.textSecondary};
+`;
+
+export const AdditionalCostsTableWrapper = styled.div`
+  width: 100%;
+  border: 1px solid #eef0f3;
+  border-radius: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: ${theme.colors.background};
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.38);
+    border-radius: 999px;
+  }
+`;
+
+const additionalCostsGridColumns = `
+  1.8fr
+  0.9fr
+  0.7fr
+  1.3fr
+  1fr
+  1.1fr
+  1.1fr
+  44px
+`;
+
+export const AdditionalCostsTableHeader = styled.div`
+  min-width: 1320px;
+  display: grid;
+  grid-template-columns: ${additionalCostsGridColumns};
+  gap: 14px;
+
+  padding: 14px 16px;
+
+  background: #f8fafc;
+  border-bottom: 1px solid #eef0f3;
+
+  font-size: 13px;
+  font-weight: 800;
+  color: ${theme.colors.textSecondary};
+`;
+
+export const AdditionalCostsTableRow = styled.div`
+  min-width: 1320px;
+  display: grid;
+  grid-template-columns: ${additionalCostsGridColumns};
+  align-items: center;
+  gap: 14px;
+
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: ${theme.colors.text};
+  }
+`;
+
+export const CreditCheckLabel = styled.label`
+  display: grid;
+  grid-template-columns: 18px auto 72px;
+  align-items: center;
+  gap: 8px;
+
+  font-size: 13px;
+  font-weight: 700;
+  color: ${theme.colors.textSecondary};
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: ${theme.colors.primary};
+    cursor: pointer;
+  }
+
+  ${WizardInput} {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  ${WizardInput}:disabled {
+    background: #f3f4f6;
+    color: #94a3b8;
+    cursor: not-allowed;
+  }
+`;
+
+export const AdditionalCostsTotals = styled.div`
+  margin-top: 20px;
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+
+  div {
+    min-height: 46px;
+    padding: 0 16px;
+
+    border: 1px solid #eef0f3;
+    border-radius: 14px;
+    background: ${theme.colors.background};
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  span {
+    font-size: 14px;
+    color: ${theme.colors.textSecondary};
+  }
+
+  strong {
+    font-size: 15px;
+    font-weight: 800;
+    color: ${theme.colors.text};
+  }
+
+  .highlight {
+    background: rgba(242, 12, 31, 0.08);
+    border-color: rgba(242, 12, 31, 0.16);
+
+    span,
+    strong {
+      color: ${theme.colors.primary};
+    }
+  }
+
+  @media (max-width: 760px) {
+    justify-content: flex-start;
+    align-items: stretch;
+    flex-direction: column;
+
+    div {
+      justify-content: space-between;
+    }
+  }
+`;
