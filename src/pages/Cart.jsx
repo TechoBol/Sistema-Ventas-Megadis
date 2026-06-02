@@ -50,7 +50,7 @@ import {
   DropHeaderQty,
   DropHeaderPrice,
   CustomerEmpty,
-  ModeTitleGroup, 
+  ModeTitleGroup,
   SegmentedControl,
   SegBtn,
 } from "../components/ui/Cart";
@@ -430,13 +430,23 @@ const Cart = () => {
                         <DropCode>{p?.code || "-"}</DropCode>
                         <DropName>{p?.name || "-"}</DropName>
                         <DropCantidad>
-                          {p?.inventories?.find(
-                            (inv) => inv.locationId === location.id,
-                          )?.quantity || 0}
-                        </DropCantidad>
-                        <DropPrice>
-                          {Number(p?.salePrice || 0).toFixed(2)} Bs
-                        </DropPrice>
+  {Number(
+    p?.inventories?.find(
+      (inv) => inv.locationId === location.id,
+    )?.quantity || 0,
+  ).toLocaleString("es-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  })}
+</DropCantidad>
+
+<DropPrice>
+  {Number(p?.salePrice || 0).toLocaleString("es-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}{" "}
+  Bs
+</DropPrice>
                       </DropItem>
                     ))
                   )}
@@ -465,7 +475,9 @@ const Cart = () => {
                         <td colSpan={8}>
                           <EmptyState>
                             <span style={{ fontSize: 40 }}>🛒</span>
-                            <span>Busca un producto para comenzar la {mode}</span>
+                            <span>
+                              Busca un producto para comenzar la {mode}
+                            </span>
                           </EmptyState>
                         </td>
                       </tr>
