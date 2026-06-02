@@ -68,7 +68,7 @@ function Products() {
       },
       {
         field: "purchasePrice",
-        headerName: "Precio Unitario",
+        headerName: "Costo Unitario",
         flex: 1,
         valueFormatter: (value) => `${Number(value || 0).toFixed(2)}`,
       },
