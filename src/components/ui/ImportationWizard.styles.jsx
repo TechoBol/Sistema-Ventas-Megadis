@@ -861,15 +861,16 @@ const additionalCostsGridColumns = `
   1.8fr
   0.9fr
   0.7fr
-  1.3fr
   1fr
+  1fr
+  1.3fr
   1.1fr
   1.1fr
   44px
 `;
 
 export const AdditionalCostsTableHeader = styled.div`
-  min-width: 1320px;
+  min-width: 1480px;
   display: grid;
   grid-template-columns: ${additionalCostsGridColumns};
   gap: 14px;
@@ -885,7 +886,7 @@ export const AdditionalCostsTableHeader = styled.div`
 `;
 
 export const AdditionalCostsTableRow = styled.div`
-  min-width: 1320px;
+  min-width: 1480px;
   display: grid;
   grid-template-columns: ${additionalCostsGridColumns};
   align-items: center;

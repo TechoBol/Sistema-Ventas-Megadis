@@ -6,7 +6,6 @@ import {
   SectionHeader,
   StepPanelTitle,
   AddButton,
-  AdditionalCostsIntro,
   AdditionalCostsTableWrapper,
   AdditionalCostsTableHeader,
   AdditionalCostsTableRow,
@@ -20,7 +19,7 @@ import {
 const emptyAdditionalCost = {
   concept: "",
   amount: "",
-  currency: "BS",
+  currency: "USD",
   hasFiscalCredit: false,
   creditRate: "13",
 };
@@ -28,6 +27,12 @@ const emptyAdditionalCost = {
 const roundToFourDecimals = (value) => {
   return Math.round((Number(value || 0) + Number.EPSILON) * 10000) / 10000;
 };
+
+const formatUsd = (value) =>
+  `$ ${Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  })}`;
 
 const formatBs = (value) =>
   `Bs ${Number(value || 0).toLocaleString("es-BO", {
@@ -46,10 +51,17 @@ function AdditionalCostsStep({
     const amount = Number(cost.amount || 0);
     const creditRate = Number(cost.creditRate || 0) / 100;
 
-    const amountBs =
+    const amountUsd =
       cost.currency === "USD"
-        ? roundToFourDecimals(amount * exchangeRate)
-        : roundToFourDecimals(amount);
+        ? roundToFourDecimals(amount)
+        : exchangeRate > 0
+          ? roundToFourDecimals(amount / exchangeRate)
+          : 0;
+
+    const amountBs =
+      cost.currency === "BS"
+        ? roundToFourDecimals(amount)
+        : roundToFourDecimals(amount * exchangeRate);
 
     const fiscalCreditBs = cost.hasFiscalCredit
       ? roundToFourDecimals(amountBs * creditRate)
@@ -58,6 +70,7 @@ function AdditionalCostsStep({
     const netAmountBs = roundToFourDecimals(amountBs - fiscalCreditBs);
 
     return {
+      amountUsd,
       amountBs,
       fiscalCreditBs,
       netAmountBs,
@@ -70,6 +83,7 @@ function AdditionalCostsStep({
         const calculation = getCostCalculation(cost);
 
         return {
+          amountUsd: roundToFourDecimals(acc.amountUsd + calculation.amountUsd),
           amountBs: roundToFourDecimals(acc.amountBs + calculation.amountBs),
           fiscalCreditBs: roundToFourDecimals(
             acc.fiscalCreditBs + calculation.fiscalCreditBs
@@ -80,6 +94,7 @@ function AdditionalCostsStep({
         };
       },
       {
+        amountUsd: 0,
         amountBs: 0,
         fiscalCreditBs: 0,
         netAmountBs: 0,
@@ -145,8 +160,9 @@ function AdditionalCostsStep({
           <span>Concepto</span>
           <span>Monto</span>
           <span>Moneda</span>
-          <span>Crédito fiscal</span>
+          <span>Importe USD</span>
           <span>Importe Bs</span>
+          <span>Crédito fiscal</span>
           <span>Crédito fiscal Bs</span>
           <span>Importe neto Bs</span>
           <span></span>
@@ -183,9 +199,13 @@ function AdditionalCostsStep({
                   handleChange(index, "currency", event.target.value)
                 }
               >
-                <option value="BS">Bs</option>
                 <option value="USD">USD</option>
+                <option value="BS">Bs</option>
               </WizardSelect>
+
+              <strong>{formatUsd(calculation.amountUsd)}</strong>
+
+              <strong>{formatBs(calculation.amountBs)}</strong>
 
               <CreditCheckLabel>
                 <input
@@ -210,8 +230,6 @@ function AdditionalCostsStep({
                 />
               </CreditCheckLabel>
 
-              <strong>{formatBs(calculation.amountBs)}</strong>
-
               <strong>{formatBs(calculation.fiscalCreditBs)}</strong>
 
               <strong>{formatBs(calculation.netAmountBs)}</strong>
@@ -230,6 +248,11 @@ function AdditionalCostsStep({
       </AdditionalCostsTableWrapper>
 
       <AdditionalCostsTotals>
+        <div>
+          <span>Total importe USD:</span>
+          <strong>{formatUsd(totals.amountUsd)}</strong>
+        </div>
+
         <div>
           <span>Total importe Bs:</span>
           <strong>{formatBs(totals.amountBs)}</strong>
