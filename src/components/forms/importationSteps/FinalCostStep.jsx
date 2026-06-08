@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-
 import {
   StepPanel,
   SectionHeader,
@@ -12,7 +11,6 @@ import {
   FinalCostTableRow,
   FinalCostTableCell,
   FinalCostTableFooter,
-  FinalCostNote,
 } from "../../ui/ImportationWizard.styles";
 
 const roundToFourDecimals = (value) => {
@@ -177,14 +175,10 @@ function FinalCostStep({
       );
 
       const referenceQuantity = Number(product.referenceQuantity || 0);
-      const baseQuantity = Number(product.baseQuantity || 0);
-
-      const quantityForUnitCost = referenceQuantity || baseQuantity;
-
       const unitCostBs =
-        quantityForUnitCost > 0
-          ? roundToFourDecimals(finalCostBs / quantityForUnitCost)
-          : 0;
+        referenceQuantity > 0
+          ? roundToFourDecimals(finalCostBs / referenceQuantity)
+          : null;
 
       return {
         id: index + 1,
@@ -193,7 +187,7 @@ function FinalCostStep({
         valueAfterTaxesBs,
         additionalAssignedBs,
         finalCostBs,
-        quantityForUnitCost,
+        referenceQuantity,
         unitCostBs,
       };
     });
@@ -287,7 +281,7 @@ function FinalCostStep({
               </FinalCostTableCell>
 
               <FinalCostTableCell>
-                {formatQuantity(item.quantityForUnitCost)}
+                {formatQuantity(item.referenceQuantity)}
               </FinalCostTableCell>
 
               <FinalCostTableCell>
@@ -307,12 +301,6 @@ function FinalCostStep({
           </FinalCostTableFooter>
         </FinalCostTable>
       </FinalCostTableWrapper>
-
-      <FinalCostNote>
-        Este cálculo distribuye los gastos adicionales netos según el factor de
-        cada producto. No incluye todavía ajustes por pagos bancarios ni
-        diferencia de tipo de cambio.
-      </FinalCostNote>
     </StepPanel>
   );
 }

@@ -50,7 +50,7 @@ function ImportationWizard({ onCancel, onSubmit }) {
     supplier: "",
     reference: "",
     date: "",
-    officialExchangeRate: "",
+    officialExchangeRate: "6.96",
     bankExchangeRate: "",
   });
   const [products, setProducts] = useState([
@@ -62,8 +62,12 @@ function ImportationWizard({ onCancel, onSubmit }) {
       gaPercent: "",
     },
   ]);
+  // estados de gastos base
   const [expenses, setExpenses] = useState({
-    freights: [{ name: "", amount: "" }],
+    freights: [
+      { name: "Flete Naviero (FLETE I)", amount: "" },
+      { name: "Flete terrestre Frontera FLETE(II)", amount: "" },
+    ],
     insurances: [{ name: "", amount: "" }],
     portCosts: [{ name: "", amount: "" }],
     otherCosts: [{ name: "", amount: "" }],

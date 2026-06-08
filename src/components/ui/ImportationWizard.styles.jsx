@@ -1081,10 +1081,3 @@ export const FinalCostTableFooter = styled.div`
     align-items: center;
   }
 `;
-
-export const FinalCostNote = styled.p`
-  margin: 16px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: ${theme.colors.textSecondary};
-`;
