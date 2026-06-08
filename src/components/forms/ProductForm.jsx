@@ -51,8 +51,8 @@ const UNITS = [
     label: "Caja",
   },
   {
-    code: "BOX15",
-    label: "Caja 15",
+    code: "BOX10",
+    label: "Caja 10",
   },
   {
     code: "DOZEN",
