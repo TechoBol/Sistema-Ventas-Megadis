@@ -167,6 +167,7 @@ function ImportationWizard({ onCancel, onSubmit }) {
 
   const handleSubmit = () => {
     const payload = {
+      status,
       generalData,
       products,
       expenses,
@@ -279,25 +280,29 @@ function ImportationWizard({ onCancel, onSubmit }) {
       <StepContent>{renderStepContent()}</StepContent>
 
       <StepActions>
-        <StepSecondaryButton type="button" onClick={onCancel}>
-          Cancelar
-        </StepSecondaryButton>
+        {currentStep > 0 ? (
+          <StepSecondaryButton type="button" onClick={handlePrevStep}>
+            <ChevronLeft size={17} />
+            Anterior
+          </StepSecondaryButton>
+        ) : (
+          <div />
+        )}
         <StepActionsRight>
-          {currentStep > 0 && (
-            <StepSecondaryButton type="button" onClick={handlePrevStep}>
-              <ChevronLeft size={17} />
-              Anterior
-            </StepSecondaryButton>
-          )}
           {currentStep < STEPS.length - 1 ? (
             <StepPrimaryButton type="button" onClick={handleNextStep}>
               Siguiente
               <ChevronRight size={17} />
             </StepPrimaryButton>
           ) : (
-            <StepPrimaryButton type="button" onClick={handleSubmit}>
-              Guardar importación
-            </StepPrimaryButton>
+            <>
+              <StepSecondaryButton type="button" onClick={() => handleSubmit("borrador")}>
+                Guardar borrador
+              </StepSecondaryButton>
+              <StepPrimaryButton type="button" onClick={() => handleSubmit("verificado")}>
+                Guardar verificado
+              </StepPrimaryButton>
+            </>
           )}
         </StepActionsRight>
       </StepActions>

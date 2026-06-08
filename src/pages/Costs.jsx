@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Search, Plus, Eye } from "lucide-react";
+import { Search, Plus, Eye, Pencil } from "lucide-react";
 import DataTable from "../components/table/DataTable";
 import ImportationWizard from "../components/forms/importationSteps/ImportationWizard";
 
@@ -13,6 +13,7 @@ import {
   SearchBox,
   SearchInput,
   PrimaryActionButton,
+  StatusBadge,
 } from "../components/ui/Page.styles";
 
 const mockImports = [
@@ -21,27 +22,30 @@ const mockImports = [
     supplier: "Proveedor Norte",
     reference: "IMP-2026-001",
     date: "2026-05-16",
-    quantity: 120,
-    totalUsd: 3500,
-    products: 8,
+    exchangeRate: 6.96,
+    productCount: 8,
+    status: "verificado",
+    rawData: null,
   },
   {
     id: 2,
     supplier: "Importadora Central",
     reference: "IMP-2026-002",
     date: "2026-05-18",
-    quantity: 85,
-    totalUsd: 2140.5,
-    products: 5,
+    exchangeRate: 6.96,
+    productCount: 5,
+    status: "borrador",
+    rawData: null,
   },
   {
     id: 3,
     supplier: "Distribuidora Andes",
     reference: "IMP-2026-003",
     date: "2026-05-20",
-    quantity: 240,
-    totalUsd: 7200,
-    products: 12,
+    exchangeRate: 6.96,
+    productCount: 12,
+    status: "verificado",
+    rawData: null,
   },
 ];
 
@@ -53,41 +57,58 @@ const fechaHoy = () =>
     day: "numeric",
   });
 
-const formatUsd = (value) =>
-  `$ ${Number(value || 0).toLocaleString("es-BO", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-
 const formatDate = (value) => {
   if (!value) return "-";
+
   const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "-";
+
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
+
   return `${day}/${month}/${year}`;
+};
+
+const formatExchangeRate = (value) => {
+  if (!value) return "-";
+
+  return Number(value).toLocaleString("es-BO", {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  });
+};
+
+const getStatusLabel = (status) => {
+  if (status === "verificado") return "Verificado";
+  return "Borrador";
 };
 
 function Costs() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [importations, setImportations] = useState(mockImports);
+
   const filteredImports = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
-    if (!value) return mockImports;
-    return mockImports.filter((item) =>
+
+    if (!value) return importations;
+
+    return importations.filter((item) =>
       [
         item.supplier,
         item.reference,
         item.date,
-        item.quantity,
-        item.totalUsd,
-        item.products,
+        item.exchangeRate,
+        item.productCount,
+        getStatusLabel(item.status),
       ]
         .join(" ")
         .toLowerCase()
         .includes(value)
     );
-  }, [searchTerm]);
+  }, [searchTerm, importations]);
 
   const importColumns = useMemo(
     () => [
@@ -99,9 +120,9 @@ function Costs() {
       },
       {
         field: "reference",
-        headerName: "Referencia",
-        flex: 1,
-        minWidth: 150,
+        headerName: "Referencia / Factura",
+        flex: 1.1,
+        minWidth: 180,
       },
       {
         field: "date",
@@ -111,23 +132,30 @@ function Costs() {
         valueFormatter: (value) => formatDate(value),
       },
       {
-        field: "quantity",
-        headerName: "Cantidad",
+        field: "exchangeRate",
+        headerName: "Tipo de cambio",
+        flex: 0.9,
+        minWidth: 150,
+        valueFormatter: (value) => formatExchangeRate(value),
+      },
+      {
+        field: "productCount",
+        headerName: "Productos",
         flex: 0.8,
         minWidth: 120,
       },
       {
-        field: "totalUsd",
-        headerName: "Total USD",
-        flex: 1,
-        minWidth: 150,
-        valueFormatter: (value) => formatUsd(value),
-      },
-      {
-        field: "products",
-        headerName: "Productos",
+        field: "status",
+        headerName: "Estado",
         flex: 0.9,
-        minWidth: 130,
+        minWidth: 140,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+          <StatusBadge $status={params.value}>
+            {getStatusLabel(params.value)}
+          </StatusBadge>
+        ),
       },
     ],
     []
@@ -143,6 +171,14 @@ function Costs() {
           console.log("Ver detalle de importación:", importation);
         },
       },
+      {
+        key: "edit",
+        title: "Editar importación",
+        icon: Pencil,
+        onClick: (importation) => {
+          console.log("Editar importación:", importation);
+        },
+      },
     ],
     []
   );
@@ -156,7 +192,18 @@ function Costs() {
   };
 
   const handleSaveImportation = (payload) => {
-    console.log("Guardar importación:", payload);
+    const newImportation = {
+      id: Date.now(),
+      supplier: payload.generalData.supplier || "Sin proveedor",
+      reference: payload.generalData.reference || "Sin referencia",
+      date: payload.generalData.date || "",
+      exchangeRate: Number(payload.generalData.officialExchangeRate || 0),
+      productCount: payload.products.length,
+      status: payload.status || "borrador",
+      rawData: payload,
+    };
+
+    setImportations((current) => [newImportation, ...current]);
     setIsCreating(false);
   };
 
@@ -186,7 +233,7 @@ function Costs() {
             <Search size={18} />
             <SearchInput
               type="text"
-              placeholder="Buscar proveedor, referencia o fecha"
+              placeholder="Buscar proveedor, referencia, fecha o estado"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
             />
@@ -204,7 +251,6 @@ function Costs() {
           actions={importActions}
           pageSize={7}
           pageSizeOptions={[7, 10, 20]}
-          noRowsLabel="No hay importaciones registradas"
         />
       </PageWrapper>
     </PageSurface>

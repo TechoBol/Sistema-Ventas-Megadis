@@ -210,15 +210,17 @@ export const StatusBadge = styled.span`
   text-transform: capitalize;
 
   color: ${({ $status }) => {
-    if ($status === "aprobado") return "#047857";
+    if ($status === "verificado" || $status === "aprobado") return "#047857";
     if ($status === "rechazado") return "#dc2626";
-    return "#b45309";
+    if ($status === "borrador") return "#b45309";
+    return "#475569";
   }};
 
   background: ${({ $status }) => {
-    if ($status === "aprobado") return "rgba(105, 213, 132, 0.18)";
+    if ($status === "verificado" || $status === "aprobado") return "rgba(105, 213, 132, 0.18)";
     if ($status === "rechazado") return "rgba(220, 101, 95, 0.16)";
-    return "rgba(245, 158, 11, 0.16)";
+    if ($status === "borrador") return "rgba(245, 158, 11, 0.16)";
+    return "rgba(148, 163, 184, 0.16)";
   }};
 `;
 
