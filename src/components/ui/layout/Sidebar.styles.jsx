@@ -293,18 +293,29 @@ export const BranchDropdown = styled.div`
   top: calc(100% + 12px);
   left: 0;
 
-  width: 260px;
+  width: 300px;
+  max-height: 500px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
 
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
 
-  overflow: hidden;
-
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12),
     0 2px 8px rgba(15, 23, 42, 0.08);
 
   z-index: 999;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
 `;
 
 export const BranchDropdownHeader = styled.div`
@@ -320,6 +331,10 @@ export const BranchDropdownHeader = styled.div`
 
   background: #fafafa;
   border-bottom: 1px solid #eeeeee;
+
+  position: sticky;
+  top: 0;
+  z-index: 3;
 `;
 
 export const BranchOption = styled.div`
@@ -367,4 +382,25 @@ export const BranchBadge = styled.span`
   color: ${theme.colors.primary};
 
   text-transform: uppercase;
+`;
+
+export const BranchGroupTitle = styled.div`
+  padding: 10px 16px;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  color: ${theme.colors.primary};
+
+  background: #f8fafc;
+
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+
+  position: sticky;
+  top: 41px;
+  z-index: 2;
 `;

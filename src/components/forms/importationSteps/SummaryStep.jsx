@@ -44,7 +44,7 @@ const formatFactor = (value) =>
     maximumFractionDigits: 7,
   });
 
-function SummaryStep({ generalData, products, expenses }) {
+function SummaryStep({ generalData, products, expenses ,setTotalProductosUsd }) {
   const officialExchangeRate = Number(generalData.officialExchangeRate || 0);
 
   /*
@@ -81,7 +81,7 @@ function SummaryStep({ generalData, products, expenses }) {
         0
       )
     );
-
+    setTotalProductosUsd(totalProductsUsd)
     const totalFreightsUsd = getSectionTotalUsd(expenses.freights);
     const totalInsurancesUsd = getSectionTotalUsd(expenses.insurances);
     const totalPortCostsUsd = getSectionTotalUsd(expenses.portCosts);

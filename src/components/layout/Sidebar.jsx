@@ -54,6 +54,7 @@ import {
   BranchName,
   BranchCode,
   BranchBadge,
+  BranchGroupTitle
 } from "../ui/layout/Sidebar.styles";
 import { useSucursales } from "../../hooks/useSucursales";
 import { useLocationStore } from "../store/locationStore";
@@ -192,7 +193,7 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
 
   const { selectedLocation, setSelectedLocation } = useLocationStore();
   const canChangeLocation = permissions.isAdmin || permissions.isManager;
-  
+
   const displayLocation =
     permissions.isAdmin || permissions.isManager
       ? selectedLocation
@@ -271,7 +272,8 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
       }))
       .filter((section) => section.items.length > 0);
   }, [permissions]);
-
+  const branches = locations.filter((l) => l.type === "BRANCH");
+  const warehouses = locations.filter((l) => l.type === "WAREHOUSE");
   return (
     <SidebarWrapper $isOpen={isOpen} $isCollapsed={isCollapsed}>
       <SidebarHeader $isCollapsed={isCollapsed}>
@@ -316,10 +318,35 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
               {canChangeLocation && showLocations && (
                 <BranchDropdown>
                   <BranchDropdownHeader>
-                    Seleccionar sucursal
+                    Seleccionar ubicación
                   </BranchDropdownHeader>
 
-                  {locations.map((location) => (
+                  <BranchGroupTitle>SUCURSALES</BranchGroupTitle>
+
+                  {branches.map((location) => (
+                    <BranchOption
+                      key={location.id}
+                      $active={selectedLocation?.id === location.id}
+                      onClick={() => {
+                        setSelectedLocation(location);
+                        setShowLocations(false);
+                      }}
+                    >
+                      <BranchOptionTop>
+                        <BranchName>{location.name}</BranchName>
+
+                        {selectedLocation?.id === location.id && (
+                          <BranchBadge>Actual</BranchBadge>
+                        )}
+                      </BranchOptionTop>
+
+                      <BranchCode>{location.abbreviation}</BranchCode>
+                    </BranchOption>
+                  ))}
+
+                  <BranchGroupTitle>ALMACENES</BranchGroupTitle>
+
+                  {warehouses.map((location) => (
                     <BranchOption
                       key={location.id}
                       $active={selectedLocation?.id === location.id}

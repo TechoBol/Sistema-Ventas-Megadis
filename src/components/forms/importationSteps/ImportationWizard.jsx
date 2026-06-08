@@ -4,13 +4,7 @@ import ProductsStep from "./ProductsStep";
 import ExpensesStep from "./ExpensesStep";
 import SummaryStep from "./SummaryStep";
 import AdditionalCostsStep from "./AdditionalCostsStep";
-import {
-  ArrowLeft,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-
+import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   WizardCard,
   WizardHeader,
@@ -23,34 +17,33 @@ import {
   StepLabel,
   StepConnector,
   StepContent,
-  StepPanel,
-  StepPanelTitle,
-  StepPreviewGrid,
-  StepPreviewCard,
   StepActions,
   StepActionsRight,
   StepSecondaryButton,
   StepPrimaryButton,
 } from "../../ui/ImportationWizard.styles";
+import BanksStep from "./BanksStep";
 
 const STEPS = [
   "Datos generales",
   "Productos",
   "Gastos base",
   "Base imponible e impuestos",
+  "Pagos de bancos",
   "Gastos adicionales",
 ];
 
 function ImportationWizard({ onCancel, onSubmit }) {
   const [currentStep, setCurrentStep] = useState(0);
-  // estado de los pasos
+
   const [generalData, setGeneralData] = useState({
     supplier: "",
     reference: "",
     date: "",
-    officialExchangeRate: "",
+    officialExchangeRate: 6.96,
     bankExchangeRate: "",
   });
+
   const [products, setProducts] = useState([
     {
       productName: "",
@@ -60,13 +53,14 @@ function ImportationWizard({ onCancel, onSubmit }) {
       gaPercent: "",
     },
   ]);
+
   const [expenses, setExpenses] = useState({
     freights: [{ name: "", amount: "" }],
     insurances: [{ name: "", amount: "" }],
     portCosts: [{ name: "", amount: "" }],
     otherCosts: [{ name: "", amount: "" }],
   });
-  // estado de gastos adicionales
+
   const [additionalCosts, setAdditionalCosts] = useState([
     {
       concept: "Comisión aduana por despacho",
@@ -139,74 +133,168 @@ function ImportationWizard({ onCancel, onSubmit }) {
       creditRate: "13",
     },
   ]);
-  // funciones del contenido los pasos
-  const handleGeneralDataChange = (field, value) => {
-    setGeneralData((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
 
-  const handleNextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
-  };
+  // ── Estado de bancos ──────────────────────────────────────────────
+  const [bankBlocks, setBankBlocks] = useState([
+    {
+      id: 1,
+      type: "anticipo",
+      banco: "",
+      monto: "",
+      tc: "",
+      comisionUsd: "",
+      itfSalidaUsd: "",
+      itfIngresoUsd: "",
+    },
+  ]);
 
-  const handlePrevStep = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 0));
-  };
+  // ── totalProductosUsd viene de SummaryStep ────────────────────────
+  const [totalProductosUsd, setTotalProductosUsd] = useState(0);
 
-  const handleGoToStep = (stepIndex) => {
-    setCurrentStep(stepIndex);
-  };
+  // ── Función de cálculo por bloque ─────────────────────────────────
+  function calcBlockTotals({
+    monto,
+    tc,
+    comisionUsd,
+    itfSalidaUsd,
+    itfIngresoUsd,
+  }) {
+    const m = parseFloat(monto) || 0;
+    const t = parseFloat(tc) || 1;
+    const com = parseFloat(comisionUsd) || 0;
+    const its = parseFloat(itfSalidaUsd) || 0;
+    const iti = parseFloat(itfIngresoUsd) || 0;
+    const comisionBs = com * 6.97;
+    const itfSalidaBs = its * t;
+    const itfIngresoBs = iti * t;
+    const total1Usd = m + com;
+    const total1Bs = m * t + comisionBs;
+    return {
+      totalUsd: total1Usd + its + iti,
+      totalBs: total1Bs + itfSalidaBs + itfIngresoBs,
+      comisionUsd: com,
+      comisionBs,
+      itfUsd: its + iti,
+      itfBs: itfSalidaBs + itfIngresoBs,
+    };
+  }
+
+  // ── Totales bancarios ─────────────────────────────────────────────
+  const bankTotals = bankBlocks.reduce(
+    (acc, b) => {
+      const c = calcBlockTotals(b);
+      acc.montoUsd += parseFloat(b.monto) || 0;
+      acc.montoBs += (parseFloat(b.monto) || 0) * (parseFloat(b.tc) || 1);
+      acc.comisionUsd += c.comisionUsd;
+      acc.comisionBs += c.comisionBs;
+      acc.itfUsd += c.itfUsd;
+      acc.itfBs += c.itfBs;
+      return acc;
+    },
+    {
+      montoUsd: 0,
+      montoBs: 0,
+      comisionUsd: 0,
+      comisionBs: 0,
+      itfUsd: 0,
+      itfBs: 0,
+    },
+  );
+
+  // ── Variables para diferencia TC ──────────────────────────────────
+  const tcOficial = parseFloat(generalData.officialExchangeRate) || 1;
+  const tcBancario = parseFloat(generalData.bankExchangeRate) || 1;
+
+  const totalFletes = expenses.freights.reduce(
+    (acc, f) => acc + Number(f.amount || 0),
+    0,
+  );
+  const totalSeguros = expenses.insurances.reduce(
+    (acc, s) => acc + Number(s.amount || 0),
+    0,
+  );
+  const totalPortCosts = expenses.portCosts.reduce(
+    (acc, p) => acc + Number(p.amount || 0),
+    0,
+  );
+
+  const flete1Usd = Number(expenses.freights[0]?.amount || 0);
+  const flete2Usd = Number(expenses.freights[1]?.amount || 0);
+  const flete1Bs = flete1Usd * tcBancario; // flete 1 × tipo de cambio bancario
+  const flete2Bs = flete2Usd * tcOficial; // flete 2 × tipo de cambio oficial
+
+  const fletes = flete1Bs + flete2Bs;
+
+  const baseImponibleBs =
+    (totalProductosUsd + totalFletes + totalSeguros + totalPortCosts) *
+    tcOficial;
+
+  const segurosBs = totalSeguros * tcOficial;
+  const restaFinal = bankTotals.montoBs + segurosBs + fletes;
+  const diferenciaTC = baseImponibleBs - restaFinal;
+
+  // ── Handlers ──────────────────────────────────────────────────────
+  const handleGeneralDataChange = (field, value) =>
+    setGeneralData((cur) => ({ ...cur, [field]: value }));
+
+  const handleNextStep = () =>
+    setCurrentStep((p) => Math.min(p + 1, STEPS.length - 1));
+  const handlePrevStep = () => setCurrentStep((p) => Math.max(p - 1, 0));
+  const handleGoToStep = (i) => setCurrentStep(i);
 
   const handleSubmit = () => {
-    const payload = {
+    onSubmit?.({
       generalData,
       products,
       expenses,
       additionalCosts,
-    };
-    onSubmit?.(payload);
+      bankBlocks,
+    });
   };
 
   const renderStepContent = () => {
-    // paso -> datos generales
-    if (currentStep === 0) {
+    if (currentStep === 0)
       return (
         <GeneralDataStep
           formData={generalData}
           onChange={handleGeneralDataChange}
         />
       );
-    }
-    // paso -> productos
-    if (currentStep === 1) {
+
+    if (currentStep === 1)
       return (
-        <ProductsStep
-          products={products}
-          onChangeProducts={setProducts}
-        />
+        <ProductsStep products={products} onChangeProducts={setProducts} />
       );
-    }
-    // paso -> gastos importacion
-    if (currentStep === 2) {
+
+    if (currentStep === 2)
       return (
-        <ExpensesStep
-          expenses={expenses}
-          onChangeExpenses={setExpenses}
-        />
+        <ExpensesStep expenses={expenses} onChangeExpenses={setExpenses} />
       );
-    }
-    // paso -> resumen
-    if (currentStep === 3) {
+
+    if (currentStep === 3)
       return (
         <SummaryStep
           generalData={generalData}
           products={products}
           expenses={expenses}
+          setTotalProductosUsd={setTotalProductosUsd}
         />
       );
-    }
+
+    if (currentStep === 4)
+      return (
+        <BanksStep
+          blocks={bankBlocks}
+          onChangeBlocks={setBankBlocks}
+          totalAnticipo={bankTotals.montoUsd}
+          totalComision={bankTotals.comisionUsd}
+          totalItf={bankTotals.itfUsd}
+          totalAnticipoBs={bankTotals.montoBs}
+          totalComisionBs={bankTotals.comisionBs}
+          totalItfBs={bankTotals.itfBs}
+          diferenciaTC={diferenciaTC}
+        />
+      );
 
     return (
       <AdditionalCostsStep
@@ -234,7 +322,6 @@ function ImportationWizard({ onCancel, onSubmit }) {
         {STEPS.map((step, index) => {
           const isActive = index === currentStep;
           const isCompleted = index < currentStep;
-
           return (
             <React.Fragment key={step}>
               <StepItem>
@@ -247,10 +334,8 @@ function ImportationWizard({ onCancel, onSubmit }) {
                 >
                   {isCompleted ? <Check size={15} /> : index + 1}
                 </StepCircle>
-
                 <StepLabel $active={isActive}>{step}</StepLabel>
               </StepItem>
-
               {index < STEPS.length - 1 && (
                 <StepConnector $completed={index < currentStep} />
               )}
@@ -268,14 +353,12 @@ function ImportationWizard({ onCancel, onSubmit }) {
         <StepActionsRight>
           {currentStep > 0 && (
             <StepSecondaryButton type="button" onClick={handlePrevStep}>
-              <ChevronLeft size={17} />
-              Anterior
+              <ChevronLeft size={17} /> Anterior
             </StepSecondaryButton>
           )}
           {currentStep < STEPS.length - 1 ? (
             <StepPrimaryButton type="button" onClick={handleNextStep}>
-              Siguiente
-              <ChevronRight size={17} />
+              Siguiente <ChevronRight size={17} />
             </StepPrimaryButton>
           ) : (
             <StepPrimaryButton type="button" onClick={handleSubmit}>

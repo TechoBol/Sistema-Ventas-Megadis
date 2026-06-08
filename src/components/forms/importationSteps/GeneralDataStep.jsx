@@ -65,7 +65,7 @@ function GeneralDataStep({ formData, onChange }) {
         </WizardField>
 
         <WizardField>
-          <WizardLabel>Tipo de cambio banco</WizardLabel>
+          <WizardLabel>Tipo de cambio nav</WizardLabel>
           <WizardInput
             type="number"
             min="0"
