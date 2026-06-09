@@ -55,9 +55,10 @@ function ImportationWizard({ onCancel, onSubmit }) {
   });
   const [products, setProducts] = useState([
     {
+      productCode: "",
       productName: "",
-      baseQuantity: "",
       referenceQuantity: "",
+      baseQuantity: "",
       priceUsd: "",
       gaPercent: "",
     },
@@ -165,7 +166,7 @@ function ImportationWizard({ onCancel, onSubmit }) {
     setCurrentStep(stepIndex);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (status) => {
     const payload = {
       status,
       generalData,

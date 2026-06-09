@@ -14,9 +14,10 @@ import {
 } from "../../ui/ImportationWizard.styles";
 
 const emptyProduct = {
+  productCode: "",
   productName: "",
-  baseQuantity: "",
   referenceQuantity: "",
+  baseQuantity: "",
   priceUsd: "",
   gaPercent: "",
 };
@@ -119,7 +120,8 @@ function ProductsStep({ products, onChangeProducts }) {
 
       <TableWrapper>
         <TableHeader>
-          <span>Producto</span>
+          <span>Código producto</span>
+          <span>Nombre producto</span>
           <span>Cantidad referencial</span>
           <span>Cantidad base</span>
           <span>Precio USD</span>
@@ -137,8 +139,17 @@ function ProductsStep({ products, onChangeProducts }) {
             <TableRow key={index}>
               <WizardInput
                 type="text"
-                placeholder="Producto..."
+                value={product.productCode}
+                placeholder="Código..."
+                onChange={(event) =>
+                  handleProductChange(index, "productCode", event.target.value)
+                }
+              />
+
+              <WizardInput
+                type="text"
                 value={product.productName}
+                placeholder="Nombre producto..."
                 onChange={(event) =>
                   handleProductChange(index, "productName", event.target.value)
                 }
