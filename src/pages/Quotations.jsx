@@ -16,6 +16,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import Swal from "sweetalert2";
 import { generarDocumentoVenta } from "../components/pdf/generarPDF.jsx";
+import { useSearchParams } from "react-router-dom";
 import {
     PageContainer,
     PageHeader,
@@ -155,10 +156,10 @@ const ConvertModal = ({ open, onClose, onConfirm, loading }) => {
 // =====================================================
 
 function Quotations() {
+    const [searchParams] = useSearchParams();
+    const [search, setSearch] = useState(searchParams.get("search") ?? "");
     const { data, loading, updateStatus, convertToSale } = useQuotations();
     const { getFileUrl, uploadPDF } = useAmazonS3();
-
-    const [search, setSearch] = useState("");
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
 
