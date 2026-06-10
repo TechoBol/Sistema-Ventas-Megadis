@@ -1,12 +1,10 @@
 import React, { useMemo, useState } from "react";
 import DataTable from "../components/table/DataTable";
 import CreateTransferModal from "../components/modals/CreateTransferModal";
-
 import { useTransfers } from "../hooks/useTransfers";
 import { useSucursales } from "../hooks/useSucursales";
-
 import { useLoginStore } from "../components/store/loginStore";
-
+import { useSearchParams } from "react-router-dom";
 import { Search, Eye, FileText, Send } from "lucide-react";
 
 import {
@@ -45,17 +43,14 @@ const EMPTY_TRANSFER_FORM = {
 };
 
 function Transfer() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") ?? "");
   const [selectedView, setSelectedView] = useState("all");
-
   const [modalOpen, setModalOpen] = useState(false);
-
   const [form, setForm] = useState(EMPTY_TRANSFER_FORM);
-
   const { location, token } = useLoginStore();
-
   const { products } = useInventory();
-
+  
   const {
     data: transfers,
     createTransfer,

@@ -14,6 +14,7 @@ const useAuthentication = () => {
     setToken,
     setLocation,
     setLevel,
+    setEmployeeId,
   } = useLoginStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +41,7 @@ const useAuthentication = () => {
       setRole(response.role);
       setLevel(response.level);
       setLocation(response.location);
+      setEmployeeId(response.id);
       changeLogInState();
       console.log(response)
       // TOAST
@@ -66,7 +68,7 @@ const useAuthentication = () => {
     setLevel(0);
     setToken("");
     setLocation("");
-
+    setEmployeeId(0);
     changeLogInState();
 
     successToast("Sesión cerrada");

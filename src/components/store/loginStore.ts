@@ -4,10 +4,11 @@ import { persist } from 'zustand/middleware'
 interface Store {
   fullName: string;
   role: string;
-  level: number;  
+  level: number;
   location: any;
   isLoggedIn: boolean;
   token: string;
+  employeeId: number;
 
   setFullName: (fullName: string) => void;
   setRole: (role: string) => void;
@@ -15,6 +16,7 @@ interface Store {
   setLocation: (location: any) => void;
   changeLogInState: () => void;
   setToken: (token: string) => void;
+  setEmployeeId: (id: number) => void;
 }
 
 export const useLoginStore = create<Store>()(
@@ -26,15 +28,15 @@ export const useLoginStore = create<Store>()(
       location: '',
       isLoggedIn: false,
       token: '',
-      setFullName: (fullName: string) => set({ fullName: fullName }),
-      setRole: (role: string) => set({ role: role }),
+      employeeId: 0,
+      setFullName: (fullName) => set({ fullName }),
+      setRole: (role) => set({ role }),
       setLevel: (level) => set({ level: Number(level) }),
-      setLocation: (location: string) => set({ location: location }),
+      setLocation: (location) => set({ location }),
       changeLogInState: () => set({ isLoggedIn: !get().isLoggedIn }),
-      setToken: (token: string) => set({ token: token })
+      setToken: (token) => set({ token }),
+      setEmployeeId: (id) => set({ employeeId: id }),
     }),
-    {
-      name: 'login-storage'
-    }
+    { name: 'login-storage' }
   )
 )
