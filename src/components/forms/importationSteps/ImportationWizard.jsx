@@ -4,7 +4,14 @@ import ProductsStep from "./ProductsStep";
 import ExpensesStep from "./ExpensesStep";
 import SummaryStep from "./SummaryStep";
 import AdditionalCostsStep from "./AdditionalCostsStep";
-import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import FinalCostStep from "./FinalCostStep";
+import {
+  ArrowLeft,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+
 import {
   WizardCard,
   WizardHeader,
@@ -31,6 +38,7 @@ const STEPS = [
   "Base imponible e impuestos",
   "Pagos de bancos",
   "Gastos adicionales",
+  "Costo final",
 ];
 
 function ImportationWizard({ onCancel, onSubmit }) {
@@ -40,22 +48,27 @@ function ImportationWizard({ onCancel, onSubmit }) {
     supplier: "",
     reference: "",
     date: "",
-    officialExchangeRate: 6.96,
+    officialExchangeRate: "6.96",
     bankExchangeRate: "",
   });
 
   const [products, setProducts] = useState([
     {
+      productCode: "",
       productName: "",
-      baseQuantity: "",
       referenceQuantity: "",
+      baseQuantity: "",
       priceUsd: "",
       gaPercent: "",
     },
   ]);
 
+  // estados de gastos base
   const [expenses, setExpenses] = useState({
-    freights: [{ name: "", amount: "" }],
+    freights: [
+      { name: "Flete Naviero (FLETE I)", amount: "" },
+      { name: "Flete terrestre Frontera FLETE(II)", amount: "" },
+    ],
     insurances: [{ name: "", amount: "" }],
     portCosts: [{ name: "", amount: "" }],
     otherCosts: [{ name: "", amount: "" }],
@@ -228,7 +241,7 @@ function ImportationWizard({ onCancel, onSubmit }) {
   const baseImponibleBs =
     (totalProductosUsd + totalFletes + totalSeguros + totalPortCosts) *
     tcOficial;
-ñ
+
   const segurosBs = totalSeguros * tcOficial;
   const restaFinal = bankTotals.montoBs + segurosBs + fletes;
   const diferenciaTC = baseImponibleBs - restaFinal;
@@ -242,8 +255,9 @@ function ImportationWizard({ onCancel, onSubmit }) {
   const handlePrevStep = () => setCurrentStep((p) => Math.max(p - 1, 0));
   const handleGoToStep = (i) => setCurrentStep(i);
 
-  const handleSubmit = () => {
+  const handleSubmit = (status) => {
     onSubmit?.({
+      status,
       generalData,
       products,
       expenses,
@@ -347,23 +361,28 @@ function ImportationWizard({ onCancel, onSubmit }) {
       <StepContent>{renderStepContent()}</StepContent>
 
       <StepActions>
-        <StepSecondaryButton type="button" onClick={onCancel}>
-          Cancelar
-        </StepSecondaryButton>
+        {currentStep > 0 ? (
+          <StepSecondaryButton type="button" onClick={handlePrevStep}>
+            <ChevronLeft size={17} />
+            Anterior
+          </StepSecondaryButton>
+        ) : (
+          <div />
+        )}
         <StepActionsRight>
-          {currentStep > 0 && (
-            <StepSecondaryButton type="button" onClick={handlePrevStep}>
-              <ChevronLeft size={17} /> Anterior
-            </StepSecondaryButton>
-          )}
           {currentStep < STEPS.length - 1 ? (
             <StepPrimaryButton type="button" onClick={handleNextStep}>
               Siguiente <ChevronRight size={17} />
             </StepPrimaryButton>
           ) : (
-            <StepPrimaryButton type="button" onClick={handleSubmit}>
-              Guardar importación
-            </StepPrimaryButton>
+            <>
+              <StepSecondaryButton type="button" onClick={() => handleSubmit("borrador")}>
+                Guardar borrador
+              </StepSecondaryButton>
+              <StepPrimaryButton type="button" onClick={() => handleSubmit("verificado")}>
+                Guardar verificado
+              </StepPrimaryButton>
+            </>
           )}
         </StepActionsRight>
       </StepActions>

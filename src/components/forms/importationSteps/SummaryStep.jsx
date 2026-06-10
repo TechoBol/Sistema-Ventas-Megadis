@@ -200,6 +200,7 @@ function SummaryStep({ generalData, products, expenses ,setTotalProductosUsd }) 
 
       return {
         id: index + 1,
+        productCode: product.productCode || "Sin código",
         productName: product.productName || "Sin nombre",
         factor,
         commoditiesBs,
@@ -294,9 +295,10 @@ function SummaryStep({ generalData, products, expenses ,setTotalProductosUsd }) 
       <SummaryTableWrapper>
         <SummaryTable>
           <SummaryTableHead>
+            <span>Código</span>
             <span>Producto</span>
             <span>Factor</span>
-            <span>Mercacía Bs</span>
+            <span>Mercancía Bs</span>
             <span>Fletes Bs</span>
             <span>Seguro Bs</span>
             <span>Gastos portuarios Bs</span>
@@ -309,6 +311,8 @@ function SummaryStep({ generalData, products, expenses ,setTotalProductosUsd }) 
 
           {productCalculations.rows.map((item) => (
             <SummaryTableRow key={item.id}>
+              <SummaryTableCell>{item.productCode}</SummaryTableCell>
+
               <SummaryTableCell>{item.productName}</SummaryTableCell>
 
               <SummaryTableCell>{formatFactor(item.factor)}</SummaryTableCell>
@@ -341,6 +345,7 @@ function SummaryStep({ generalData, products, expenses ,setTotalProductosUsd }) 
 
           <SummaryTableFooter>
             <span>Total</span>
+            <span></span>
             <span></span>
             <span>{formatBs(totals.totalProductsBs)}</span>
             <span>{formatBs(totals.totalFreightsBs)}</span>
