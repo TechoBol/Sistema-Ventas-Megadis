@@ -5,7 +5,7 @@ import ImportationWizard from "../components/forms/importationSteps/ImportationW
 import { useImportations } from "../hooks/useImportations";
 import { generarImportationPDF } from "../components/pdf/generarImportationPDF";
 import { socket } from "../services/SocketIOConnection";
-
+import { useAmazonS3 } from "../hooks/useAmazonS3";
 import {
   PageSurface,
   PageWrapper,
@@ -65,7 +65,7 @@ function Costs() {
   });
   const { data, createImportation, updateImportation, isLoading } =
     useImportations();
-
+  const {getFileUrl} = useAmazonS3()
   const importations = useMemo(() => {
     return data.map((item) => ({
       id: item.id,
@@ -198,11 +198,15 @@ function Costs() {
         key: "detail",
         title: "Ver reporte PDF",
         icon: FileText,
-        onClick: (importation) => {
+        onClick: async (importation) => {
           try {
-            generarImportationPDF(importation.rawData);
+            const key = `MEGADIS/IMPORT/${importation.rawData.referenceNumber}.pdf`;
+
+            const url = await getFileUrl(key);
+
+            window.open(url, "_blank", "noopener,noreferrer");
           } catch (error) {
-            console.error("Error generando PDF:", error);
+            console.error("Error obteniendo PDF:", error);
           }
         },
       },

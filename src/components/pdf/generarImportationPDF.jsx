@@ -1,6 +1,9 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { calculateImportation, roundToFourDecimals } from "../utils/importationCalculations";
+import {
+  calculateImportation,
+  roundToFourDecimals,
+} from "../utils/importationCalculations";
 
 const formatDate = (value) => {
   if (!value) return "Sin fecha";
@@ -43,29 +46,19 @@ const formatPercent = (value) =>
   })}%`;
 
 const getStatusLabel = (status) => {
-  return status === "VERIFIED"
-    ? "Verificado"
-    : "Borrador";
+  return status === "VERIFIED" ? "Verificado" : "Borrador";
 };
 
-const mapImportationToCalculationData = (
-  importation
-) => {
+const mapImportationToCalculationData = (importation) => {
   const snapshot = importation?.snapshot ?? {};
-  const baseExpenses =
-    snapshot?.baseExpenses ?? {};
+  const baseExpenses = snapshot?.baseExpenses ?? {};
 
   return {
     generalData: {
-      supplier:
-        importation?.supplierName || "",
-      reference:
-        importation?.referenceNumber || "",
-      date:
-        importation?.importationDate || "",
-      officialExchangeRate: Number(
-        importation?.officialExchangeRate || 0
-      ),
+      supplier: importation?.supplierName || "",
+      reference: importation?.referenceNumber || "",
+      date: importation?.importationDate || "",
+      officialExchangeRate: Number(importation?.officialExchangeRate || 0),
       bankExchangeRate:
         importation?.bankExchangeRate !== null &&
         importation?.bankExchangeRate !== undefined
@@ -73,93 +66,55 @@ const mapImportationToCalculationData = (
           : null,
     },
 
-    products: Array.isArray(snapshot.products)
-      ? snapshot.products
-      : [],
+    products: Array.isArray(snapshot.products) ? snapshot.products : [],
 
     expenses: {
-      freights: Array.isArray(
-        baseExpenses.freights
-      )
+      freights: Array.isArray(baseExpenses.freights)
         ? baseExpenses.freights.map((item) => ({
             name: item?.name || "",
-            amount: Number(
-              item?.amountUsd ?? item?.amount ?? 0
-            ),
+            amount: Number(item?.amountUsd ?? item?.amount ?? 0),
           }))
         : [],
 
-      insurances: Array.isArray(
-        baseExpenses.insurances
-      )
+      insurances: Array.isArray(baseExpenses.insurances)
         ? baseExpenses.insurances.map((item) => ({
             name: item?.name || "",
-            amount: Number(
-              item?.amountUsd ?? item?.amount ?? 0
-            ),
+            amount: Number(item?.amountUsd ?? item?.amount ?? 0),
           }))
         : [],
 
-      portCosts: Array.isArray(
-        baseExpenses.portCosts
-      )
+      portCosts: Array.isArray(baseExpenses.portCosts)
         ? baseExpenses.portCosts.map((item) => ({
             name: item?.name || "",
-            amount: Number(
-              item?.amountUsd ?? item?.amount ?? 0
-            ),
+            amount: Number(item?.amountUsd ?? item?.amount ?? 0),
           }))
         : [],
 
-      otherCosts: Array.isArray(
-        baseExpenses.otherCosts
-      )
+      otherCosts: Array.isArray(baseExpenses.otherCosts)
         ? baseExpenses.otherCosts.map((item) => ({
             name: item?.name || "",
-            amount: Number(
-              item?.amountUsd ?? item?.amount ?? 0
-            ),
+            amount: Number(item?.amountUsd ?? item?.amount ?? 0),
           }))
         : [],
     },
 
-    additionalCosts: Array.isArray(
-      snapshot.additionalCosts
-    )
+    additionalCosts: Array.isArray(snapshot.additionalCosts)
       ? snapshot.additionalCosts.map((cost) => ({
           concept: cost?.concept || "",
           amount: Number(cost?.amount || 0),
           currency: cost?.currency || "BS",
-          hasFiscalCredit: Boolean(
-            cost?.hasFiscalCredit
-          ),
+          hasFiscalCredit: Boolean(cost?.hasFiscalCredit),
           creditRate: Number(
-            cost?.fiscalCreditPercent ??
-              cost?.creditRate ??
-              0
+            cost?.fiscalCreditPercent ?? cost?.creditRate ?? 0,
           ),
         }))
       : [],
   };
 };
 
-const addSectionTitle = (
-  doc,
-  title,
-  y,
-  pageWidth,
-  margin
-) => {
+const addSectionTitle = (doc, title, y, pageWidth, margin) => {
   doc.setFillColor(247, 248, 250);
-  doc.roundedRect(
-    margin,
-    y,
-    pageWidth - margin * 2,
-    9,
-    2,
-    2,
-    "F"
-  );
+  doc.roundedRect(margin, y, pageWidth - margin * 2, 9, 2, 2, "F");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
@@ -170,20 +125,13 @@ const addSectionTitle = (
 };
 
 const addPageNumbers = (doc) => {
-  const pageCount =
-    doc.internal.getNumberOfPages();
+  const pageCount = doc.internal.getNumberOfPages();
 
-  for (
-    let pageNumber = 1;
-    pageNumber <= pageCount;
-    pageNumber += 1
-  ) {
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
     doc.setPage(pageNumber);
 
-    const pageWidth =
-      doc.internal.pageSize.getWidth();
-    const pageHeight =
-      doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -193,40 +141,23 @@ const addPageNumbers = (doc) => {
       `Página ${pageNumber} de ${pageCount}`,
       pageWidth - 14,
       pageHeight - 8,
-      { align: "right" }
+      { align: "right" },
     );
 
-    doc.text(
-      "Sistema Megadis",
-      14,
-      pageHeight - 8
-    );
+    doc.text("Sistema Megadis", 14, pageHeight - 8);
   }
 };
 
-export const generarImportationPDF = (
-  importation
-) => {
+export const generarImportationPDF = (importation) => {
   if (!importation) {
-    throw new Error(
-      "No se proporcionó una importación."
-    );
+    throw new Error("No se proporcionó una importación.");
   }
 
-  const calculationData =
-    mapImportationToCalculationData(
-      importation
-    );
+  const calculationData = mapImportationToCalculationData(importation);
 
-  const calculations =
-    calculateImportation(calculationData);
+  const calculations = calculateImportation(calculationData);
 
-  const {
-    productRows,
-    additionalCostRows,
-    finalRows,
-    totals,
-  } = calculations;
+  const { productRows, additionalCostRows, finalRows, totals } = calculations;
 
   const doc = new jsPDF({
     orientation: "landscape",
@@ -234,8 +165,7 @@ export const generarImportationPDF = (
     format: "a4",
   });
 
-  const pageWidth =
-    doc.internal.pageSize.getWidth();
+  const pageWidth = doc.internal.pageSize.getWidth();
 
   const margin = 12;
 
@@ -244,39 +174,23 @@ export const generarImportationPDF = (
   doc.setFontSize(17);
   doc.setTextColor(30, 41, 59);
 
-  doc.text(
-    "REPORTE DE CÁLCULO DE COSTOS DE IMPORTACIÓN",
-    pageWidth / 2,
-    16,
-    { align: "center" }
-  );
+  doc.text("REPORTE DE CÁLCULO DE COSTOS DE IMPORTACIÓN", pageWidth / 2, 16, {
+    align: "center",
+  });
 
   doc.setDrawColor(204, 51, 41);
   doc.setLineWidth(0.7);
 
-  doc.line(
-    margin,
-    21,
-    pageWidth - margin,
-    21
-  );
+  doc.line(margin, 21, pageWidth - margin, 21);
 
   // DATOS GENERALES
-  const supplier =
-    importation?.supplierName ||
-    "Sin proveedor";
+  const supplier = importation?.supplierName || "Sin proveedor";
 
-  const reference =
-    importation?.referenceNumber ||
-    "Sin referencia";
+  const reference = importation?.referenceNumber || "Sin referencia";
 
-  const date = formatDate(
-    importation?.importationDate
-  );
+  const date = formatDate(importation?.importationDate);
 
-  const officialExchangeRate = Number(
-    importation?.officialExchangeRate || 0
-  );
+  const officialExchangeRate = Number(importation?.officialExchangeRate || 0);
 
   const bankExchangeRate =
     importation?.bankExchangeRate !== null &&
@@ -284,82 +198,44 @@ export const generarImportationPDF = (
       ? Number(importation.bankExchangeRate)
       : null;
 
-  const status = getStatusLabel(
-    importation?.status
-  );
+  const status = getStatusLabel(importation?.status);
 
   doc.setFontSize(9);
 
   const infoY = 28;
 
-  const drawField = (
-    label,
-    value,
-    x,
-    y,
-    labelWidth
-  ) => {
+  const drawField = (label, value, x, y, labelWidth) => {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(71, 85, 105);
     doc.text(`${label}:`, x, y);
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(15, 23, 42);
-    doc.text(
-      String(value ?? "-"),
-      x + labelWidth,
-      y
-    );
+    doc.text(String(value ?? "-"), x + labelWidth, y);
   };
 
-  drawField(
-    "Proveedor",
-    supplier,
-    margin,
-    infoY,
-    22
-  );
+  drawField("Proveedor", supplier, margin, infoY, 22);
 
-  drawField(
-    "Referencia",
-    reference,
-    margin,
-    infoY + 6,
-    22
-  );
+  drawField("Referencia", reference, margin, infoY + 6, 22);
 
-  drawField(
-    "Fecha",
-    date,
-    108,
-    infoY,
-    14
-  );
+  drawField("Fecha", date, 108, infoY, 14);
 
-  drawField(
-    "Estado",
-    status,
-    108,
-    infoY + 6,
-    14
-  );
+  drawField("Estado", status, 108, infoY + 6, 14);
 
   drawField(
     "Tipo de cambio oficial",
     officialExchangeRate.toFixed(4),
     190,
     infoY,
-    38
+    38,
   );
 
   drawField(
     "Tipo de cambio banco",
-    bankExchangeRate !== null
-      ? bankExchangeRate.toFixed(4)
-      : "No registrado",
+    bankExchangeRate !== null ? bankExchangeRate.toFixed(4) : "No registrado",
     190,
     infoY + 6,
-    38
+    38,
   );
 
   let currentY = 45;
@@ -370,7 +246,7 @@ export const generarImportationPDF = (
     "1. Productos importados",
     currentY,
     pageWidth,
-    margin
+    margin,
   );
 
   autoTable(doc, {
@@ -394,9 +270,7 @@ export const generarImportationPDF = (
     body: productRows.map((row) => [
       row.productCode,
       row.productName,
-      formatQuantity(
-        row.referenceQuantity
-      ),
+      formatQuantity(row.referenceQuantity),
       formatQuantity(row.baseQuantity),
       formatUsd(row.priceUsd),
       formatUsd(row.subtotalUsd),
@@ -428,9 +302,7 @@ export const generarImportationPDF = (
     },
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    8;
+  currentY = (doc.lastAutoTable?.finalY || currentY) + 8;
 
   // GASTOS BASE
   currentY = addSectionTitle(
@@ -438,41 +310,33 @@ export const generarImportationPDF = (
     "2. Gastos base",
     currentY,
     pageWidth,
-    margin
+    margin,
   );
 
   const baseExpenseRows = [
-    ...(calculationData.expenses.freights || []).map(
-      (item) => [
-        "Flete",
-        item.name || "Sin nombre",
-        formatUsd(item.amount),
-      ]
-    ),
+    ...(calculationData.expenses.freights || []).map((item) => [
+      "Flete",
+      item.name || "Sin nombre",
+      formatUsd(item.amount),
+    ]),
 
-    ...(calculationData.expenses.insurances || []).map(
-      (item) => [
-        "Seguro",
-        item.name || "Sin nombre",
-        formatUsd(item.amount),
-      ]
-    ),
+    ...(calculationData.expenses.insurances || []).map((item) => [
+      "Seguro",
+      item.name || "Sin nombre",
+      formatUsd(item.amount),
+    ]),
 
-    ...(calculationData.expenses.portCosts || []).map(
-      (item) => [
-        "Gasto portuario",
-        item.name || "Sin nombre",
-        formatUsd(item.amount),
-      ]
-    ),
+    ...(calculationData.expenses.portCosts || []).map((item) => [
+      "Gasto portuario",
+      item.name || "Sin nombre",
+      formatUsd(item.amount),
+    ]),
 
-    ...(calculationData.expenses.otherCosts || []).map(
-      (item) => [
-        "Otro gasto",
-        item.name || "Sin nombre",
-        formatUsd(item.amount),
-      ]
-    ),
+    ...(calculationData.expenses.otherCosts || []).map((item) => [
+      "Otro gasto",
+      item.name || "Sin nombre",
+      formatUsd(item.amount),
+    ]),
   ];
 
   autoTable(doc, {
@@ -481,30 +345,16 @@ export const generarImportationPDF = (
       left: margin,
       right: margin,
     },
-    head: [
-      [
-        "Categoría",
-        "Concepto",
-        "Monto USD",
-      ],
-    ],
+    head: [["Categoría", "Concepto", "Monto USD"]],
     body:
       baseExpenseRows.length > 0
         ? baseExpenseRows
-        : [
-            [
-              "—",
-              "Sin gastos registrados",
-              formatUsd(0),
-            ],
-          ],
+        : [["—", "Sin gastos registrados", formatUsd(0)]],
     foot: [
       [
         "",
         "Total gastos considerados en CIF",
-        formatUsd(
-          totals.totalBaseExpensesUsd
-        ),
+        formatUsd(totals.totalBaseExpensesUsd),
       ],
     ],
     styles: {
@@ -530,9 +380,7 @@ export const generarImportationPDF = (
     },
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    8;
+  currentY = (doc.lastAutoTable?.finalY || currentY) + 8;
 
   // BASE IMPONIBLE
   doc.addPage();
@@ -544,7 +392,7 @@ export const generarImportationPDF = (
     "3. Base imponible e impuestos",
     currentY,
     pageWidth,
-    margin
+    margin,
   );
 
   autoTable(doc, {
@@ -587,17 +435,13 @@ export const generarImportationPDF = (
         "",
         formatBs(totals.totalProductsBs),
         formatBs(totals.totalFreightsBs),
-        formatBs(
-          totals.totalInsurancesBs
-        ),
+        formatBs(totals.totalInsurancesBs),
         formatBs(totals.totalPortCostsBs),
         formatBs(totals.totalCifBs),
         "",
         formatBs(totals.totalGaBs),
         formatBs(totals.totalIvaBs),
-        formatBs(
-          totals.totalValueAfterTaxesBs
-        ),
+        formatBs(totals.totalValueAfterTaxesBs),
       ],
     ],
     styles: {
@@ -634,9 +478,7 @@ export const generarImportationPDF = (
     },
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    8;
+  currentY = (doc.lastAutoTable?.finalY || currentY) + 8;
 
   // GASTOS ADICIONALES
   currentY = addSectionTitle(
@@ -644,7 +486,7 @@ export const generarImportationPDF = (
     "4. Gastos adicionales",
     currentY,
     pageWidth,
-    margin
+    margin,
   );
 
   autoTable(doc, {
@@ -671,22 +513,12 @@ export const generarImportationPDF = (
             row.concept,
             row.currency,
             row.currency === "USD"
-              ? formatUsd(
-                  row.originalAmount
-                )
-              : formatBs(
-                  row.originalAmount
-                ),
+              ? formatUsd(row.originalAmount)
+              : formatBs(row.originalAmount),
             formatUsd(row.amountUsd),
             formatBs(row.amountBs),
-            row.hasFiscalCredit
-              ? formatPercent(
-                  row.creditRate
-                )
-              : "No aplica",
-            formatBs(
-              row.fiscalCreditBs
-            ),
+            row.hasFiscalCredit ? formatPercent(row.creditRate) : "No aplica",
+            formatBs(row.fiscalCreditBs),
             formatBs(row.netAmountBs),
           ])
         : [
@@ -706,23 +538,11 @@ export const generarImportationPDF = (
         "TOTAL",
         "",
         "",
-        formatUsd(
-          totals.totalAdditionalCosts
-            .amountUsd
-        ),
-        formatBs(
-          totals.totalAdditionalCosts
-            .amountBs
-        ),
+        formatUsd(totals.totalAdditionalCosts.amountUsd),
+        formatBs(totals.totalAdditionalCosts.amountBs),
         "",
-        formatBs(
-          totals.totalAdditionalCosts
-            .fiscalCreditBs
-        ),
-        formatBs(
-          totals.totalAdditionalCosts
-            .netAmountBs
-        ),
+        formatBs(totals.totalAdditionalCosts.fiscalCreditBs),
+        formatBs(totals.totalAdditionalCosts.netAmountBs),
       ],
     ],
     styles: {
@@ -744,9 +564,7 @@ export const generarImportationPDF = (
     },
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    8;
+  currentY = (doc.lastAutoTable?.finalY || currentY) + 8;
 
   // COSTO FINAL
   doc.addPage();
@@ -758,7 +576,7 @@ export const generarImportationPDF = (
     "5. Costo final por producto",
     currentY,
     pageWidth,
-    margin
+    margin,
   );
 
   autoTable(doc, {
@@ -784,31 +602,19 @@ export const generarImportationPDF = (
       row.productName,
       formatFactor(row.factor),
       formatBs(row.valueAfterTaxesBs),
-      formatBs(
-        row.additionalAssignedBs
-      ),
+      formatBs(row.additionalAssignedBs),
       formatBs(row.finalCostBs),
-      formatQuantity(
-        row.referenceQuantity
-      ),
-      row.unitCostBs !== null
-        ? formatBs(row.unitCostBs)
-        : "Sin cantidad",
+      formatQuantity(row.referenceQuantity),
+      row.unitCostBs !== null ? formatBs(row.unitCostBs) : "Sin cantidad",
     ]),
     foot: [
       [
         "TOTAL",
         "",
         "",
-        formatBs(
-          totals.totalValueAfterTaxesBs
-        ),
-        formatBs(
-          totals.totalAdditionalAssignedBs
-        ),
-        formatBs(
-          totals.totalFinalCostBs
-        ),
+        formatBs(totals.totalValueAfterTaxesBs),
+        formatBs(totals.totalAdditionalAssignedBs),
+        formatBs(totals.totalFinalCostBs),
         "",
         "",
       ],
@@ -832,103 +638,53 @@ export const generarImportationPDF = (
     },
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    9;
+  currentY = (doc.lastAutoTable?.finalY || currentY) + 9;
 
   // RESUMEN FINAL
   doc.setFillColor(254, 242, 242);
-  doc.roundedRect(
-    margin,
-    currentY,
-    pageWidth - margin * 2,
-    28,
-    3,
-    3,
-    "F"
-  );
+  doc.roundedRect(margin, currentY, pageWidth - margin * 2, 28, 3, 3, "F");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(153, 27, 27);
 
-  doc.text(
-    "RESUMEN FINAL",
-    margin + 5,
-    currentY + 7
-  );
+  doc.text("RESUMEN FINAL", margin + 5, currentY + 7);
 
   doc.setFontSize(9);
   doc.setTextColor(31, 41, 55);
 
   doc.text(
-    `Valor después de impuestos: ${formatBs(
-      totals.totalValueAfterTaxesBs
-    )}`,
+    `Valor después de impuestos: ${formatBs(totals.totalValueAfterTaxesBs)}`,
     margin + 5,
-    currentY + 15
+    currentY + 15,
   );
 
   doc.text(
     `Gastos adicionales netos: ${formatBs(
-      totals.totalAdditionalCosts
-        .netAmountBs
+      totals.totalAdditionalCosts.netAmountBs,
     )}`,
     106,
-    currentY + 15
+    currentY + 15,
   );
 
   doc.text(
-    `Crédito fiscal: ${formatBs(
-      totals.totalAdditionalCosts
-        .fiscalCreditBs
-    )}`,
+    `Crédito fiscal: ${formatBs(totals.totalAdditionalCosts.fiscalCreditBs)}`,
     198,
-    currentY + 15
+    currentY + 15,
   );
 
   doc.setFontSize(11);
   doc.setTextColor(185, 28, 28);
 
   doc.text(
-    `Costo final total: ${formatBs(
-      totals.totalFinalCostBs
-    )}`,
+    `Costo final total: ${formatBs(totals.totalFinalCostBs)}`,
     margin + 5,
-    currentY + 23
+    currentY + 23,
   );
 
   addPageNumbers(doc);
 
-  const safeReference = String(
-    importation?.referenceNumber ||
-      importation?.id ||
-      "sin-referencia"
-  )
-    .replace(/[^\w-]/g, "_")
-    .toLowerCase();
+  addPageNumbers(doc);
 
-  const fileName = `calculo_costos_${safeReference}.pdf`;
-
-  /*
-   * Abrimos el PDF en una pestaña nueva.
-   * También puedes cambiarlo por doc.save(fileName)
-   * cuando quieras descargar directamente.
-   */
-  const pdfBlob = doc.output("blob");
-  const pdfUrl = URL.createObjectURL(pdfBlob);
-
-  const openedWindow = window.open(
-    pdfUrl,
-    "_blank",
-    "noopener,noreferrer"
-  );
-
-  if (!openedWindow) {
-    doc.save(fileName);
-  }
-
-  window.setTimeout(() => {
-    URL.revokeObjectURL(pdfUrl);
-  }, 60000);
+  return doc.output("blob");
 };

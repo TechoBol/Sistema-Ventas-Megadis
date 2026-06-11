@@ -112,7 +112,7 @@ export const useImportations = () => {
 
 
       const pdfBlob = generarImportationPDF(newImportation);
-      // 3. Convertir a File
+
       const file = new File(
         [pdfBlob],
         `import_${newImportation.referenceNumber}.pdf`,

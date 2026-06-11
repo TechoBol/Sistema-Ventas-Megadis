@@ -89,18 +89,6 @@ export default function BanksStep({
   const removeBlock = (id) =>
     onChangeBlocks((prev) => prev.filter((b) => b.id !== id));
 
-  const BlocksGrid = ({ children }) => (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        gap: 16,
-      }}
-    >
-      {children}
-    </div>
-  );
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <SectionHeader>
@@ -109,7 +97,13 @@ export default function BanksStep({
           <Plus size={14} /> Agregar saldo
         </AddButton>
       </SectionHeader>
-      <BlocksGrid>
+      <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 16,
+  }}
+>
         {blocks.map((b) => {
           const c = calcBlock(b);
           return (
@@ -284,7 +278,7 @@ export default function BanksStep({
             </StepPanel>
           );
         })}
-      </BlocksGrid>
+      </div>
       {/* Resumen global */}
       <SummaryCardsGrid>
         <SummaryCard>
