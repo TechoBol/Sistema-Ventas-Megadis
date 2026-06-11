@@ -1,27 +1,20 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
-
 import DataTable from "../components/table/DataTable";
-
 import { useSales } from "../hooks/useSale";
 import { useAmazonS3 } from "../hooks/useAmazonS3";
-
 import dayjs from "dayjs";
 import "dayjs/locale/es";
-
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-
 import { Dialog, DialogContent, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
 import PrintIcon from "@mui/icons-material/Print";
-
 import { FaTrash } from "react-icons/fa";
 import { FileText, Search, ReceiptText } from "lucide-react";
-
 import { Document, Page, pdfjs } from "react-pdf";
-
+import { useSearchParams } from "react-router-dom";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -60,23 +53,28 @@ const fechaHoy = () => {
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 function Receipts() {
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const { data } = useSales();
   const { getFileUrl } = useAmazonS3();
-
-  console.log("SALES:", data);
-
   const containerRef = useRef(null);
-
-  const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-
   const [openPdf, setOpenPdf] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState("");
   const [numPages, setNumPages] = useState(null);
   const [pageWidth, setPageWidth] = useState(600);
   const [currentCode, setCurrentCode] = useState("");
 
+
+
+  useEffect(() => {
+    const code = searchParams.get("search");
+    if (code !== null) {
+      setSearch(code);
+    }
+  }, [searchParams]);
+  
   // =====================================================
   // RESPONSIVE PDF
   // =====================================================

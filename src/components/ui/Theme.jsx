@@ -23,5 +23,9 @@ export const theme = {
     success: "#69d584",
     error: "#dc655f",
     warning: "#F59E0B",
+
+    transferBg: "#FFF7ED",  
+    transferColor: "#C2410C",
+    transferBorder: "#FB923C",
   },
 };

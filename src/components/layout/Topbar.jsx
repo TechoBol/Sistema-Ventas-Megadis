@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-
-import { Bell, ChevronDown, User, LogOut ,PiggyBank} from "lucide-react";
+import { ChevronDown, User, LogOut, PiggyBank } from "lucide-react";
 import MenuIcon from "@mui/icons-material/Menu";
+import NotificationBell from "../utils/NotificationBell";
 import {
   TopbarWrapper,
   LeftActions,
   MenuButton,
   Actions,
-  IconButton,
   UserProfile,
   Avatar,
   UserText,
@@ -22,17 +21,15 @@ import {
 } from "../ui/layout/Topbar.styles";
 
 import { useLoginStore } from "../store/loginStore";
-
 import useAuthentication from "../../hooks/useAuthentication";
+import useNotifications from "../../hooks/useNotification";
 
 function Topbar({ onOpenSidebar }) {
   const { fullName, role } = useLoginStore();
-
-  const { logOut ,redirect} = useAuthentication();
-
+  const { logOut, redirect } = useAuthentication();
   const [openMenu, setOpenMenu] = useState(false);
-
   const menuRef = useRef(null);
+  const { notifications, markAsRead, markAllAsRead, toastNotification, clearToast } = useNotifications();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -40,12 +37,8 @@ function Topbar({ onOpenSidebar }) {
         setOpenMenu(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -57,9 +50,13 @@ function Topbar({ onOpenSidebar }) {
       </LeftActions>
 
       <Actions>
-        <IconButton type="button">
-          <Bell size={18} />
-        </IconButton>
+        <NotificationBell
+          notifications={notifications}
+          onMarkAllRead={markAllAsRead}
+          onMarkRead={markAsRead}
+          toastNotification={toastNotification}
+          onClearToast={clearToast}
+        />
 
         <UserMenuWrapper ref={menuRef}>
           <UserProfile
@@ -84,9 +81,7 @@ function Topbar({ onOpenSidebar }) {
                 <DropdownName>{fullName}</DropdownName>
                 <DropdownRole>{role}</DropdownRole>
               </DropdownHeader>
-              <DropdownItem
-                onClick={redirect}
-              >
+              <DropdownItem onClick={redirect}>
                 <PiggyBank size={18} />
                 Ir a tesoreria
               </DropdownItem>

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import DataTable from "../components/table/DataTable";
 import { useQuotations } from "../hooks/useQuotation";
 import { useAmazonS3 } from "../hooks/useAmazonS3";
@@ -16,6 +16,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import Swal from "sweetalert2";
 import { generarDocumentoVenta } from "../components/pdf/generarPDF.jsx";
+import { useSearchParams } from "react-router-dom";
 import {
     PageContainer,
     PageHeader,
@@ -155,10 +156,10 @@ const ConvertModal = ({ open, onClose, onConfirm, loading }) => {
 // =====================================================
 
 function Quotations() {
+    const [searchParams] = useSearchParams();
+    const [search, setSearch] = useState(searchParams.get("search") ?? "");
     const { data, loading, updateStatus, convertToSale } = useQuotations();
     const { getFileUrl, uploadPDF } = useAmazonS3();
-
-    const [search, setSearch] = useState("");
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
 
@@ -173,6 +174,13 @@ function Quotations() {
     const [convertOpen, setConvertOpen] = useState(false);
     const [convertLoading, setConvertLoading] = useState(false);
     const [selectedQuotation, setSelectedQuotation] = useState(null);
+
+    useEffect(() => {
+        const code = searchParams.get("search");
+        if (code !== null) {
+            setSearch(code);
+        }
+    }, [searchParams]);
 
     // =====================================================
     // FILTROS

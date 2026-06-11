@@ -1,12 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import DataTable from "../components/table/DataTable";
 import CreateTransferModal from "../components/modals/CreateTransferModal";
-
 import { useTransfers } from "../hooks/useTransfers";
 import { useSucursales } from "../hooks/useSucursales";
-
 import { useLoginStore } from "../components/store/loginStore";
-
+import { useSearchParams } from "react-router-dom";
 import { Search, Eye, FileText, Send } from "lucide-react";
 
 import {
@@ -45,16 +43,21 @@ const EMPTY_TRANSFER_FORM = {
 };
 
 function Transfer() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") ?? "");
   const [selectedView, setSelectedView] = useState("all");
-
   const [modalOpen, setModalOpen] = useState(false);
-
   const [form, setForm] = useState(EMPTY_TRANSFER_FORM);
-
   const { location, token } = useLoginStore();
-
   const { products } = useInventory();
+
+
+  useEffect(() => {
+    const code = searchParams.get("search");
+    if (code !== null) {
+      setSearchTerm(code);
+    }
+  }, [searchParams]);
 
   const {
     data: transfers,
@@ -93,25 +96,25 @@ function Transfer() {
 
   const filteredTransfers = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
-  
+
     let result = [];
-  
+
     if (selectedView === "all") {
       result = formattedTransfers.filter(
         (transfer) =>
           transfer.raw?.toLocationId === location?.id,
       );
     }
-  
+
     if (selectedView === "requests") {
       result = formattedTransfers.filter(
         (transfer) =>
           transfer.raw?.fromLocationId === location?.id,
       );
     }
-  
+
     if (!value) return result;
-  
+
     return result.filter((transfer) =>
       [
         transfer.code,
@@ -209,17 +212,17 @@ function Transfer() {
         key: "details",
         title: "Ver detalles",
         icon: Eye,
-  
+
         onClick: (transfer) => {
           handleViewDetail(transfer);
         },
       },
-  
+
       {
         key: "pdf",
         title: "Ver PDF",
         icon: FileText,
-  
+
         onClick: (transfer) => {
           handleViewPDF(transfer.code);
         },

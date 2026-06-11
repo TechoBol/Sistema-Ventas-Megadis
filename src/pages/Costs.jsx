@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { Search, Plus, Eye } from "lucide-react";
+import { Search, Plus, FileText, Pencil } from "lucide-react";
 import DataTable from "../components/table/DataTable";
 import ImportationWizard from "../components/forms/importationSteps/ImportationWizard";
-
+import { useImportations } from "../hooks/useImportations";
+import { generarImportationPDF } from "../components/pdf/generarImportationPDF";
+import { socket } from "../services/SocketIOConnection";
+import { useAmazonS3 } from "../hooks/useAmazonS3";
 import {
   PageSurface,
   PageWrapper,
@@ -13,37 +16,8 @@ import {
   SearchBox,
   SearchInput,
   PrimaryActionButton,
+  StatusBadge,
 } from "../components/ui/Page.styles";
-
-const mockImports = [
-  {
-    id: 1,
-    supplier: "Proveedor Norte",
-    reference: "IMP-2026-001",
-    date: "2026-05-16",
-    quantity: 120,
-    totalUsd: 3500,
-    products: 8,
-  },
-  {
-    id: 2,
-    supplier: "Importadora Central",
-    reference: "IMP-2026-002",
-    date: "2026-05-18",
-    quantity: 85,
-    totalUsd: 2140.5,
-    products: 5,
-  },
-  {
-    id: 3,
-    supplier: "Distribuidora Andes",
-    reference: "IMP-2026-003",
-    date: "2026-05-20",
-    quantity: 240,
-    totalUsd: 7200,
-    products: 12,
-  },
-];
 
 const fechaHoy = () =>
   new Date().toLocaleDateString("es-BO", {
@@ -53,41 +27,77 @@ const fechaHoy = () =>
     day: "numeric",
   });
 
-const formatUsd = (value) =>
-  `$ ${Number(value || 0).toLocaleString("es-BO", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-
 const formatDate = (value) => {
   if (!value) return "-";
-  const date = new Date(value);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
+
+  const [datePart] = value.split("T");
+  const [year, month, day] = datePart.split("-");
+
+  if (!year || !month || !day) return "-";
+
   return `${day}/${month}/${year}`;
+};
+
+const formatExchangeRate = (value) => {
+  if (!value) return "-";
+
+  return Number(value).toLocaleString("es-BO", {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  });
+};
+
+const getStatusLabel = (status) => {
+  if (status === "VERIFIED" || status === "verificado") return "Verificado";
+  return "Borrador";
+};
+
+const getStatusValue = (status) => {
+  if (status === "VERIFIED") return "verificado";
+  return "borrador";
 };
 
 function Costs() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+  const [viewState, setViewState] = useState({
+    mode: "list",
+    selectedImportation: null,
+  });
+  const { data, createImportation, updateImportation, isLoading } =
+    useImportations();
+  const {getFileUrl} = useAmazonS3()
+  const importations = useMemo(() => {
+    return data.map((item) => ({
+      id: item.id,
+      supplier: item.supplierName || "Sin proveedor",
+      reference: item.referenceNumber || "Sin referencia",
+      date: item.importationDate || "",
+      exchangeRate: item.officialExchangeRate || 0,
+      productCount: item.productCount || 0,
+      status: getStatusValue(item.status),
+      rawData: item,
+    }));
+  }, [data]);
+
   const filteredImports = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
-    if (!value) return mockImports;
-    return mockImports.filter((item) =>
+
+    if (!value) return importations;
+
+    return importations.filter((item) =>
       [
         item.supplier,
         item.reference,
         item.date,
-        item.quantity,
-        item.totalUsd,
-        item.products,
+        item.exchangeRate,
+        item.productCount,
+        getStatusLabel(item.status),
       ]
         .join(" ")
         .toLowerCase()
-        .includes(value)
+        .includes(value),
     );
-  }, [searchTerm]);
+  }, [searchTerm, importations]);
 
   const importColumns = useMemo(
     () => [
@@ -99,9 +109,9 @@ function Costs() {
       },
       {
         field: "reference",
-        headerName: "Referencia",
-        flex: 1,
-        minWidth: 150,
+        headerName: "Referencia / Factura",
+        flex: 1.1,
+        minWidth: 180,
       },
       {
         field: "date",
@@ -111,61 +121,114 @@ function Costs() {
         valueFormatter: (value) => formatDate(value),
       },
       {
-        field: "quantity",
-        headerName: "Cantidad",
+        field: "exchangeRate",
+        headerName: "Tipo de cambio",
+        flex: 0.9,
+        minWidth: 150,
+        valueFormatter: (value) => formatExchangeRate(value),
+      },
+      {
+        field: "productCount",
+        headerName: "Productos",
         flex: 0.8,
         minWidth: 120,
       },
       {
-        field: "totalUsd",
-        headerName: "Total USD",
-        flex: 1,
-        minWidth: 150,
-        valueFormatter: (value) => formatUsd(value),
-      },
-      {
-        field: "products",
-        headerName: "Productos",
+        field: "status",
+        headerName: "Estado",
         flex: 0.9,
-        minWidth: 130,
+        minWidth: 140,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+          <StatusBadge $status={params.value}>
+            {getStatusLabel(params.value)}
+          </StatusBadge>
+        ),
       },
     ],
-    []
+    [],
   );
 
+  // funciones
+  const handleOpenCreate = () => {
+    setViewState({
+      mode: "create",
+      selectedImportation: null,
+    });
+  };
+
+  const handleOpenEdit = (importation) => {
+    setViewState({
+      mode: "edit",
+      selectedImportation: importation.rawData,
+    });
+  };
+
+  const handleCloseForm = () => {
+    setViewState({
+      mode: "list",
+      selectedImportation: null,
+    });
+  };
+
+  const handleSaveImportation = async (payload) => {
+    if (viewState.mode === "edit") {
+      const updated = await updateImportation(
+        viewState.selectedImportation.id,
+        payload,
+      );
+      if (updated) {
+        handleCloseForm();
+      }
+      return;
+    }
+    const created = await createImportation(payload);
+    if (created) {
+      socket.emit("createProduct", created);
+
+      handleCloseForm();
+    }
+  };
+
+  // actions
   const importActions = useMemo(
     () => [
       {
         key: "detail",
-        title: "Ver detalle",
-        icon: Eye,
-        onClick: (importation) => {
-          console.log("Ver detalle de importación:", importation);
+        title: "Ver reporte PDF",
+        icon: FileText,
+        onClick: async (importation) => {
+          try {
+            const key = `MEGADIS/IMPORT/${importation.rawData.referenceNumber}.pdf`;
+
+            const url = await getFileUrl(key);
+
+            window.open(url, "_blank", "noopener,noreferrer");
+          } catch (error) {
+            console.error("Error obteniendo PDF:", error);
+          }
         },
       },
+      {
+        key: "edit",
+        title: "Editar importación",
+        icon: Pencil,
+        hidden: (importation) => importation.status === "verificado",
+        onClick: handleOpenEdit,
+      },
     ],
-    []
+    [handleOpenEdit],
   );
 
-  const handleOpenCreate = () => {
-    setIsCreating(true);
-  };
-
-  const handleCloseCreate = () => {
-    setIsCreating(false);
-  };
-
-  const handleSaveImportation = (payload) => {
-    console.log("Guardar importación:", payload);
-    setIsCreating(false);
-  };
-
-  if (isCreating) {
+  if (viewState.mode === "create" || viewState.mode === "edit") {
     return (
       <PageSurface>
         <PageWrapper>
           <ImportationWizard
-            onCancel={handleCloseCreate}
+            mode={viewState.mode}
+            initialData={viewState.selectedImportation}
+            onCancel={handleCloseForm}
             onSubmit={handleSaveImportation}
           />
         </PageWrapper>
@@ -186,7 +249,7 @@ function Costs() {
             <Search size={18} />
             <SearchInput
               type="text"
-              placeholder="Buscar proveedor, referencia o fecha"
+              placeholder="Buscar proveedor, referencia, fecha o estado"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
             />
@@ -205,6 +268,7 @@ function Costs() {
           pageSize={7}
           pageSizeOptions={[7, 10, 20]}
           noRowsLabel="No hay importaciones registradas"
+          loading={isLoading}
         />
       </PageWrapper>
     </PageSurface>
