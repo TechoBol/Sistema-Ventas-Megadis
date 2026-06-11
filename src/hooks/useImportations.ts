@@ -8,7 +8,8 @@ import {
   updateImportationService,
   verifyImportationService,
 } from "../services/importationService";
-
+import { useAmazonS3 } from "./useAmazonS3";
+import { generarImportationPDF } from "../components/pdf/generarImportationPDF.jsx";
 const mapWizardPayloadToApi = (payload: any) => {
   const generalData = payload.generalData ?? {};
   const products = payload.products ?? [];
@@ -78,6 +79,7 @@ export const useImportations = () => {
 
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { uploadPDFImport } = useAmazonS3();
 
   const getImportations = async () => {
     setIsLoading(true);
@@ -108,12 +110,28 @@ export const useImportations = () => {
       const dataToSave = mapWizardPayloadToApi(payload);
       const newImportation = await createImportationService(dataToSave, token);
 
-      successToast(
-        payload.status === "verificado"
-          ? "Importación guardada como verificada"
-          : "Importación guardada como borrador"
+
+      const pdfBlob = generarImportationPDF(newImportation);
+      // 3. Convertir a File
+      const file = new File(
+        [pdfBlob],
+        `import_${newImportation.referenceNumber}.pdf`,
+        {
+          type: "application/pdf",
+        },
       );
 
+      // 4. Subir a S3
+      const pdfKey = await uploadPDFImport(
+        file,
+        newImportation.referenceNumber,
+      );
+      
+      successToast(
+        payload.status === "verificado"
+          ? "Importación " + pdfKey+"  guardada como verificada"
+          : "Importación " + pdfKey+"  guardada como borrador",
+      );
       await getImportations();
 
       return newImportation;
@@ -133,11 +151,26 @@ export const useImportations = () => {
       const updatedImportation = await updateImportationService(
         id,
         dataToSave,
-        token
+        token,
       );
 
-      successToast("Importación actualizada");
+      
+      const pdfBlob = generarImportationPDF(updatedImportation);
+      // 3. Convertir a File
+      const file = new File(
+        [pdfBlob],
+        `import_${updatedImportation.referenceNumber}.pdf`,
+        {
+          type: "application/pdf",
+        },
+      );
 
+      // 4. Subir a S3
+      const pdfKey = await uploadPDFImport(
+        file,
+        updatedImportation.referenceNumber,
+      );
+      successToast("Importación " + pdfKey+" actualizada");
       await getImportations();
 
       return updatedImportation;

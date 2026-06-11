@@ -15,7 +15,7 @@ export const usePermissions = () => {
   const isAdmin = lvl === 1;
   const isManager = lvl === 2;
   const isSeller = lvl === 4;
-
+  const isViewer = lvl === 5;
   return {
     level: lvl,
 
@@ -45,5 +45,6 @@ export const usePermissions = () => {
     canEditProduct: isAdmin || isManager,
     // SOLO ADMIN
     canViewProfits: isAdmin,
+    canViewCosts : isAdmin || isManager || isViewer,
   };
 };

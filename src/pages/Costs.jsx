@@ -4,7 +4,7 @@ import DataTable from "../components/table/DataTable";
 import ImportationWizard from "../components/forms/importationSteps/ImportationWizard";
 import { useImportations } from "../hooks/useImportations";
 import { generarImportationPDF } from "../components/pdf/generarImportationPDF";
-//import { socket } from "../services/SocketIOConnection";
+import { socket } from "../services/SocketIOConnection";
 
 import {
   PageSurface,
@@ -63,7 +63,8 @@ function Costs() {
     mode: "list",
     selectedImportation: null,
   });
-  const { data, createImportation, updateImportation, isLoading } = useImportations();
+  const { data, createImportation, updateImportation, isLoading } =
+    useImportations();
 
   const importations = useMemo(() => {
     return data.map((item) => ({
@@ -94,7 +95,7 @@ function Costs() {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(value)
+        .includes(value),
     );
   }, [searchTerm, importations]);
 
@@ -146,7 +147,7 @@ function Costs() {
         ),
       },
     ],
-    []
+    [],
   );
 
   // funciones
@@ -175,7 +176,7 @@ function Costs() {
     if (viewState.mode === "edit") {
       const updated = await updateImportation(
         viewState.selectedImportation.id,
-        payload
+        payload,
       );
       if (updated) {
         handleCloseForm();
@@ -184,6 +185,8 @@ function Costs() {
     }
     const created = await createImportation(payload);
     if (created) {
+      socket.emit("createProduct", created);
+
       handleCloseForm();
     }
   };
@@ -197,14 +200,9 @@ function Costs() {
         icon: FileText,
         onClick: (importation) => {
           try {
-            generarImportationPDF(
-              importation.rawData
-            );
+            generarImportationPDF(importation.rawData);
           } catch (error) {
-            console.error(
-              "Error generando PDF:",
-              error
-            );
+            console.error("Error generando PDF:", error);
           }
         },
       },
@@ -216,7 +214,7 @@ function Costs() {
         onClick: handleOpenEdit,
       },
     ],
-    [handleOpenEdit]
+    [handleOpenEdit],
   );
 
   if (viewState.mode === "create" || viewState.mode === "edit") {
