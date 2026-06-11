@@ -41,116 +41,301 @@ const STEPS = [
   "Costo final",
 ];
 
-function ImportationWizard({ onCancel, onSubmit }) {
+// constantes para arracar con datos existentes
+const emptyProduct = {
+  productCode: "",
+  productName: "",
+  referenceQuantity: "",
+  baseQuantity: "",
+  priceUsd: "",
+  gaPercent: "",
+};
+
+const defaultExpenses = {
+  freights: [
+    { name: "Flete Naviero (FLETE I)", amount: "" },
+    { name: "Flete terrestre Frontera FLETE(II)", amount: "" },
+  ],
+  insurances: [{ name: "", amount: "" }],
+  portCosts: [{ name: "", amount: "" }],
+  otherCosts: [{ name: "", amount: "" }],
+};
+
+const defaultAdditionalCosts = [
+  {
+    concept: "Comisión aduana por despacho",
+    amount: "",
+    currency: "USD",
+    hasFiscalCredit: true,
+    creditRate: "13",
+  },
+  {
+    concept: "Impuestos globales",
+    amount: "",
+    currency: "USD",
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+  {
+    concept: "Flete PISIGA-CBBA",
+    amount: "",
+    currency: "USD",
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+  {
+    concept: "Comisiones bancarias",
+    amount: "",
+    currency: "BS",
+    hasFiscalCredit: true,
+    creditRate: "13",
+  },
+  {
+    concept: "ITF",
+    amount: "",
+    currency: "BS",
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+  {
+    concept: "SAMC",
+    amount: "",
+    currency: "BS",
+    hasFiscalCredit: true,
+    creditRate: "13",
+  },
+  {
+    concept: "Gate In devolución",
+    amount: "",
+    currency: "BS",
+    hasFiscalCredit: true,
+    creditRate: "13",
+  },
+  {
+    concept: "Emisión de documentos",
+    amount: "",
+    currency: "USD",
+    hasFiscalCredit: true,
+    creditRate: "13",
+  },
+  {
+    concept: "Diferencia tipo de cambio",
+    amount: "",
+    currency: "BS",
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+  {
+    concept: "Pago transporte interno diferencia",
+    amount: "",
+    currency: "USD",
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+];
+
+const getDateInputValue = (value) => {
+  if (!value) return "";
+  const [datePart] = value.split("T");
+  return datePart || "";
+};
+
+const mapApiDataToWizardState = (importation) => {
+  const snapshot = importation?.snapshot ?? {};
+  return {
+    generalData: {
+      supplier: importation?.supplierName || "",
+      reference: importation?.referenceNumber || "",
+      date: getDateInputValue(importation?.importationDate),
+      officialExchangeRate: importation?.officialExchangeRate
+        ? String(importation.officialExchangeRate)
+        : "6.96",
+      bankExchangeRate: importation?.bankExchangeRate
+        ? String(importation.bankExchangeRate)
+        : "",
+    },
+    products:
+      Array.isArray(snapshot.products) && snapshot.products.length > 0
+        ? snapshot.products.map((product) => ({
+            productId: product.productId ?? null,
+            productCode: product.productCode || "",
+            productName: product.productName || "",
+            referenceQuantity: product.referenceQuantity ?? "",
+            baseQuantity: product.baseQuantity ?? "",
+            priceUsd: product.priceUsd ?? "",
+            gaPercent: product.gaPercent ?? "",
+          }))
+        : [{ ...emptyProduct }],
+    expenses: {
+      freights:
+        snapshot.baseExpenses?.freights?.length > 0
+          ? snapshot.baseExpenses.freights.map((item) => ({
+              name: item.name || "",
+              amount: item.amountUsd ?? "",
+            }))
+          : defaultExpenses.freights,
+      insurances:
+        snapshot.baseExpenses?.insurances?.length > 0
+          ? snapshot.baseExpenses.insurances.map((item) => ({
+              name: item.name || "",
+              amount: item.amountUsd ?? "",
+            }))
+          : defaultExpenses.insurances,
+      portCosts:
+        snapshot.baseExpenses?.portCosts?.length > 0
+          ? snapshot.baseExpenses.portCosts.map((item) => ({
+              name: item.name || "",
+              amount: item.amountUsd ?? "",
+            }))
+          : defaultExpenses.portCosts,
+      otherCosts:
+        snapshot.baseExpenses?.otherCosts?.length > 0
+          ? snapshot.baseExpenses.otherCosts.map((item) => ({
+              name: item.name || "",
+              amount: item.amountUsd ?? "",
+            }))
+          : defaultExpenses.otherCosts,
+    },
+    additionalCosts:
+      Array.isArray(snapshot.additionalCosts) &&
+      snapshot.additionalCosts.length > 0
+        ? snapshot.additionalCosts.map((cost) => ({
+            concept: cost.concept || "",
+            amount: cost.amount ?? "",
+            currency: cost.currency || "BS",
+            hasFiscalCredit: Boolean(cost.hasFiscalCredit),
+            creditRate: cost.fiscalCreditPercent ?? "",
+          }))
+        : defaultAdditionalCosts,
+  };
+};
+/* fin - constantes para arracar con datos existentes */
+
+function ImportationWizard({ mode = "create", initialData = null, onCancel, onSubmit }) {
   const [currentStep, setCurrentStep] = useState(0);
   // estado de los pasos
-  const [generalData, setGeneralData] = useState({
-    supplier: "",
-    reference: "",
-    date: "",
-    officialExchangeRate: "6.96",
-    bankExchangeRate: "",
-  });
-  const [products, setProducts] = useState([
+  const initialWizardState =
+    mode === "edit" && initialData
+      ? mapApiDataToWizardState(initialData)
+      : {
+          generalData: {
+            supplier: "",
+            reference: "",
+            date: "",
+            officialExchangeRate: "6.96",
+            bankExchangeRate: "",
+          },
+          products: [{ ...emptyProduct }],
+          expenses: defaultExpenses,
+          additionalCosts: defaultAdditionalCosts,
+        };
+  const [generalData, setGeneralData] = useState(initialWizardState.generalData);
+  const [products, setProducts] = useState(initialWizardState.products);
+  const [expenses, setExpenses] = useState(initialWizardState.expenses); //estados de gastos base
+  const [additionalCosts, setAdditionalCosts] = useState(initialWizardState.additionalCosts); // estado de gastos adicionales
+
+  // ── Estado de bancos ──────────────────────────────────────────────
+  const [bankBlocks, setBankBlocks] = useState([
     {
-      productCode: "",
-      productName: "",
-      referenceQuantity: "",
-      baseQuantity: "",
-      priceUsd: "",
-      gaPercent: "",
+      id: 1,
+      type: "anticipo",
+      banco: "",
+      monto: "",
+      tc: "",
+      comisionUsd: "",
+      itfSalidaUsd: "",
+      itfIngresoUsd: "",
     },
   ]);
-  // estados de gastos base
-  const [expenses, setExpenses] = useState({
-    freights: [
-      { name: "Flete Naviero (FLETE I)", amount: "" },
-      { name: "Flete terrestre Frontera FLETE(II)", amount: "" },
-    ],
-    insurances: [{ name: "", amount: "" }],
-    portCosts: [{ name: "", amount: "" }],
-    otherCosts: [{ name: "", amount: "" }],
-  });
-  // estado de gastos adicionales
-  const [additionalCosts, setAdditionalCosts] = useState([
-    {
-      concept: "Comisión aduana por despacho",
-      amount: "",
-      currency: "USD",
-      hasFiscalCredit: true,
-      creditRate: "13",
+
+  // ── totalProductosUsd viene de SummaryStep ────────────────────────
+  const [totalProductosUsd, setTotalProductosUsd] = useState(0);
+
+  // ── Función de cálculo por bloque ─────────────────────────────────
+  function calcBlockTotals({
+    monto,
+    tc,
+    comisionUsd,
+    itfSalidaUsd,
+    itfIngresoUsd,
+  }) {
+    const m = parseFloat(monto) || 0;
+    const t = parseFloat(tc) || 1;
+    const com = parseFloat(comisionUsd) || 0;
+    const its = parseFloat(itfSalidaUsd) || 0;
+    const iti = parseFloat(itfIngresoUsd) || 0;
+    const comisionBs = com * 6.97;
+    const itfSalidaBs = its * t;
+    const itfIngresoBs = iti * t;
+    const total1Usd = m + com;
+    const total1Bs = m * t + comisionBs;
+    return {
+      totalUsd: total1Usd + its + iti,
+      totalBs: total1Bs + itfSalidaBs + itfIngresoBs,
+      comisionUsd: com,
+      comisionBs,
+      itfUsd: its + iti,
+      itfBs: itfSalidaBs + itfIngresoBs,
+    };
+  }
+
+  // ── Totales bancarios ─────────────────────────────────────────────
+  const bankTotals = bankBlocks.reduce(
+    (acc, b) => {
+      const c = calcBlockTotals(b);
+      acc.montoUsd += parseFloat(b.monto) || 0;
+      acc.montoBs += (parseFloat(b.monto) || 0) * (parseFloat(b.tc) || 1);
+      acc.comisionUsd += c.comisionUsd;
+      acc.comisionBs += c.comisionBs;
+      acc.itfUsd += c.itfUsd;
+      acc.itfBs += c.itfBs;
+      return acc;
     },
     {
-      concept: "Impuestos globales",
-      amount: "",
-      currency: "USD",
-      hasFiscalCredit: false,
-      creditRate: "13",
+      montoUsd: 0,
+      montoBs: 0,
+      comisionUsd: 0,
+      comisionBs: 0,
+      itfUsd: 0,
+      itfBs: 0,
     },
-    {
-      concept: "Flete PISIGA-CBBA",
-      amount: "",
-      currency: "USD",
-      hasFiscalCredit: false,
-      creditRate: "13",
-    },
-    {
-      concept: "Comisiones bancarias",
-      amount: "",
-      currency: "BS",
-      hasFiscalCredit: true,
-      creditRate: "13",
-    },
-    {
-      concept: "ITF",
-      amount: "",
-      currency: "BS",
-      hasFiscalCredit: false,
-      creditRate: "13",
-    },
-    {
-      concept: "SAMC",
-      amount: "",
-      currency: "BS",
-      hasFiscalCredit: true,
-      creditRate: "13",
-    },
-    {
-      concept: "Gate In devolución",
-      amount: "",
-      currency: "BS",
-      hasFiscalCredit: true,
-      creditRate: "13",
-    },
-    {
-      concept: "Emisión de documentos",
-      amount: "",
-      currency: "USD",
-      hasFiscalCredit: true,
-      creditRate: "13",
-    },
-    {
-      concept: "Diferencia tipo de cambio",
-      amount: "",
-      currency: "BS",
-      hasFiscalCredit: false,
-      creditRate: "13",
-    },
-    {
-      concept: "Pago transporte interno diferencia",
-      amount: "",
-      currency: "USD",
-      hasFiscalCredit: false,
-      creditRate: "13",
-    },
-  ]);
-  // funciones del contenido los pasos
-  const handleGeneralDataChange = (field, value) => {
-    setGeneralData((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
+  );
+
+  // ── Variables para diferencia TC ──────────────────────────────────
+  const tcOficial = parseFloat(generalData.officialExchangeRate) || 1;
+  const tcBancario = parseFloat(generalData.bankExchangeRate) || 1;
+
+  const totalFletes = expenses.freights.reduce(
+    (acc, f) => acc + Number(f.amount || 0),
+    0,
+  );
+  const totalSeguros = expenses.insurances.reduce(
+    (acc, s) => acc + Number(s.amount || 0),
+    0,
+  );
+  const totalPortCosts = expenses.portCosts.reduce(
+    (acc, p) => acc + Number(p.amount || 0),
+    0,
+  );
+
+  const flete1Usd = Number(expenses.freights[0]?.amount || 0);
+  const flete2Usd = Number(expenses.freights[1]?.amount || 0);
+  const flete1Bs = flete1Usd * tcBancario; // flete 1 × tipo de cambio bancario
+  const flete2Bs = flete2Usd * tcOficial; // flete 2 × tipo de cambio oficial
+
+  const fletes = flete1Bs + flete2Bs;
+
+  const baseImponibleBs =
+    (totalProductosUsd + totalFletes + totalSeguros + totalPortCosts) *
+    tcOficial;
+
+  const segurosBs = totalSeguros * tcOficial;
+  const restaFinal = bankTotals.montoBs + segurosBs + fletes;
+  const diferenciaTC = baseImponibleBs - restaFinal;
+
+  // ── Handlers ──────────────────────────────────────────────────────
+  const handleGeneralDataChange = (field, value) =>
+    setGeneralData((cur) => ({ ...cur, [field]: value }));
 
   const handleNextStep = () =>
     setCurrentStep((p) => Math.min(p + 1, STEPS.length - 1));
