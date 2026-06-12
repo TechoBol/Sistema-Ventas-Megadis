@@ -50,7 +50,7 @@ export const generarTransferPDF = (transfer) => {
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255);
   doc.setFontSize(14);
-  doc.text("ECOZONA - TRANSFERENCIAS", pageWidth / 2, 14, {
+  doc.text("MEGADIS - TRANSFERENCIAS", pageWidth / 2, 14, {
     align: "center",
   });
 
