@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-import { Plus, Trash2 } from "lucide-react";
-
+import { Plus, Trash2, LockKeyhole } from "lucide-react";
 import {
   StepPanel,
   SectionHeader,
@@ -15,6 +14,7 @@ import {
   IconButton,
   AdditionalCostsTotals,
 } from "../../ui/ImportationWizard.styles";
+import { buildBankAdditionalCosts, calculateAdditionalCost, roundToFourDecimals } from "../../utils/importationCalculations";
 
 const emptyAdditionalCost = {
   concept: "",
@@ -22,10 +22,7 @@ const emptyAdditionalCost = {
   currency: "USD",
   hasFiscalCredit: false,
   creditRate: "13",
-};
-
-const roundToFourDecimals = (value) => {
-  return Math.round((Number(value || 0) + Number.EPSILON) * 10000) / 10000;
+  source: "MANUAL",
 };
 
 const formatUsd = (value) =>
@@ -44,52 +41,80 @@ function AdditionalCostsStep({
   additionalCosts,
   onChangeAdditionalCosts,
   officialExchangeRate,
+  bankPayments = [],
 }) {
   const exchangeRate = Number(officialExchangeRate || 0);
 
-  const getCostCalculation = (cost) => {
-    const amount = Number(cost.amount || 0);
-    const creditRate = Number(cost.creditRate || 0) / 100;
+  /*
+   * Genera automáticamente:
+   * - Comisiones Bancarias DÓLARES
+   * - ITF USD
+   *
+   * Sus montos se obtienen desde el paso Pagos bancarios.
+   */
+  const bankAdditionalCosts = useMemo(
+    () =>
+      buildBankAdditionalCosts(
+        bankPayments,
+        exchangeRate
+      ),
+    [bankPayments, exchangeRate]
+  );
 
-    const amountUsd =
-      cost.currency === "USD"
-        ? roundToFourDecimals(amount)
-        : exchangeRate > 0
-          ? roundToFourDecimals(amount / exchangeRate)
-          : 0;
+  /*
+   * Las filas manuales vienen del estado del wizard.
+   * Las filas bancarias solo se agregan para visualización y cálculo.
+   */
+  const displayedCosts = useMemo(
+    () => [
+      ...(Array.isArray(additionalCosts)
+        ? additionalCosts
+        : []),
+      ...bankAdditionalCosts,
+    ],
+    [additionalCosts, bankAdditionalCosts]
+  );
 
-    const amountBs =
-      cost.currency === "BS"
-        ? roundToFourDecimals(amount)
-        : roundToFourDecimals(amount * exchangeRate);
-
-    const fiscalCreditBs = cost.hasFiscalCredit
-      ? roundToFourDecimals(amountBs * creditRate)
-      : 0;
-
-    const netAmountBs = roundToFourDecimals(amountBs - fiscalCreditBs);
-
-    return {
-      amountUsd,
-      amountBs,
-      fiscalCreditBs,
-      netAmountBs,
-    };
-  };
+  /*
+   * Todos los cálculos, tanto manuales como bancarios,
+   * usan la misma función centralizada.
+   */
+  const calculatedRows = useMemo(
+    () =>
+      displayedCosts.map((cost) => ({
+        ...cost,
+        calculation: calculateAdditionalCost(
+          cost,
+          exchangeRate
+        ),
+      })),
+    [displayedCosts, exchangeRate]
+  );
 
   const totals = useMemo(() => {
-    return additionalCosts.reduce(
-      (acc, cost) => {
-        const calculation = getCostCalculation(cost);
+    return calculatedRows.reduce(
+      (accumulator, row) => {
+        const calculation = row.calculation;
 
         return {
-          amountUsd: roundToFourDecimals(acc.amountUsd + calculation.amountUsd),
-          amountBs: roundToFourDecimals(acc.amountBs + calculation.amountBs),
-          fiscalCreditBs: roundToFourDecimals(
-            acc.fiscalCreditBs + calculation.fiscalCreditBs
+          amountUsd: roundToFourDecimals(
+            accumulator.amountUsd +
+              calculation.amountUsd
           ),
+
+          amountBs: roundToFourDecimals(
+            accumulator.amountBs +
+              calculation.amountBs
+          ),
+
+          fiscalCreditBs: roundToFourDecimals(
+            accumulator.fiscalCreditBs +
+              calculation.fiscalCreditBs
+          ),
+
           netAmountBs: roundToFourDecimals(
-            acc.netAmountBs + calculation.netAmountBs
+            accumulator.netAmountBs +
+              calculation.netAmountBs
           ),
         };
       },
@@ -100,44 +125,58 @@ function AdditionalCostsStep({
         netAmountBs: 0,
       }
     );
-  }, [additionalCosts, exchangeRate]);
+  }, [calculatedRows]);
 
+  /*
+   * Solo modifica las filas manuales.
+   * Las bancarias nunca entran a este estado.
+   */
   const handleChange = (index, field, value) => {
-    const updatedCosts = additionalCosts.map((cost, costIndex) =>
-      costIndex === index
-        ? {
-            ...cost,
-            [field]: value,
-          }
-        : cost
+    const updatedCosts = additionalCosts.map(
+      (cost, costIndex) =>
+        costIndex === index
+          ? {
+              ...cost,
+              [field]: value,
+            }
+          : cost
     );
 
     onChangeAdditionalCosts(updatedCosts);
   };
 
-  const handleCheckChange = (index, checked) => {
-    const updatedCosts = additionalCosts.map((cost, costIndex) =>
-      costIndex === index
-        ? {
-            ...cost,
-            hasFiscalCredit: checked,
-          }
-        : cost
+  const handleCheckChange = (
+    index,
+    checked
+  ) => {
+    const updatedCosts = additionalCosts.map(
+      (cost, costIndex) =>
+        costIndex === index
+          ? {
+              ...cost,
+              hasFiscalCredit: checked,
+            }
+          : cost
     );
 
     onChangeAdditionalCosts(updatedCosts);
   };
 
   const handleAddCost = () => {
-    onChangeAdditionalCosts([...additionalCosts, { ...emptyAdditionalCost }]);
+    onChangeAdditionalCosts([
+      ...additionalCosts,
+      { ...emptyAdditionalCost },
+    ]);
   };
 
   const handleRemoveCost = (index) => {
     if (additionalCosts.length === 1) return;
 
-    const updatedCosts = additionalCosts.filter(
-      (_, costIndex) => costIndex !== index
-    );
+    const updatedCosts =
+      additionalCosts.filter(
+        (_, costIndex) =>
+          costIndex !== index
+      );
 
     onChangeAdditionalCosts(updatedCosts);
   };
@@ -146,10 +185,29 @@ function AdditionalCostsStep({
     <StepPanel>
       <SectionHeader>
         <div>
-          <StepPanelTitle>Gastos adicionales de importación</StepPanelTitle>
+          <StepPanelTitle>
+            Gastos adicionales de importación
+          </StepPanelTitle>
+
+          <p
+            style={{
+              margin: "6px 0 0",
+              color: "#64748b",
+              fontSize: "13px",
+              lineHeight: 1.45,
+            }}
+          >
+            Las comisiones bancarias y el ITF se
+            completan automáticamente a partir de
+            los pagos registrados en el paso
+            anterior.
+          </p>
         </div>
 
-        <AddButton type="button" onClick={handleAddCost}>
+        <AddButton
+          type="button"
+          onClick={handleAddCost}
+        >
           <Plus size={15} />
           Agregar gasto
         </AddButton>
@@ -168,104 +226,234 @@ function AdditionalCostsStep({
           <span></span>
         </AdditionalCostsTableHeader>
 
-        {additionalCosts.map((cost, index) => {
-          const calculation = getCostCalculation(cost);
+        {calculatedRows.map(
+          (row, index) => {
+            const isBankCost =
+              row.source === "BANK";
 
-          return (
-            <AdditionalCostsTableRow key={index}>
-              <WizardInput
-                type="text"
-                placeholder="Concepto del gasto..."
-                value={cost.concept}
-                onChange={(event) =>
-                  handleChange(index, "concept", event.target.value)
-                }
-              />
+            const manualIndex = index;
 
-              <WizardInput
-                type="number"
-                min="0"
-                step="0.0001"
-                placeholder="0"
-                value={cost.amount}
-                onChange={(event) =>
-                  handleChange(index, "amount", event.target.value)
-                }
-              />
-
-              <WizardSelect
-                value={cost.currency}
-                onChange={(event) =>
-                  handleChange(index, "currency", event.target.value)
+            return (
+              <AdditionalCostsTableRow
+                key={`${row.source}-${row.concept}-${index}`}
+                style={
+                  isBankCost
+                    ? {
+                        background: "#f8fafc",
+                      }
+                    : undefined
                 }
               >
-                <option value="USD">USD</option>
-                <option value="BS">Bs</option>
-              </WizardSelect>
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                  }}
+                >
+                  <WizardInput
+                    type="text"
+                    placeholder="Concepto del gasto..."
+                    value={row.concept}
+                    disabled={isBankCost}
+                    onChange={(event) =>
+                      handleChange(
+                        manualIndex,
+                        "concept",
+                        event.target.value
+                      )
+                    }
+                  />
 
-              <strong>{formatUsd(calculation.amountUsd)}</strong>
-
-              <strong>{formatBs(calculation.amountBs)}</strong>
-
-              <CreditCheckLabel>
-                <input
-                  type="checkbox"
-                  checked={cost.hasFiscalCredit}
-                  onChange={(event) =>
-                    handleCheckChange(index, event.target.checked)
-                  }
-                />
-
-                <span>Aplica</span>
+                  {isBankCost && (
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        marginTop: "4px",
+                        color: "#64748b",
+                        fontSize: "10px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <LockKeyhole size={11} />
+                      Calculado desde pagos bancarios
+                    </span>
+                  )}
+                </div>
 
                 <WizardInput
                   type="number"
                   min="0"
-                  step="0.01"
-                  value={cost.creditRate}
-                  disabled={!cost.hasFiscalCredit}
+                  step="0.0001"
+                  placeholder="0"
+                  value={row.amount}
+                  disabled={isBankCost}
                   onChange={(event) =>
-                    handleChange(index, "creditRate", event.target.value)
+                    handleChange(
+                      manualIndex,
+                      "amount",
+                      event.target.value
+                    )
                   }
                 />
-              </CreditCheckLabel>
 
-              <strong>{formatBs(calculation.fiscalCreditBs)}</strong>
+                <WizardSelect
+                  value={row.currency}
+                  disabled={isBankCost}
+                  onChange={(event) =>
+                    handleChange(
+                      manualIndex,
+                      "currency",
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="USD">
+                    USD
+                  </option>
 
-              <strong>{formatBs(calculation.netAmountBs)}</strong>
+                  <option value="BS">
+                    Bs
+                  </option>
+                </WizardSelect>
 
-              <IconButton
-                type="button"
-                title="Eliminar gasto"
-                disabled={additionalCosts.length === 1}
-                onClick={() => handleRemoveCost(index)}
-              >
-                <Trash2 size={16} />
-              </IconButton>
-            </AdditionalCostsTableRow>
-          );
-        })}
+                <strong>
+                  {formatUsd(
+                    row.calculation.amountUsd
+                  )}
+                </strong>
+
+                <strong>
+                  {formatBs(
+                    row.calculation.amountBs
+                  )}
+                </strong>
+
+                <CreditCheckLabel>
+                  <input
+                    type="checkbox"
+                    checked={
+                      row.hasFiscalCredit
+                    }
+                    disabled={isBankCost}
+                    onChange={(event) =>
+                      handleCheckChange(
+                        manualIndex,
+                        event.target.checked
+                      )
+                    }
+                  />
+
+                  <span>
+                    {row.hasFiscalCredit
+                      ? "Aplica"
+                      : "No aplica"}
+                  </span>
+
+                  <WizardInput
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={row.creditRate}
+                    disabled={
+                      isBankCost ||
+                      !row.hasFiscalCredit
+                    }
+                    onChange={(event) =>
+                      handleChange(
+                        manualIndex,
+                        "creditRate",
+                        event.target.value
+                      )
+                    }
+                  />
+                </CreditCheckLabel>
+
+                <strong>
+                  {formatBs(
+                    row.calculation
+                      .fiscalCreditBs
+                  )}
+                </strong>
+
+                <strong>
+                  {formatBs(
+                    row.calculation.netAmountBs
+                  )}
+                </strong>
+
+                {isBankCost ? (
+                  <IconButton
+                    type="button"
+                    title="Calculado automáticamente"
+                    disabled
+                  >
+                    <LockKeyhole size={15} />
+                  </IconButton>
+                ) : (
+                  <IconButton
+                    type="button"
+                    title="Eliminar gasto"
+                    disabled={
+                      additionalCosts.length === 1
+                    }
+                    onClick={() =>
+                      handleRemoveCost(
+                        manualIndex
+                      )
+                    }
+                  >
+                    <Trash2 size={16} />
+                  </IconButton>
+                )}
+              </AdditionalCostsTableRow>
+            );
+          }
+        )}
       </AdditionalCostsTableWrapper>
 
       <AdditionalCostsTotals>
         <div>
-          <span>Total importe USD:</span>
-          <strong>{formatUsd(totals.amountUsd)}</strong>
+          <span>
+            Total importe USD:
+          </span>
+
+          <strong>
+            {formatUsd(totals.amountUsd)}
+          </strong>
         </div>
 
         <div>
-          <span>Total importe Bs:</span>
-          <strong>{formatBs(totals.amountBs)}</strong>
+          <span>
+            Total importe Bs:
+          </span>
+
+          <strong>
+            {formatBs(totals.amountBs)}
+          </strong>
         </div>
 
         <div>
-          <span>Total crédito fiscal:</span>
-          <strong>{formatBs(totals.fiscalCreditBs)}</strong>
+          <span>
+            Total crédito fiscal:
+          </span>
+
+          <strong>
+            {formatBs(
+              totals.fiscalCreditBs
+            )}
+          </strong>
         </div>
 
         <div className="highlight">
-          <span>Total neto distribuible:</span>
-          <strong>{formatBs(totals.netAmountBs)}</strong>
+          <span>
+            Total neto distribuible:
+          </span>
+
+          <strong>
+            {formatBs(totals.netAmountBs)}
+          </strong>
         </div>
       </AdditionalCostsTotals>
     </StepPanel>

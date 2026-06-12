@@ -553,6 +553,10 @@ export const DetailPopoverHead = styled.div`
   font-size: 13px;
   font-weight: 800;
   color: #334155;
+
+  span:last-child {
+    text-align: right;
+  }
 `;
 
 export const DetailPopoverRow = styled.div`
@@ -569,6 +573,11 @@ export const DetailPopoverRow = styled.div`
   font-size: 14px;
   color: #0f172a;
 
+  span:last-child {
+    text-align: right;
+    font-weight: 600;
+  }
+
   &:last-child {
     border-bottom: none;
   }
@@ -576,5 +585,37 @@ export const DetailPopoverRow = styled.div`
   &:hover {
     background: rgba(255, 255, 255, 0.45);
     border-radius: 10px;
+  }
+`;
+
+export const PricePopoverHead = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+
+  font-size: 13px;
+  font-weight: 800;
+  color: #334155;
+
+  span:last-child {
+    text-align: right;
+  }
+`;
+
+export const PricePopoverRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+
+  padding: 12px;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.7);
+
+  span:last-child {
+    text-align: right;
   }
 `;

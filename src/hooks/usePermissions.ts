@@ -59,5 +59,6 @@ export const usePermissions = () => {
     canCreateProduct: isAdmin || isManager,
     canEditProduct: isAdmin || isManager,
     canViewProfits: isAdmin,
+    canViewCosts : isAdmin || isManager || isViewer,
   };
 };

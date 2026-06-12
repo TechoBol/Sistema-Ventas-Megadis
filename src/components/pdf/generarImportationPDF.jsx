@@ -1,25 +1,15 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { calculateImportation, roundToFourDecimals } from "../utils/importationCalculations";
+import { calculateImportation } from "../utils/importationCalculations";
 
-const formatDate = (value) => {
-  if (!value) return "Sin fecha";
-  const datePart = String(value).split("T")[0];
-  const [year, month, day] = datePart.split("-");
-  if (!year || !month || !day) {
-    return String(value);
-  }
-  return `${day}/${month}/${year}`;
-};
-
-const formatUsd = (value) =>
-  `$ ${Number(value || 0).toLocaleString("en-US", {
+const formatBs = (value) =>
+  `Bs ${Number(value || 0).toLocaleString("es-BO", {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,
   })}`;
 
-const formatBs = (value) =>
-  `Bs ${Number(value || 0).toLocaleString("es-BO", {
+const formatUsd = (value) =>
+  `$ ${Number(value || 0).toLocaleString("en-US", {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,
   })}`;
@@ -37,32 +27,59 @@ const formatFactor = (value) =>
   });
 
 const formatPercent = (value) =>
-  `${Number(value || 0).toLocaleString("en-US", {
+  `${Number(value || 0).toLocaleString("es-BO", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}%`;
 
-const getStatusLabel = (status) => {
-  return status === "VERIFIED"
-    ? "Verificado"
-    : "Borrador";
+const formatDate = (value) => {
+  if (!value) return "—";
+
+  const datePart = String(value).split("T")[0];
+  const [year, month, day] = datePart.split("-");
+
+  if (!year || !month || !day) return String(value);
+
+  return `${day}/${month}/${year}`;
 };
 
-const mapImportationToCalculationData = (
-  importation
-) => {
+const getStatusLabel = (status) => {
+  if (status === "VERIFIED" || status === "verificado") {
+    return "Verificado";
+  }
+
+  return "Borrador";
+};
+
+const getPaymentTypeLabel = (type) => {
+  if (type === "ADVANCE") return "Anticipo";
+  if (type === "FINAL_PAYMENT") return "Pago final";
+
+  return "Pago";
+};
+
+/**
+ * Convierte el objeto almacenado en la BD al formato utilizado
+ * por calculateImportation().
+ */
+const mapImportationData = (importation) => {
   const snapshot = importation?.snapshot ?? {};
-  const baseExpenses =
-    snapshot?.baseExpenses ?? {};
+  const baseExpenses = snapshot?.baseExpenses ?? {};
+
+  const mapExpenses = (items) => {
+    if (!Array.isArray(items)) return [];
+
+    return items.map((item) => ({
+      name: item?.name || "",
+      amount: Number(item?.amountUsd ?? item?.amount ?? 0),
+    }));
+  };
 
   return {
     generalData: {
-      supplier:
-        importation?.supplierName || "",
-      reference:
-        importation?.referenceNumber || "",
-      date:
-        importation?.importationDate || "",
+      supplier: importation?.supplierName || "",
+      reference: importation?.referenceNumber || "",
+      date: importation?.importationDate || "",
       officialExchangeRate: Number(
         importation?.officialExchangeRate || 0
       ),
@@ -78,82 +95,38 @@ const mapImportationToCalculationData = (
       : [],
 
     expenses: {
-      freights: Array.isArray(
-        baseExpenses.freights
-      )
-        ? baseExpenses.freights.map((item) => ({
-            name: item?.name || "",
-            amount: Number(
-              item?.amountUsd ?? item?.amount ?? 0
-            ),
-          }))
-        : [],
-
-      insurances: Array.isArray(
-        baseExpenses.insurances
-      )
-        ? baseExpenses.insurances.map((item) => ({
-            name: item?.name || "",
-            amount: Number(
-              item?.amountUsd ?? item?.amount ?? 0
-            ),
-          }))
-        : [],
-
-      portCosts: Array.isArray(
-        baseExpenses.portCosts
-      )
-        ? baseExpenses.portCosts.map((item) => ({
-            name: item?.name || "",
-            amount: Number(
-              item?.amountUsd ?? item?.amount ?? 0
-            ),
-          }))
-        : [],
-
-      otherCosts: Array.isArray(
-        baseExpenses.otherCosts
-      )
-        ? baseExpenses.otherCosts.map((item) => ({
-            name: item?.name || "",
-            amount: Number(
-              item?.amountUsd ?? item?.amount ?? 0
-            ),
-          }))
-        : [],
+      freights: mapExpenses(baseExpenses.freights),
+      insurances: mapExpenses(baseExpenses.insurances),
+      portCosts: mapExpenses(baseExpenses.portCosts),
+      otherCosts: mapExpenses(baseExpenses.otherCosts),
     },
 
-    additionalCosts: Array.isArray(
-      snapshot.additionalCosts
-    )
+    bankPayments: Array.isArray(snapshot.bankPayments?.payments)
+      ? snapshot.bankPayments.payments
+      : [],
+
+    additionalCosts: Array.isArray(snapshot.additionalCosts)
       ? snapshot.additionalCosts.map((cost) => ({
           concept: cost?.concept || "",
           amount: Number(cost?.amount || 0),
           currency: cost?.currency || "BS",
-          hasFiscalCredit: Boolean(
-            cost?.hasFiscalCredit
-          ),
+          hasFiscalCredit: Boolean(cost?.hasFiscalCredit),
           creditRate: Number(
             cost?.fiscalCreditPercent ??
               cost?.creditRate ??
               0
           ),
+          source: cost?.source || "MANUAL",
         }))
       : [],
   };
 };
 
-const addSectionTitle = (
-  doc,
-  title,
-  y,
-  pageWidth,
-  margin
-) => {
-  doc.setFillColor(247, 248, 250);
+const addSectionTitle = (doc, title, startY, pageWidth, margin) => {
+  doc.setFillColor(248, 250, 252);
   doc.roundedRect(
     margin,
-    y,
+    startY,
     pageWidth - margin * 2,
     9,
     2,
@@ -162,71 +135,57 @@ const addSectionTitle = (
   );
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(31, 41, 55);
-  doc.text(title, margin + 3, y + 6);
+  doc.setFontSize(10);
+  doc.setTextColor(30, 41, 59);
+  doc.text(title, margin + 3, startY + 6);
 
-  return y + 12;
+  return startY + 12;
 };
 
-const addPageNumbers = (doc) => {
-  const pageCount =
-    doc.internal.getNumberOfPages();
+const getFinalY = (doc, defaultY = 40) =>
+  doc.lastAutoTable?.finalY || defaultY;
 
-  for (
-    let pageNumber = 1;
-    pageNumber <= pageCount;
-    pageNumber += 1
-  ) {
-    doc.setPage(pageNumber);
-
-    const pageWidth =
-      doc.internal.pageSize.getWidth();
-    const pageHeight =
-      doc.internal.pageSize.getHeight();
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(130, 130, 130);
-
-    doc.text(
-      `Página ${pageNumber} de ${pageCount}`,
-      pageWidth - 14,
-      pageHeight - 8,
-      { align: "right" }
-    );
-
-    doc.text(
-      "Sistema Megadis",
-      14,
-      pageHeight - 8
-    );
-  }
+const tableStyles = {
+  styles: {
+    fontSize: 7,
+    cellPadding: 1.8,
+    valign: "middle",
+    overflow: "linebreak",
+  },
+  headStyles: {
+    fillColor: [204, 51, 41],
+    textColor: [255, 255, 255],
+    fontStyle: "bold",
+  },
+  alternateRowStyles: {
+    fillColor: [248, 250, 252],
+  },
+  footStyles: {
+    fillColor: [254, 242, 242],
+    textColor: [185, 28, 28],
+    fontStyle: "bold",
+  },
 };
 
-export const generarImportationPDF = (
-  importation
-) => {
+export const generarImportationPDF = (importation) => {
   if (!importation) {
-    throw new Error(
-      "No se proporcionó una importación."
-    );
+    throw new Error("No se proporcionaron datos de la importación.");
   }
 
-  const calculationData =
-    mapImportationToCalculationData(
-      importation
-    );
+  const calculationData = mapImportationData(importation);
 
-  const calculations =
-    calculateImportation(calculationData);
+  const calculations = calculateImportation(calculationData);
 
   const {
-    productRows,
-    additionalCostRows,
-    finalRows,
-    totals,
+    productRows = [],
+    additionalCostRows = [],
+    finalRows = [],
+    totals = {},
+    bankCalculation = {},
   } = calculations;
+
+  const bankRows = bankCalculation?.rows ?? [];
+  const bankTotals = bankCalculation?.totals ?? {};
 
   const doc = new jsPDF({
     orientation: "landscape",
@@ -234,15 +193,17 @@ export const generarImportationPDF = (
     format: "a4",
   });
 
-  const pageWidth =
-    doc.internal.pageSize.getWidth();
-
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 12;
 
+  // ─────────────────────────────────────────────
   // ENCABEZADO
+  // ─────────────────────────────────────────────
+
+  doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(17);
-  doc.setTextColor(30, 41, 59);
+  doc.setTextColor(20, 28, 45);
 
   doc.text(
     "REPORTE DE CÁLCULO DE COSTOS DE IMPORTACIÓN",
@@ -252,307 +213,217 @@ export const generarImportationPDF = (
   );
 
   doc.setDrawColor(204, 51, 41);
-  doc.setLineWidth(0.7);
+  doc.setLineWidth(0.6);
+  doc.line(margin, 21, pageWidth - margin, 21);
 
-  doc.line(
-    margin,
-    21,
-    pageWidth - margin,
-    21
-  );
-
-  // DATOS GENERALES
-  const supplier =
-    importation?.supplierName ||
-    "Sin proveedor";
-
-  const reference =
-    importation?.referenceNumber ||
-    "Sin referencia";
-
-  const date = formatDate(
-    importation?.importationDate
-  );
-
-  const officialExchangeRate = Number(
-    importation?.officialExchangeRate || 0
-  );
-
-  const bankExchangeRate =
-    importation?.bankExchangeRate !== null &&
-    importation?.bankExchangeRate !== undefined
-      ? Number(importation.bankExchangeRate)
-      : null;
-
-  const status = getStatusLabel(
-    importation?.status
-  );
-
-  doc.setFontSize(9);
-
-  const infoY = 28;
-
-  const drawField = (
-    label,
-    value,
-    x,
-    y,
-    labelWidth
-  ) => {
+  const campo = (label, value, x, y, labelWidth) => {
+    doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(71, 85, 105);
     doc.text(`${label}:`, x, y);
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(15, 23, 42);
-    doc.text(
-      String(value ?? "-"),
-      x + labelWidth,
-      y
-    );
+    doc.text(String(value ?? "—"), x + labelWidth, y);
   };
 
-  drawField(
+  const infoY = 29;
+
+  campo(
     "Proveedor",
-    supplier,
+    importation?.supplierName || "Sin proveedor",
     margin,
     infoY,
-    22
+    23
   );
 
-  drawField(
+  campo(
     "Referencia",
-    reference,
+    importation?.referenceNumber || "Sin referencia",
     margin,
     infoY + 6,
-    22
+    23
   );
 
-  drawField(
+  campo(
     "Fecha",
-    date,
+    formatDate(importation?.importationDate),
     108,
     infoY,
-    14
+    15
   );
 
-  drawField(
+  campo(
     "Estado",
-    status,
+    getStatusLabel(importation?.status),
     108,
     infoY + 6,
-    14
+    15
   );
 
-  drawField(
+  campo(
     "Tipo de cambio oficial",
-    officialExchangeRate.toFixed(4),
+    Number(importation?.officialExchangeRate || 0).toFixed(4),
     190,
     infoY,
-    38
+    39
   );
 
-  drawField(
-    "Tipo de cambio banco",
-    bankExchangeRate !== null
-      ? bankExchangeRate.toFixed(4)
-      : "No registrado",
+  campo(
+    "Cantidad de productos",
+    String(importation?.productCount || productRows.length),
     190,
     infoY + 6,
-    38
+    39
   );
 
-  let currentY = 45;
+  // ─────────────────────────────────────────────
+  // 1. PRODUCTOS IMPORTADOS
+  // ─────────────────────────────────────────────
 
-  // PRODUCTOS
-  currentY = addSectionTitle(
+  let y = 45;
+
+  y = addSectionTitle(
     doc,
     "1. Productos importados",
-    currentY,
+    y,
     pageWidth,
     margin
   );
 
   autoTable(doc, {
-    startY: currentY,
-    margin: {
-      left: margin,
-      right: margin,
-    },
+    startY: y,
+    margin: { left: margin, right: margin },
+
     head: [
       [
         "Código",
         "Producto",
-        "Cant. referencial",
-        "Cant. base",
+        "Cantidad referencial",
+        "Cantidad base",
         "Precio USD",
         "Subtotal USD",
         "Factor",
-        "GA",
+        "GA %",
       ],
     ],
-    body: productRows.map((row) => [
-      row.productCode,
-      row.productName,
-      formatQuantity(
-        row.referenceQuantity
-      ),
-      formatQuantity(row.baseQuantity),
-      formatUsd(row.priceUsd),
-      formatUsd(row.subtotalUsd),
-      formatFactor(row.factor),
-      formatPercent(row.gaPercent),
-    ]),
-    styles: {
-      fontSize: 7.3,
-      cellPadding: 2,
-      valign: "middle",
-    },
-    headStyles: {
-      fillColor: [204, 51, 41],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252],
-    },
-    columnStyles: {
-      0: { cellWidth: 27 },
-      1: { cellWidth: 54 },
-      2: { cellWidth: 27 },
-      3: { cellWidth: 25 },
-      4: { cellWidth: 28 },
-      5: { cellWidth: 32 },
-      6: { cellWidth: 25 },
-      7: { cellWidth: 20 },
-    },
+
+    body:
+      productRows.length > 0
+        ? productRows.map((product) => [
+            product.productCode || "—",
+            product.productName || "—",
+            formatQuantity(product.referenceQuantity),
+            formatQuantity(product.baseQuantity),
+            formatUsd(product.priceUsd),
+            formatUsd(product.subtotalUsd),
+            formatFactor(product.factor),
+            formatPercent(product.gaPercent),
+          ])
+        : [
+            [
+              "—",
+              "Sin productos registrados",
+              "—",
+              "—",
+              "—",
+              "—",
+              "—",
+              "—",
+            ],
+          ],
+
+    ...tableStyles,
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    8;
+  // ─────────────────────────────────────────────
+  // 2. GASTOS BASE
+  // ─────────────────────────────────────────────
 
-  // GASTOS BASE
-  currentY = addSectionTitle(
+  y = getFinalY(doc, y) + 8;
+
+  y = addSectionTitle(
     doc,
-    "2. Gastos base",
-    currentY,
+    "2. Gastos base de importación",
+    y,
     pageWidth,
     margin
   );
 
   const baseExpenseRows = [
-    ...(calculationData.expenses.freights || []).map(
-      (item) => [
-        "Flete",
-        item.name || "Sin nombre",
-        formatUsd(item.amount),
-      ]
-    ),
+    ...calculationData.expenses.freights.map((item) => [
+      "Flete",
+      item.name || "Sin nombre",
+      formatUsd(item.amount),
+    ]),
 
-    ...(calculationData.expenses.insurances || []).map(
-      (item) => [
-        "Seguro",
-        item.name || "Sin nombre",
-        formatUsd(item.amount),
-      ]
-    ),
+    ...calculationData.expenses.insurances.map((item) => [
+      "Seguro",
+      item.name || "Sin nombre",
+      formatUsd(item.amount),
+    ]),
 
-    ...(calculationData.expenses.portCosts || []).map(
-      (item) => [
-        "Gasto portuario",
-        item.name || "Sin nombre",
-        formatUsd(item.amount),
-      ]
-    ),
+    ...calculationData.expenses.portCosts.map((item) => [
+      "Gasto portuario",
+      item.name || "Sin nombre",
+      formatUsd(item.amount),
+    ]),
 
-    ...(calculationData.expenses.otherCosts || []).map(
-      (item) => [
-        "Otro gasto",
-        item.name || "Sin nombre",
-        formatUsd(item.amount),
-      ]
-    ),
+    ...calculationData.expenses.otherCosts.map((item) => [
+      "Otro gasto",
+      item.name || "Sin nombre",
+      formatUsd(item.amount),
+    ]),
   ];
 
   autoTable(doc, {
-    startY: currentY,
-    margin: {
-      left: margin,
-      right: margin,
-    },
-    head: [
-      [
-        "Categoría",
-        "Concepto",
-        "Monto USD",
-      ],
-    ],
+    startY: y,
+    margin: { left: margin, right: margin },
+
+    head: [["Categoría", "Concepto", "Monto USD"]],
+
     body:
       baseExpenseRows.length > 0
         ? baseExpenseRows
-        : [
-            [
-              "—",
-              "Sin gastos registrados",
-              formatUsd(0),
-            ],
-          ],
+        : [["—", "Sin gastos registrados", formatUsd(0)]],
+
     foot: [
       [
         "",
         "Total gastos considerados en CIF",
-        formatUsd(
-          totals.totalBaseExpensesUsd
-        ),
+        formatUsd(totals.totalBaseExpensesUsd),
       ],
     ],
-    styles: {
-      fontSize: 8,
-      cellPadding: 2.2,
-    },
-    headStyles: {
-      fillColor: [204, 51, 41],
-      textColor: [255, 255, 255],
-    },
-    footStyles: {
-      fillColor: [254, 242, 242],
-      textColor: [185, 28, 28],
-      fontStyle: "bold",
-    },
+
     columnStyles: {
-      0: { cellWidth: 48 },
-      1: { cellWidth: 150 },
-      2: {
-        cellWidth: 55,
-        halign: "right",
-      },
+      0: { cellWidth: 50 },
+      1: { cellWidth: 160 },
+      2: { cellWidth: 55, halign: "right" },
     },
+
+    ...tableStyles,
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    8;
+  // ─────────────────────────────────────────────
+  // NUEVA PÁGINA
+  // 3. BASE IMPONIBLE E IMPUESTOS
+  // ─────────────────────────────────────────────
 
-  // BASE IMPONIBLE
   doc.addPage();
+  y = 16;
 
-  currentY = 18;
-
-  currentY = addSectionTitle(
+  y = addSectionTitle(
     doc,
     "3. Base imponible e impuestos",
-    currentY,
+    y,
     pageWidth,
     margin
   );
 
   autoTable(doc, {
-    startY: currentY,
-    margin: {
-      left: margin,
-      right: margin,
-    },
+    startY: y,
+    margin: { left: margin, right: margin },
+
     head: [
       [
         "Código",
@@ -561,98 +432,163 @@ export const generarImportationPDF = (
         "Fletes Bs",
         "Seguro Bs",
         "Portuarios Bs",
-        "CIF Bs",
+        "Base imponible CIF Bs",
         "GA %",
         "GA Bs",
-        "IVA 14,94% Bs",
-        "Valor después impuestos Bs",
+        "IVA Bs",
+        "Valor después de impuestos Bs",
       ],
     ],
-    body: productRows.map((row) => [
-      row.productCode,
-      row.productName,
-      formatBs(row.productValueBs),
-      formatBs(row.freightsBs),
-      formatBs(row.insurancesBs),
-      formatBs(row.portCostsBs),
-      formatBs(row.cifBs),
-      formatPercent(row.gaPercent),
-      formatBs(row.gaBs),
-      formatBs(row.ivaBs),
-      formatBs(row.valueAfterTaxesBs),
-    ]),
+
+    body:
+      productRows.length > 0
+        ? productRows.map((product) => [
+            product.productCode || "—",
+            product.productName || "—",
+            formatBs(product.productValueBs),
+            formatBs(product.freightsBs),
+            formatBs(product.insurancesBs),
+            formatBs(product.portCostsBs),
+            formatBs(product.cifBs),
+            formatPercent(product.gaPercent),
+            formatBs(product.gaBs),
+            formatBs(product.ivaBs),
+            formatBs(product.valueAfterTaxesBs),
+          ])
+        : [],
+
     foot: [
       [
         "TOTAL",
         "",
         formatBs(totals.totalProductsBs),
         formatBs(totals.totalFreightsBs),
-        formatBs(
-          totals.totalInsurancesBs
-        ),
+        formatBs(totals.totalInsurancesBs),
         formatBs(totals.totalPortCostsBs),
         formatBs(totals.totalCifBs),
         "",
         formatBs(totals.totalGaBs),
         formatBs(totals.totalIvaBs),
-        formatBs(
-          totals.totalValueAfterTaxesBs
-        ),
+        formatBs(totals.totalValueAfterTaxesBs),
       ],
     ],
+
     styles: {
-      fontSize: 6.5,
-      cellPadding: 1.7,
-      valign: "middle",
-      overflow: "linebreak",
+      ...tableStyles.styles,
+      fontSize: 6.2,
+      cellPadding: 1.5,
     },
-    headStyles: {
-      fillColor: [204, 51, 41],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-    },
-    footStyles: {
-      fillColor: [254, 242, 242],
-      textColor: [185, 28, 28],
-      fontStyle: "bold",
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252],
-    },
-    columnStyles: {
-      0: { cellWidth: 21 },
-      1: { cellWidth: 42 },
-      2: { cellWidth: 25 },
-      3: { cellWidth: 23 },
-      4: { cellWidth: 23 },
-      5: { cellWidth: 24 },
-      6: { cellWidth: 25 },
-      7: { cellWidth: 16 },
-      8: { cellWidth: 23 },
-      9: { cellWidth: 25 },
-      10: { cellWidth: 29 },
-    },
+    headStyles: tableStyles.headStyles,
+    alternateRowStyles: tableStyles.alternateRowStyles,
+    footStyles: tableStyles.footStyles,
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    8;
+  // ─────────────────────────────────────────────
+  // 4. PAGOS BANCARIOS
+  // ─────────────────────────────────────────────
 
-  // GASTOS ADICIONALES
-  currentY = addSectionTitle(
+  y = getFinalY(doc, y) + 8;
+
+  y = addSectionTitle(
     doc,
-    "4. Gastos adicionales",
-    currentY,
+    "4. Pagos bancarios",
+    y,
     pageWidth,
     margin
   );
 
   autoTable(doc, {
-    startY: currentY,
-    margin: {
-      left: margin,
-      right: margin,
+    startY: y,
+    margin: { left: margin, right: margin },
+
+    head: [
+      [
+        "Tipo",
+        "Fecha",
+        "Banco",
+        "Monto USD",
+        "T/C banco",
+        "Pago Bs",
+        "Comisión USD",
+        "Comisión Bs",
+        "ITF entrada USD",
+        "ITF salida USD",
+      ],
+    ],
+
+    body:
+      bankRows.length > 0
+        ? bankRows.map((payment) => [
+            getPaymentTypeLabel(payment.paymentType),
+            formatDate(payment.date),
+            payment.bankName || "—",
+            formatUsd(payment.amountUsd),
+            Number(payment.bankExchangeRate || 0).toFixed(4),
+            formatBs(payment.paymentAmountBs),
+            formatUsd(payment.commissionUsd),
+            formatBs(payment.commissionBs),
+            formatUsd(payment.itfEntryUsd),
+            formatUsd(payment.itfExitUsd),
+          ])
+        : [
+            [
+              "—",
+              "—",
+              "Sin pagos registrados",
+              formatUsd(0),
+              "0.0000",
+              formatBs(0),
+              formatUsd(0),
+              formatBs(0),
+              formatUsd(0),
+              formatUsd(0),
+            ],
+          ],
+
+    foot: [
+      [
+        "TOTAL",
+        "",
+        "",
+        formatUsd(bankTotals.totalPaymentUsd),
+        "",
+        formatBs(bankTotals.totalPaymentBs),
+        formatUsd(bankTotals.totalCommissionUsd),
+        formatBs(bankTotals.totalCommissionBs),
+        formatUsd(bankTotals.totalItfEntryUsd),
+        formatUsd(bankTotals.totalItfExitUsd),
+      ],
+    ],
+
+    styles: {
+      ...tableStyles.styles,
+      fontSize: 6.5,
     },
+    headStyles: tableStyles.headStyles,
+    alternateRowStyles: tableStyles.alternateRowStyles,
+    footStyles: tableStyles.footStyles,
+  });
+
+  // ─────────────────────────────────────────────
+  // NUEVA PÁGINA
+  // 5. GASTOS ADICIONALES
+  // ─────────────────────────────────────────────
+
+  doc.addPage();
+  y = 16;
+
+  y = addSectionTitle(
+    doc,
+    "5. Gastos adicionales",
+    y,
+    pageWidth,
+    margin
+  );
+
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+
     head: [
       [
         "Concepto",
@@ -665,108 +601,59 @@ export const generarImportationPDF = (
         "Importe neto Bs",
       ],
     ],
+
     body:
       additionalCostRows.length > 0
-        ? additionalCostRows.map((row) => [
-            row.concept,
-            row.currency,
-            row.currency === "USD"
-              ? formatUsd(
-                  row.originalAmount
-                )
-              : formatBs(
-                  row.originalAmount
-                ),
-            formatUsd(row.amountUsd),
-            formatBs(row.amountBs),
-            row.hasFiscalCredit
-              ? formatPercent(
-                  row.creditRate
-                )
+        ? additionalCostRows.map((cost) => [
+            cost.concept || "—",
+            cost.currency || "—",
+            cost.currency === "USD"
+              ? formatUsd(cost.originalAmount)
+              : formatBs(cost.originalAmount),
+            formatUsd(cost.amountUsd),
+            formatBs(cost.amountBs),
+            cost.hasFiscalCredit
+              ? formatPercent(cost.creditRate)
               : "No aplica",
-            formatBs(
-              row.fiscalCreditBs
-            ),
-            formatBs(row.netAmountBs),
+            formatBs(cost.fiscalCreditBs),
+            formatBs(cost.netAmountBs),
           ])
-        : [
-            [
-              "Sin gastos adicionales",
-              "—",
-              "—",
-              formatUsd(0),
-              formatBs(0),
-              "No aplica",
-              formatBs(0),
-              formatBs(0),
-            ],
-          ],
+        : [],
+
     foot: [
       [
         "TOTAL",
         "",
         "",
-        formatUsd(
-          totals.totalAdditionalCosts
-            .amountUsd
-        ),
-        formatBs(
-          totals.totalAdditionalCosts
-            .amountBs
-        ),
+        formatUsd(totals.totalAdditionalCosts?.amountUsd),
+        formatBs(totals.totalAdditionalCosts?.amountBs),
         "",
-        formatBs(
-          totals.totalAdditionalCosts
-            .fiscalCreditBs
-        ),
-        formatBs(
-          totals.totalAdditionalCosts
-            .netAmountBs
-        ),
+        formatBs(totals.totalAdditionalCosts?.fiscalCreditBs),
+        formatBs(totals.totalAdditionalCosts?.netAmountBs),
       ],
     ],
-    styles: {
-      fontSize: 7,
-      cellPadding: 2,
-      valign: "middle",
-    },
-    headStyles: {
-      fillColor: [204, 51, 41],
-      textColor: [255, 255, 255],
-    },
-    footStyles: {
-      fillColor: [254, 242, 242],
-      textColor: [185, 28, 28],
-      fontStyle: "bold",
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252],
-    },
+
+    ...tableStyles,
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    8;
+  // ─────────────────────────────────────────────
+  // 6. COSTO FINAL POR PRODUCTO
+  // ─────────────────────────────────────────────
 
-  // COSTO FINAL
-  doc.addPage();
+  y = getFinalY(doc, y) + 8;
 
-  currentY = 18;
-
-  currentY = addSectionTitle(
+  y = addSectionTitle(
     doc,
-    "5. Costo final por producto",
-    currentY,
+    "6. Costo final por producto",
+    y,
     pageWidth,
     margin
   );
 
   autoTable(doc, {
-    startY: currentY,
-    margin: {
-      left: margin,
-      right: margin,
-    },
+    startY: y,
+    margin: { left: margin, right: margin },
+
     head: [
       [
         "Código",
@@ -779,68 +666,54 @@ export const generarImportationPDF = (
         "Costo unitario Bs",
       ],
     ],
-    body: finalRows.map((row) => [
-      row.productCode,
-      row.productName,
-      formatFactor(row.factor),
-      formatBs(row.valueAfterTaxesBs),
-      formatBs(
-        row.additionalAssignedBs
-      ),
-      formatBs(row.finalCostBs),
-      formatQuantity(
-        row.referenceQuantity
-      ),
-      row.unitCostBs !== null
-        ? formatBs(row.unitCostBs)
-        : "Sin cantidad",
-    ]),
+
+    body:
+      finalRows.length > 0
+        ? finalRows.map((product) => [
+            product.productCode || "—",
+            product.productName || "—",
+            formatFactor(product.factor),
+            formatBs(product.valueAfterTaxesBs),
+            formatBs(product.additionalAssignedBs),
+            formatBs(product.finalCostBs),
+            formatQuantity(product.referenceQuantity),
+            product.unitCostBs !== null
+              ? formatBs(product.unitCostBs)
+              : "Sin cantidad",
+          ])
+        : [],
+
     foot: [
       [
         "TOTAL",
         "",
         "",
-        formatBs(
-          totals.totalValueAfterTaxesBs
-        ),
-        formatBs(
-          totals.totalAdditionalAssignedBs
-        ),
-        formatBs(
-          totals.totalFinalCostBs
-        ),
+        formatBs(totals.totalValueAfterTaxesBs),
+        formatBs(totals.totalAdditionalAssignedBs),
+        formatBs(totals.totalFinalCostBs),
         "",
         "",
       ],
     ],
-    styles: {
-      fontSize: 7.5,
-      cellPadding: 2.2,
-      valign: "middle",
-    },
-    headStyles: {
-      fillColor: [204, 51, 41],
-      textColor: [255, 255, 255],
-    },
-    footStyles: {
-      fillColor: [254, 242, 242],
-      textColor: [185, 28, 28],
-      fontStyle: "bold",
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252],
-    },
+
+    ...tableStyles,
   });
 
-  currentY =
-    (doc.lastAutoTable?.finalY || currentY) +
-    9;
-
+  // ─────────────────────────────────────────────
   // RESUMEN FINAL
+  // ─────────────────────────────────────────────
+
+  y = getFinalY(doc, y) + 9;
+
+  if (y + 32 > pageHeight - 15) {
+    doc.addPage();
+    y = 18;
+  }
+
   doc.setFillColor(254, 242, 242);
   doc.roundedRect(
     margin,
-    currentY,
+    y,
     pageWidth - margin * 2,
     28,
     3,
@@ -850,85 +723,73 @@ export const generarImportationPDF = (
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(153, 27, 27);
-
-  doc.text(
-    "RESUMEN FINAL",
-    margin + 5,
-    currentY + 7
-  );
+  doc.setTextColor(185, 28, 28);
+  doc.text("RESUMEN FINAL", margin + 5, y + 7);
 
   doc.setFontSize(9);
-  doc.setTextColor(31, 41, 55);
+  doc.setTextColor(30, 41, 59);
 
   doc.text(
     `Valor después de impuestos: ${formatBs(
       totals.totalValueAfterTaxesBs
     )}`,
     margin + 5,
-    currentY + 15
+    y + 15
   );
 
   doc.text(
     `Gastos adicionales netos: ${formatBs(
-      totals.totalAdditionalCosts
-        .netAmountBs
+      totals.totalAdditionalCosts?.netAmountBs
     )}`,
-    106,
-    currentY + 15
+    105,
+    y + 15
   );
 
   doc.text(
     `Crédito fiscal: ${formatBs(
-      totals.totalAdditionalCosts
-        .fiscalCreditBs
+      totals.totalAdditionalCosts?.fiscalCreditBs
     )}`,
-    198,
-    currentY + 15
+    200,
+    y + 15
   );
 
   doc.setFontSize(11);
   doc.setTextColor(185, 28, 28);
 
   doc.text(
-    `Costo final total: ${formatBs(
-      totals.totalFinalCostBs
-    )}`,
+    `Costo final total: ${formatBs(totals.totalFinalCostBs)}`,
     margin + 5,
-    currentY + 23
+    y + 23
   );
 
-  addPageNumbers(doc);
+  // ─────────────────────────────────────────────
+  // PIE DE PÁGINA
+  // ─────────────────────────────────────────────
 
-  const safeReference = String(
-    importation?.referenceNumber ||
-      importation?.id ||
-      "sin-referencia"
-  )
-    .replace(/[^\w-]/g, "_")
-    .toLowerCase();
+  const totalPages = doc.internal.getNumberOfPages();
 
-  const fileName = `calculo_costos_${safeReference}.pdf`;
+  for (let page = 1; page <= totalPages; page += 1) {
+    doc.setPage(page);
 
-  /*
-   * Abrimos el PDF en una pestaña nueva.
-   * También puedes cambiarlo por doc.save(fileName)
-   * cuando quieras descargar directamente.
-   */
-  const pdfBlob = doc.output("blob");
-  const pdfUrl = URL.createObjectURL(pdfBlob);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(150);
 
-  const openedWindow = window.open(
-    pdfUrl,
-    "_blank",
-    "noopener,noreferrer"
-  );
+    doc.text(
+      `Generado el ${new Date().toLocaleString("es-BO")}`,
+      margin,
+      pageHeight - 7
+    );
 
-  if (!openedWindow) {
-    doc.save(fileName);
+    doc.text(
+      `Página ${page} de ${totalPages}`,
+      pageWidth - margin,
+      pageHeight - 7,
+      { align: "right" }
+    );
   }
 
-  window.setTimeout(() => {
-    URL.revokeObjectURL(pdfUrl);
-  }, 60000);
+  // No se abre ni descarga el documento.
+  // El hook lo convierte en File y lo sube al servidor.
+  return doc.output("blob");
 };

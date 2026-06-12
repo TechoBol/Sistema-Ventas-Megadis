@@ -71,7 +71,6 @@ export const useAmazonS3 = () => {
     return key;
   };
 
-
   const uploadPDFTranfer = async (file: File, code: string) => {
     const key = `MEGADIS/TRANSFERENCIAS/${code}.pdf`;
 
@@ -135,5 +134,30 @@ export const useAmazonS3 = () => {
     return key;
   };
 
-  return { getFileUrl, uploadPDF, uploadPDFCotizacion, uploadPDFTranfer, uploadPDFFactura };
+  const uploadPDFImport = async (file: File, code: string) => {
+    const key = `MEGADIS/IMPORT/${code}.pdf`;
+
+    const signedUrl = await getSignedUrl(
+      s3Ref.current,
+      new PutObjectCommand({
+        Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
+        Key: key,
+        ContentType: "application/pdf",
+      }),
+      { expiresIn: 3600 }
+    );
+
+    const response = await fetch(signedUrl, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": "application/pdf",
+      },
+    });
+
+    if (!response.ok) throw new Error("Error al subir el PDF");
+
+    return key;
+  };
+  return { getFileUrl, uploadPDF, uploadPDFCotizacion, uploadPDFTranfer, uploadPDFFactura ,uploadPDFImport};
 };
