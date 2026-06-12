@@ -129,6 +129,17 @@ const createDefaultBankPayments = (officialExchangeRate = "6.96") => [
   },
 ];
 
+const createDefaultBankFiscalCredit = () => ({
+  commission: {
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+  itf: {
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+});
+
 const getDateInputValue = (value) => {
   if (!value) return "";
   const [datePart] = String(value).split("T");
@@ -239,6 +250,17 @@ const mapApiDataToWizardState = (importation) => {
             officialExchangeRate
           ),
 
+    bankFiscalCredit: {
+      commission: {
+        hasFiscalCredit: Boolean(snapshot.bankFiscalCredit?.commission?.hasFiscalCredit),
+        creditRate: String(snapshot.bankFiscalCredit?.commission?.creditRate ?? "13"),
+      },
+      itf: {
+        hasFiscalCredit: Boolean(snapshot.bankFiscalCredit?.itf?.hasFiscalCredit),
+        creditRate: String(snapshot.bankFiscalCredit?.itf?.creditRate ?? "13"),
+      },
+    },
+
     additionalCosts:
       savedAdditionalCosts.length > 0
         ? savedAdditionalCosts.map((cost) => ({
@@ -269,6 +291,7 @@ const createInitialWizardState = () => ({
   products: [{ ...emptyProduct }],
   expenses: createDefaultExpenses(),
   bankPayments: createDefaultBankPayments("6.96"),
+  bankFiscalCredit: createDefaultBankFiscalCredit(),
   additionalCosts: createDefaultAdditionalCosts(),
 });
 
@@ -297,6 +320,10 @@ function ImportationWizard({
 
   const [bankPayments, setBankPayments] = useState(
     initialWizardState.bankPayments
+  );
+
+  const [bankFiscalCredit, setBankFiscalCredit] = useState(
+    initialWizardState.bankFiscalCredit
   );
 
   const [additionalCosts, setAdditionalCosts] = useState(
@@ -333,6 +360,7 @@ function ImportationWizard({
       products,
       expenses,
       bankPayments,
+      bankFiscalCredit,
       additionalCosts,
     };
     onSubmit?.(payload);
@@ -393,13 +421,11 @@ function ImportationWizard({
       return (
         <AdditionalCostsStep
           additionalCosts={additionalCosts}
-          onChangeAdditionalCosts={
-            setAdditionalCosts
-          }
-          officialExchangeRate={
-            generalData.officialExchangeRate
-          }
+          onChangeAdditionalCosts={setAdditionalCosts}
+          officialExchangeRate={generalData.officialExchangeRate}
           bankPayments={bankPayments}
+          bankFiscalCredit={bankFiscalCredit}
+          onChangeBankFiscalCredit={setBankFiscalCredit}
         />
       );
     }
@@ -410,6 +436,7 @@ function ImportationWizard({
         products={products}
         expenses={expenses}
         bankPayments={bankPayments}
+        bankFiscalCredit={bankFiscalCredit}
         additionalCosts={additionalCosts}
       />
     );

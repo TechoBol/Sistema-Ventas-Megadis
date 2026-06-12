@@ -218,8 +218,18 @@ function BanksStep({
         </BankSummaryCard>
 
         <BankSummaryCard $highlight>
+          <span>Comisiones bancarias Bs</span>
+          <strong>{formatBs(calculations.totals.totalCommissionBs)}</strong>
+        </BankSummaryCard>
+
+        <BankSummaryCard $highlight>
           <span>ITF total USD</span>
           <strong>{formatUsd(calculations.totals.totalItfUsd)}</strong>
+        </BankSummaryCard>
+
+        <BankSummaryCard $highlight>
+          <span>ITF total Bs</span>
+          <strong>{formatBs(calculations.totals.totalItfBs)}</strong>
         </BankSummaryCard>
       </BankSummaryGrid>
     </StepPanel>

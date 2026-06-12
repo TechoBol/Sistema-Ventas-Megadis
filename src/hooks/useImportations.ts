@@ -29,6 +29,8 @@ const mapWizardPayloadToApi = (payload: any) => {
     ? payload.bankPayments
     : [];
 
+  const bankFiscalCredit = payload.bankFiscalCredit ?? {};
+
   const additionalCosts = Array.isArray(payload.additionalCosts)
     ? payload.additionalCosts
     : [];
@@ -122,6 +124,16 @@ const mapWizardPayloadToApi = (payload: any) => {
       },
 
       bankPayments: { payments: paymentsToSave },
+      bankFiscalCredit: {
+        commission: {
+          hasFiscalCredit: Boolean(bankFiscalCredit?.commission?.hasFiscalCredit),
+          creditRate: Number(bankFiscalCredit?.commission?.creditRate || 0),
+        },
+        itf: {
+          hasFiscalCredit: Boolean(bankFiscalCredit?.itf?.hasFiscalCredit),
+          creditRate: Number(bankFiscalCredit?.itf?.creditRate || 0),
+        },
+      },
       additionalCosts: manualAdditionalCosts,
       notes: payload.notes?.trim() || "",
     },
