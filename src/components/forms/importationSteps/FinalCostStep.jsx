@@ -20,6 +20,12 @@ const formatBs = (value) =>
     maximumFractionDigits: 4,
   })}`;
 
+const formatUsd = (value) =>
+  `$ ${Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  })}`;
+
 const formatQuantity = (value) =>
   Number(value || 0).toLocaleString("en-US", {
     minimumFractionDigits: 4,
@@ -36,6 +42,7 @@ function FinalCostStep({
   generalData,
   products,
   expenses,
+  bankPayments,
   additionalCosts,
 }) {
   const calculations = useMemo(
@@ -44,18 +51,23 @@ function FinalCostStep({
         generalData,
         products,
         expenses,
+        bankPayments,
         additionalCosts,
       }),
     [
       generalData,
       products,
       expenses,
+      bankPayments,
       additionalCosts,
     ]
   );
 
-  const { finalRows, totals } =
-    calculations;
+  const {
+    finalRows,
+    totals,
+    bankCalculation,
+  } = calculations;
 
   return (
     <StepPanel>
@@ -69,23 +81,19 @@ function FinalCostStep({
         <SummaryCard>
           <span>Proveedor</span>
           <strong>
-            {generalData.supplier ||
-              "Sin proveedor"}
+            {generalData.supplier || "Sin proveedor"}
           </strong>
         </SummaryCard>
 
         <SummaryCard>
           <span>Referencia</span>
           <strong>
-            {generalData.reference ||
-              "Sin referencia"}
+            {generalData.reference || "Sin referencia"}
           </strong>
         </SummaryCard>
 
         <SummaryCard>
-          <span>
-            Valor después de impuestos
-          </span>
+          <span>Valor después de impuestos</span>
           <strong>
             {formatBs(
               totals.totalValueAfterTaxesBs
@@ -94,9 +102,27 @@ function FinalCostStep({
         </SummaryCard>
 
         <SummaryCard>
-          <span>
-            Gastos adicionales netos
-          </span>
+          <span>Comisiones bancarias</span>
+          <strong>
+            {formatUsd(
+              bankCalculation?.totals
+                ?.totalCommissionUsd
+            )}
+          </strong>
+        </SummaryCard>
+
+        <SummaryCard>
+          <span>ITF bancario</span>
+          <strong>
+            {formatUsd(
+              bankCalculation?.totals
+                ?.totalItfUsd
+            )}
+          </strong>
+        </SummaryCard>
+
+        <SummaryCard>
+          <span>Gastos adicionales netos</span>
           <strong>
             {formatBs(
               totals.totalAdditionalCosts
@@ -138,16 +164,12 @@ function FinalCostStep({
               Gastos adicionales asignados Bs
             </span>
             <span>Costo final Bs</span>
-            <span>
-              Cantidad referencial
-            </span>
+            <span>Cantidad referencial</span>
             <span>Costo unitario Bs</span>
           </FinalCostTableHead>
 
           {finalRows.map((item) => (
-            <FinalCostTableRow
-              key={item.id}
-            >
+            <FinalCostTableRow key={item.id}>
               <FinalCostTableCell>
                 {item.productCode}
               </FinalCostTableCell>
@@ -174,9 +196,7 @@ function FinalCostStep({
 
               <FinalCostTableCell>
                 <strong>
-                  {formatBs(
-                    item.finalCostBs
-                  )}
+                  {formatBs(item.finalCostBs)}
                 </strong>
               </FinalCostTableCell>
 
@@ -189,9 +209,7 @@ function FinalCostStep({
               <FinalCostTableCell>
                 <strong>
                   {item.unitCostBs !== null
-                    ? formatBs(
-                        item.unitCostBs
-                      )
+                    ? formatBs(item.unitCostBs)
                     : "Sin cantidad"}
                 </strong>
               </FinalCostTableCell>
