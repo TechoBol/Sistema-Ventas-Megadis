@@ -72,9 +72,7 @@ function FinalCostStep({
   return (
     <StepPanel>
       <SectionHeader>
-        <StepPanelTitle>
-          Costo final por producto
-        </StepPanelTitle>
+        <StepPanelTitle>Costo final por producto</StepPanelTitle>
       </SectionHeader>
 
       <SummaryCardsGrid>
@@ -170,42 +168,17 @@ function FinalCostStep({
 
           {finalRows.map((item) => (
             <FinalCostTableRow key={item.id}>
-              <FinalCostTableCell>
-                {item.productCode}
-              </FinalCostTableCell>
-
-              <FinalCostTableCell>
-                {item.productName}
-              </FinalCostTableCell>
-
-              <FinalCostTableCell>
-                {formatFactor(item.factor)}
-              </FinalCostTableCell>
-
-              <FinalCostTableCell>
-                {formatBs(
-                  item.valueAfterTaxesBs
-                )}
-              </FinalCostTableCell>
-
-              <FinalCostTableCell>
-                {formatBs(
-                  item.additionalAssignedBs
-                )}
-              </FinalCostTableCell>
-
+              <FinalCostTableCell>{item.productCode}</FinalCostTableCell>
+              <FinalCostTableCell>{item.productName}</FinalCostTableCell>
+              <FinalCostTableCell>{formatFactor(item.factor)}</FinalCostTableCell>
+              <FinalCostTableCell>{formatBs(item.valueAfterTaxesBs)}</FinalCostTableCell>
+              <FinalCostTableCell>{formatBs(item.additionalAssignedBs)}</FinalCostTableCell>
               <FinalCostTableCell>
                 <strong>
                   {formatBs(item.finalCostBs)}
                 </strong>
               </FinalCostTableCell>
-
-              <FinalCostTableCell>
-                {formatQuantity(
-                  item.referenceQuantity
-                )}
-              </FinalCostTableCell>
-
+              <FinalCostTableCell>{formatQuantity(item.referenceQuantity)}</FinalCostTableCell>
               <FinalCostTableCell>
                 <strong>
                   {item.unitCostBs !== null
@@ -221,19 +194,13 @@ function FinalCostStep({
             <span></span>
             <span></span>
             <span>
-              {formatBs(
-                totals.totalValueAfterTaxesBs
-              )}
+              {formatBs(totals.totalValueAfterTaxesBs)}
             </span>
             <span>
-              {formatBs(
-                totals.totalAdditionalAssignedBs
-              )}
+              {formatBs(totals.totalAdditionalAssignedBs)}
             </span>
             <span>
-              {formatBs(
-                totals.totalFinalCostBs
-              )}
+              {formatBs(totals.totalFinalCostBs)}
             </span>
             <span></span>
             <span></span>

@@ -58,17 +58,12 @@ const getPaymentTypeLabel = (type) => {
   return "Pago";
 };
 
-/**
- * Convierte el objeto almacenado en la BD al formato utilizado
- * por calculateImportation().
- */
+/* Convierte el objeto almacenado en la BD al formato utilizado por calculateImportation() */
 const mapImportationData = (importation) => {
   const snapshot = importation?.snapshot ?? {};
   const baseExpenses = snapshot?.baseExpenses ?? {};
-
   const mapExpenses = (items) => {
     if (!Array.isArray(items)) return [];
-
     return items.map((item) => ({
       name: item?.name || "",
       amount: Number(item?.amountUsd ?? item?.amount ?? 0),
@@ -133,17 +128,14 @@ const addSectionTitle = (doc, title, startY, pageWidth, margin) => {
     2,
     "F"
   );
-
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(30, 41, 59);
   doc.text(title, margin + 3, startY + 6);
-
   return startY + 12;
 };
 
-const getFinalY = (doc, defaultY = 40) =>
-  doc.lastAutoTable?.finalY || defaultY;
+const getFinalY = (doc, defaultY = 40) => doc.lastAutoTable?.finalY || defaultY;
 
 const tableStyles = {
   styles: {
@@ -173,9 +165,7 @@ export const generarImportationPDF = (importation) => {
   }
 
   const calculationData = mapImportationData(importation);
-
   const calculations = calculateImportation(calculationData);
-
   const {
     productRows = [],
     additionalCostRows = [],
@@ -183,16 +173,13 @@ export const generarImportationPDF = (importation) => {
     totals = {},
     bankCalculation = {},
   } = calculations;
-
   const bankRows = bankCalculation?.rows ?? [];
   const bankTotals = bankCalculation?.totals ?? {};
-
   const doc = new jsPDF({
     orientation: "landscape",
     unit: "mm",
     format: "a4",
   });
-
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 12;
@@ -200,18 +187,15 @@ export const generarImportationPDF = (importation) => {
   // ─────────────────────────────────────────────
   // ENCABEZADO
   // ─────────────────────────────────────────────
-
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(20, 28, 45);
-
   doc.text(
     "REPORTE DE CÁLCULO DE COSTOS DE IMPORTACIÓN",
     pageWidth / 2,
     16,
     { align: "center" }
   );
-
   doc.setDrawColor(204, 51, 41);
   doc.setLineWidth(0.6);
   doc.line(margin, 21, pageWidth - margin, 21);
@@ -221,7 +205,6 @@ export const generarImportationPDF = (importation) => {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(71, 85, 105);
     doc.text(`${label}:`, x, y);
-
     doc.setFont("helvetica", "normal");
     doc.setTextColor(15, 23, 42);
     doc.text(String(value ?? "—"), x + labelWidth, y);
@@ -294,7 +277,6 @@ export const generarImportationPDF = (importation) => {
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-
     head: [
       [
         "Código",
@@ -379,14 +361,11 @@ export const generarImportationPDF = (importation) => {
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-
     head: [["Categoría", "Concepto", "Monto USD"]],
-
     body:
       baseExpenseRows.length > 0
         ? baseExpenseRows
         : [["—", "Sin gastos registrados", formatUsd(0)]],
-
     foot: [
       [
         "",
@@ -394,7 +373,6 @@ export const generarImportationPDF = (importation) => {
         formatUsd(totals.totalBaseExpensesUsd),
       ],
     ],
-
     columnStyles: {
       0: { cellWidth: 50 },
       1: { cellWidth: 160 },
@@ -423,7 +401,6 @@ export const generarImportationPDF = (importation) => {
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-
     head: [
       [
         "Código",
@@ -500,7 +477,6 @@ export const generarImportationPDF = (importation) => {
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-
     head: [
       [
         "Tipo",
@@ -588,7 +564,6 @@ export const generarImportationPDF = (importation) => {
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-
     head: [
       [
         "Concepto",
@@ -653,7 +628,6 @@ export const generarImportationPDF = (importation) => {
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-
     head: [
       [
         "Código",
@@ -725,10 +699,8 @@ export const generarImportationPDF = (importation) => {
   doc.setFontSize(10);
   doc.setTextColor(185, 28, 28);
   doc.text("RESUMEN FINAL", margin + 5, y + 7);
-
   doc.setFontSize(9);
   doc.setTextColor(30, 41, 59);
-
   doc.text(
     `Valor después de impuestos: ${formatBs(
       totals.totalValueAfterTaxesBs
@@ -736,7 +708,6 @@ export const generarImportationPDF = (importation) => {
     margin + 5,
     y + 15
   );
-
   doc.text(
     `Gastos adicionales netos: ${formatBs(
       totals.totalAdditionalCosts?.netAmountBs
@@ -744,7 +715,6 @@ export const generarImportationPDF = (importation) => {
     105,
     y + 15
   );
-
   doc.text(
     `Crédito fiscal: ${formatBs(
       totals.totalAdditionalCosts?.fiscalCreditBs
@@ -752,10 +722,8 @@ export const generarImportationPDF = (importation) => {
     200,
     y + 15
   );
-
   doc.setFontSize(11);
   doc.setTextColor(185, 28, 28);
-
   doc.text(
     `Costo final total: ${formatBs(totals.totalFinalCostBs)}`,
     margin + 5,
@@ -770,17 +738,14 @@ export const generarImportationPDF = (importation) => {
 
   for (let page = 1; page <= totalPages; page += 1) {
     doc.setPage(page);
-
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
     doc.setTextColor(150);
-
     doc.text(
       `Generado el ${new Date().toLocaleString("es-BO")}`,
       margin,
       pageHeight - 7
     );
-
     doc.text(
       `Página ${page} de ${totalPages}`,
       pageWidth - margin,
@@ -789,7 +754,5 @@ export const generarImportationPDF = (importation) => {
     );
   }
 
-  // No se abre ni descarga el documento.
-  // El hook lo convierte en File y lo sube al servidor.
   return doc.output("blob");
 };

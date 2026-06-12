@@ -1,20 +1,10 @@
 import React, { useMemo, useState } from "react";
-import {
-  Search,
-  Plus,
-  FileText,
-  Pencil,
-} from "lucide-react";
-
+import { Search, Plus, FileText, Pencil } from "lucide-react";
 import DataTable from "../components/table/DataTable";
 import ImportationWizard from "../components/forms/importationSteps/ImportationWizard";
-
 import { useImportations } from "../hooks/useImportations";
 import { useAmazonS3 } from "../hooks/useAmazonS3";
-
-import { generarImportationPDF } from "../components/pdf/generarImportationPDF";
 import { errorToast } from "../services/toasts";
-
 import {
   PageSurface,
   PageWrapper,
@@ -38,18 +28,14 @@ const fechaHoy = () =>
 
 const formatDate = (value) => {
   if (!value) return "-";
-
   const [datePart] = String(value).split("T");
   const [year, month, day] = datePart.split("-");
-
   if (!year || !month || !day) return "-";
-
   return `${day}/${month}/${year}`;
 };
 
 const formatExchangeRate = (value) => {
   if (!value) return "-";
-
   return Number(value).toLocaleString("es-BO", {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,
@@ -57,13 +43,9 @@ const formatExchangeRate = (value) => {
 };
 
 const getStatusLabel = (status) => {
-  if (
-    status === "VERIFIED" ||
-    status === "verificado"
-  ) {
+  if (status === "VERIFIED" || status === "verificado") {
     return "Verificado";
   }
-
   return "Borrador";
 };
 
@@ -71,21 +53,12 @@ const getStatusValue = (status) => {
   if (status === "VERIFIED") {
     return "verificado";
   }
-
   return "borrador";
 };
 
-/*
- * Usamos una clave predecible.
- *
- * Ejemplo:
- * MEGADIS/IMPORT/IMPORTACION-15.pdf
- *
- * Al editar un borrador se utiliza la misma clave,
- * por lo que el archivo anterior es reemplazado.
- */
+/* Al editar un borrador se utiliza la misma clave, por lo que el archivo anterior es reemplazado */
 const getImportationPdfCode = (importation) => {
-  return `IMPORTACION-${importation.id}`;
+  return `IMPORTACION-${importation?.referenceNumber || importation?.id}`;
 };
 
 function Costs() {
@@ -105,10 +78,7 @@ function Costs() {
     isLoading,
   } = useImportations();
 
-  const {
-    uploadPDFImport,
-    getFileUrl,
-  } = useAmazonS3();
+  const { getFileUrl } = useAmazonS3();
 
   const importations = useMemo(() => {
     return data.map((item) => ({
@@ -206,14 +176,11 @@ function Costs() {
         minWidth: 140,
         sortable: false,
         filterable: false,
-
         renderCell: (params) => (
           <StatusBadge
             $status={params.value}
           >
-            {getStatusLabel(
-              params.value
-            )}
+            {getStatusLabel(params.value)}
           </StatusBadge>
         ),
       },
@@ -245,113 +212,33 @@ function Costs() {
     });
   };
 
-  /*
-   * Genera el PDF y lo sube al servidor.
-   *
-   * La importación debe guardarse primero porque necesitamos
-   * su id para construir una clave estable.
-   */
-  const uploadImportationPdf = async (
-    savedImportation
-  ) => {
-    const pdfFile =
-      generarImportationPDF(
-        savedImportation
-      );
-
-    const pdfCode =
-      getImportationPdfCode(
-        savedImportation
-      );
-
-    await uploadPDFImport(
-      pdfFile,
-      pdfCode
-    );
-  };
-
-  const handleSaveImportation = async (
-    payload
-  ) => {
-    let savedImportation = null;
-
+  const handleSaveImportation = async (payload) => {
     if (viewState.mode === "edit") {
-      savedImportation =
-        await updateImportation(
-          viewState
-            .selectedImportation.id,
-          payload
-        );
-    } else {
-      savedImportation =
-        await createImportation(
-          payload
-        );
+      const updated = await updateImportation(
+        viewState.selectedImportation.id,
+        payload
+      );
+      if (updated) {
+        handleCloseForm();
+      }
+      return;
     }
-
-    if (!savedImportation) return;
-
-    try {
-      /*
-       * El backend devuelve la importación guardada con:
-       * id, datos generales y snapshot.
-       *
-       * Con esos datos generamos el documento definitivo.
-       */
-      await uploadImportationPdf(
-        savedImportation
-      );
-    } catch (error) {
-      console.error(
-        "La importación fue guardada, pero no se pudo subir el PDF:",
-        error
-      );
-
-      errorToast(
-        "La importación fue guardada, pero no se pudo guardar su PDF"
-      );
-    } finally {
-      /*
-       * Cerramos igualmente porque la importación ya fue guardada.
-       * Así evitamos que el usuario vuelva a enviarla y la duplique.
-       */
+    const created = await createImportation(payload);
+    if (created) {
       handleCloseForm();
     }
   };
 
-  /*
-   * Esta acción ya no genera el archivo.
-   * Solamente consulta el PDF guardado en S3 y abre su URL firmada.
-   */
-  const handleViewPdf = async (
-    importation
-  ) => {
+  /* consulta el PDF guardado en S3 y abre su URL firmada */
+  const handleViewPdf = async (importation) => {
     try {
-      const pdfCode =
-        getImportationPdfCode(
-          importation.rawData
-        );
-
-      const key =
-        `MEGADIS/IMPORT/${pdfCode}.pdf`;
-
-      const url =
-        await getFileUrl(key);
-
-      window.open(
-        url,
-        "_blank",
-        "noopener,noreferrer"
-      );
+      const pdfCode = getImportationPdfCode(importation.rawData);
+      const key = `MEGADIS/IMPORT/${pdfCode}.pdf`;
+      const url = await getFileUrl(key);
+      window.open(url, "_blank");
     } catch (error) {
-      console.error(
-        "Error al abrir el PDF:",
-        error
-      );
-
-      errorToast(
-        "No se pudo abrir el PDF de la importación"
-      );
+      console.error("Error al abrir el PDF:", error);
+      errorToast("No se pudo abrir el PDF de la importación");
     }
   };
 
@@ -388,15 +275,9 @@ function Costs() {
         <PageWrapper>
           <ImportationWizard
             mode={viewState.mode}
-            initialData={
-              viewState.selectedImportation
-            }
-            onCancel={
-              handleCloseForm
-            }
-            onSubmit={
-              handleSaveImportation
-            }
+            initialData={viewState.selectedImportation}
+            onCancel={handleCloseForm}
+            onSubmit={handleSaveImportation}
           />
         </PageWrapper>
       </PageSurface>
@@ -407,19 +288,13 @@ function Costs() {
     <PageSurface>
       <PageWrapper>
         <HeaderTitle>
-          <Title>
-            Importaciones
-          </Title>
-
-          <Subtitle>
-            {fechaHoy()}
-          </Subtitle>
+          <Title>Importaciones</Title>
+          <Subtitle>{fechaHoy()}</Subtitle>
         </HeaderTitle>
 
         <Toolbar>
           <SearchBox>
             <Search size={18} />
-
             <SearchInput
               type="text"
               placeholder="Buscar proveedor, referencia, fecha o estado"

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLoginStore } from "../components/store/loginStore";
 import { successToast, errorToast } from "../services/toasts";
-
 import {
   getImportationsService,
   getImportationByIdService,
@@ -9,17 +8,13 @@ import {
   updateImportationService,
   verifyImportationService,
 } from "../services/importationService";
-
 import { generarImportationPDF } from "../components/pdf/generarImportationPDF";
 import { useAmazonS3 } from "./useAmazonS3";
 
 /**
- * Convierte los datos del wizard al formato esperado
- * por el backend.
- *
- * Se guardan únicamente los datos ingresados.
- * Los resultados calculados se obtienen nuevamente desde
- * importationCalculations.js.
+ * Convierte los datos del wizard al formato esperado por el backend
+ * Se guardan únicamente los datos ingresados
+ * Los resultados calculados se obtienen nuevamente desde importationCalculations.js
  */
 const mapWizardPayloadToApi = (payload: any) => {
   const generalData = payload.generalData ?? {};
@@ -38,19 +33,13 @@ const mapWizardPayloadToApi = (payload: any) => {
     ? payload.additionalCosts
     : [];
 
-  /*
-   * Evita guardar la fila bancaria inicial si continúa vacía.
-   *
-   * No se consideran bankName ni bankExchangeRate porque pueden
-   * tener valores predeterminados aunque no exista realmente un pago.
-   */
+  /* Evita guardar la fila bancaria inicial si continúa vacía */
   const paymentsToSave = bankPayments
     .filter((payment: any) => {
       const amountUsd = Number(payment.amountUsd || 0);
       const commissionUsd = Number(payment.commissionUsd || 0);
       const itfEntryUsd = Number(payment.itfEntryUsd || 0);
       const hasDate = Boolean(payment.date);
-
       return (
         amountUsd > 0 ||
         commissionUsd > 0 ||
@@ -69,9 +58,7 @@ const mapWizardPayloadToApi = (payload: any) => {
     }));
 
   /*
-   * Los gastos bancarios no se guardan nuevamente en additionalCosts,
-   * porque se reconstruyen desde bankPayments.
-   */
+   * Los gastos bancarios se reconstruyen desde bankPayments, no desde additionalCosts */
   const manualAdditionalCosts = additionalCosts
     .filter((cost: any) => cost?.source !== "BANK")
     .map((cost: any) => ({
@@ -79,11 +66,9 @@ const mapWizardPayloadToApi = (payload: any) => {
       amount: Number(cost.amount || 0),
       currency: cost.currency || "BS",
       hasFiscalCredit: Boolean(cost.hasFiscalCredit),
-
       fiscalCreditPercent: cost.hasFiscalCredit
         ? Number(cost.creditRate || 0)
         : 0,
-
       source: cost.source || "MANUAL",
     }));
 
@@ -91,17 +76,11 @@ const mapWizardPayloadToApi = (payload: any) => {
     supplierName: generalData.supplier?.trim() || null,
     referenceNumber: generalData.reference?.trim() || null,
     importationDate: generalData.date || null,
-
-    officialExchangeRate: Number(
-      generalData.officialExchangeRate || 6.96
-    ),
-
+    officialExchangeRate: Number(generalData.officialExchangeRate || 6.96),
     bankExchangeRate: generalData.bankExchangeRate
       ? Number(generalData.bankExchangeRate)
       : null,
-
     ivaPercent: 14.94,
-
     productCount: products.length,
 
     status:
@@ -114,11 +93,7 @@ const mapWizardPayloadToApi = (payload: any) => {
         productId: product.productId ?? null,
         productCode: product.productCode?.trim() || "",
         productName: product.productName?.trim() || "",
-
-        referenceQuantity: Number(
-          product.referenceQuantity || 0
-        ),
-
+        referenceQuantity: Number(product.referenceQuantity || 0),
         baseQuantity: Number(product.baseQuantity || 0),
         priceUsd: Number(product.priceUsd || 0),
         gaPercent: Number(product.gaPercent || 0),
@@ -146,25 +121,16 @@ const mapWizardPayloadToApi = (payload: any) => {
         })),
       },
 
-      bankPayments: {
-        payments: paymentsToSave,
-      },
-
+      bankPayments: { payments: paymentsToSave },
       additionalCosts: manualAdditionalCosts,
-
       notes: payload.notes?.trim() || "",
     },
   };
 };
 
-/**
- * Código estable utilizado para guardar el archivo en S3.
- *
- * Ejemplo:
- * MEGADIS/IMPORT/IMPORTACION-25.pdf
- */
-const getImportationPdfCode = (importationId: number) => {
-  return `IMPORTACION-${importationId}`;
+/* guardar el pdf con el nombre: numero de factura sino id */
+const getImportationPdfCode = (importation: any) => {
+  return `IMPORTACION-${importation?.referenceNumber || importation?.id}`;
 };
 
 export const useImportations = () => {
@@ -181,14 +147,12 @@ export const useImportations = () => {
 
     try {
       const response = await getImportationsService(token);
-
       setData(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error(
         "Error al cargar las importaciones:",
         error
       );
-
       errorToast("Error al cargar las importaciones");
     } finally {
       setIsLoading(false);
@@ -197,7 +161,6 @@ export const useImportations = () => {
 
   const getImportationById = async (id: number) => {
     if (!token || !id) return null;
-
     try {
       return await getImportationByIdService(id, token);
     } catch (error) {
@@ -205,39 +168,21 @@ export const useImportations = () => {
         "Error al cargar la importación:",
         error
       );
-
       errorToast("Error al cargar la importación");
-
       return null;
     }
   };
 
-  /**
-   * Genera y sube el PDF usando el ID de la importación.
-   *
-   * Si ya existe un PDF con la misma clave, S3 lo reemplaza.
-   */
-  const generateAndUploadImportationPdf = async (
-    importation: any
-  ) => {
-    if (!importation?.id) {
-      throw new Error(
-        "La importación no tiene un identificador válido."
-      );
-    }
-
-    const pdfFile = generarImportationPDF(importation);
-
-    const pdfCode = getImportationPdfCode(importation.id);
-
-    const pdfKey = await uploadPDFImport(
-      pdfFile,
-      pdfCode
+  /* Genera y sube el PDF usando la factura/id. Si ya existe un PDF con la misma clave, S3 lo reemplaza */
+  const generateAndUploadImportationPdf = async (importation: any) => {
+    const pdfCode = getImportationPdfCode(importation);
+    const pdfBlob = generarImportationPDF(importation);
+    const pdfFile = new File(
+      [pdfBlob],
+      `${pdfCode}.pdf`,
+      { type: "application/pdf" }
     );
-
-    console.log("PDF de importación subido:", pdfKey);
-
-    return pdfKey;
+    return uploadPDFImport(pdfFile, pdfCode);
   };
 
   const createImportation = async (payload: any) => {
@@ -257,11 +202,6 @@ export const useImportations = () => {
           token
         );
 
-      /*
-       * Combinamos la respuesta con dataToSave para asegurarnos
-       * de que el generador tenga snapshot y todos los datos,
-       * incluso si el backend devuelve una respuesta resumida.
-       */
       const completeImportation = {
         ...dataToSave,
         ...createdImportation,
@@ -271,15 +211,12 @@ export const useImportations = () => {
       };
 
       try {
-        await generateAndUploadImportationPdf(
-          completeImportation
-        );
+        await generateAndUploadImportationPdf(completeImportation);
       } catch (pdfError) {
         console.error(
           "La importación se creó, pero falló la generación o subida del PDF:",
           pdfError
         );
-
         errorToast(
           "La importación fue guardada, pero no se pudo guardar su PDF"
         );
@@ -308,15 +245,11 @@ export const useImportations = () => {
     }
   };
 
-  const updateImportation = async (
-    id: number,
-    payload: any
-  ) => {
+  const updateImportation = async (id: number, payload: any) => {
     if (!token || !id) {
       errorToast(
         "No se pudo identificar la importación"
       );
-
       return null;
     }
 
@@ -324,7 +257,6 @@ export const useImportations = () => {
 
     try {
       const dataToSave = mapWizardPayloadToApi(payload);
-
       const updatedImportation =
         await updateImportationService(
           id,
@@ -332,10 +264,7 @@ export const useImportations = () => {
           token
         );
 
-      /*
-       * El mismo ID genera la misma clave en S3.
-       * Al editar, el nuevo PDF reemplaza al anterior.
-       */
+      /* El mismo ID genera la misma clave en S3. Al editar, el nuevo PDF reemplaza al anterior */
       const completeImportation = {
         ...dataToSave,
         ...updatedImportation,
@@ -346,18 +275,13 @@ export const useImportations = () => {
       };
 
       try {
-        await generateAndUploadImportationPdf(
-          completeImportation
-        );
+        await generateAndUploadImportationPdf(completeImportation);
       } catch (pdfError) {
         console.error(
           "La importación se actualizó, pero falló la actualización del PDF:",
           pdfError
         );
-
-        errorToast(
-          "La importación fue actualizada, pero no se pudo actualizar su PDF"
-        );
+        errorToast("La importación fue actualizada, pero no se pudo actualizar su PDF");
       }
 
       successToast(
@@ -374,11 +298,7 @@ export const useImportations = () => {
         "Error al actualizar la importación:",
         error
       );
-
-      errorToast(
-        "No se pudo actualizar la importación"
-      );
-
+      errorToast("No se pudo actualizar la importación");
       return null;
     } finally {
       setIsLoading(false);
@@ -387,10 +307,7 @@ export const useImportations = () => {
 
   const verifyImportation = async (id: number) => {
     if (!token || !id) {
-      errorToast(
-        "No se pudo identificar la importación"
-      );
-
+      errorToast("No se pudo identificar la importación");
       return null;
     }
 
@@ -398,49 +315,33 @@ export const useImportations = () => {
 
     try {
       const verifiedImportation =
-        await verifyImportationService(
-          id,
-          token
-        );
+        await verifyImportationService(id, token);
 
-      /*
-       * Si verify-importation devuelve el objeto completo,
-       * también podemos regenerar el PDF con el nuevo estado.
-       */
       if (verifiedImportation?.snapshot) {
         try {
-          await generateAndUploadImportationPdf(
-            verifiedImportation
-          );
+          await generateAndUploadImportationPdf(verifiedImportation);
         } catch (pdfError) {
           console.error(
             "La importación fue verificada, pero no se pudo actualizar el PDF:",
             pdfError
           );
-
           errorToast(
             "La importación fue verificada, pero no se pudo actualizar su PDF"
           );
         }
       }
 
-      successToast(
-        "Importación verificada correctamente"
-      );
-
+      successToast("Importación verificada correctamente");
       await getImportations();
-
       return verifiedImportation;
     } catch (error) {
       console.error(
         "Error al verificar la importación:",
         error
       );
-
       errorToast(
         "No se pudo verificar la importación"
       );
-
       return null;
     } finally {
       setIsLoading(false);
@@ -449,7 +350,6 @@ export const useImportations = () => {
 
   useEffect(() => {
     if (!token) return;
-
     getImportations();
   }, [token]);
 

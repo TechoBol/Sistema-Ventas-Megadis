@@ -46,8 +46,8 @@ export const calculateBankPayments = ({
     const itfExitUsd = roundToFourDecimals(amountUsd * ITF_RATE);
 
     /*
-     * El ITF de entrada se registra según el comprobante.
-     * Ambos ITF son convertidos a Bs con el tipo de cambio del pago.
+     * El ITF de entrada se registra según el comprobante
+     * Ambos ITF son convertidos a Bs con el tipo de cambio del pago
      */
     const itfEntryBs = roundToFourDecimals(
       itfEntryUsd * bankExchangeRate

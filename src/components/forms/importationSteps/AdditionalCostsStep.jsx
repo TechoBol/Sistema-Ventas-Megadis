@@ -49,8 +49,7 @@ function AdditionalCostsStep({
    * Genera automáticamente:
    * - Comisiones Bancarias DÓLARES
    * - ITF USD
-   *
-   * Sus montos se obtienen desde el paso Pagos bancarios.
+   * Sus montos se obtienen desde el paso Pagos bancarios
    */
   const bankAdditionalCosts = useMemo(
     () =>
@@ -75,10 +74,7 @@ function AdditionalCostsStep({
     [additionalCosts, bankAdditionalCosts]
   );
 
-  /*
-   * Todos los cálculos, tanto manuales como bancarios,
-   * usan la misma función centralizada.
-   */
+  /* Todos los cálculos, tanto manuales como bancarios, usan la misma función centralizada */
   const calculatedRows = useMemo(
     () =>
       displayedCosts.map((cost) => ({
@@ -97,25 +93,10 @@ function AdditionalCostsStep({
         const calculation = row.calculation;
 
         return {
-          amountUsd: roundToFourDecimals(
-            accumulator.amountUsd +
-              calculation.amountUsd
-          ),
-
-          amountBs: roundToFourDecimals(
-            accumulator.amountBs +
-              calculation.amountBs
-          ),
-
-          fiscalCreditBs: roundToFourDecimals(
-            accumulator.fiscalCreditBs +
-              calculation.fiscalCreditBs
-          ),
-
-          netAmountBs: roundToFourDecimals(
-            accumulator.netAmountBs +
-              calculation.netAmountBs
-          ),
+          amountUsd: roundToFourDecimals(accumulator.amountUsd + calculation.amountUsd),
+          amountBs: roundToFourDecimals(accumulator.amountBs + calculation.amountBs),
+          fiscalCreditBs: roundToFourDecimals(accumulator.fiscalCreditBs + calculation.fiscalCreditBs),
+          netAmountBs: roundToFourDecimals(accumulator.netAmountBs + calculation.netAmountBs),
         };
       },
       {
@@ -127,10 +108,7 @@ function AdditionalCostsStep({
     );
   }, [calculatedRows]);
 
-  /*
-   * Solo modifica las filas manuales.
-   * Las bancarias nunca entran a este estado.
-   */
+  /* Solo modifica las filas manuales, las bancarias nunca entran a este estado */
   const handleChange = (index, field, value) => {
     const updatedCosts = additionalCosts.map(
       (cost, costIndex) =>
@@ -141,7 +119,6 @@ function AdditionalCostsStep({
             }
           : cost
     );
-
     onChangeAdditionalCosts(updatedCosts);
   };
 
@@ -158,7 +135,6 @@ function AdditionalCostsStep({
             }
           : cost
     );
-
     onChangeAdditionalCosts(updatedCosts);
   };
 
@@ -171,39 +147,18 @@ function AdditionalCostsStep({
 
   const handleRemoveCost = (index) => {
     if (additionalCosts.length === 1) return;
-
     const updatedCosts =
       additionalCosts.filter(
         (_, costIndex) =>
           costIndex !== index
       );
-
     onChangeAdditionalCosts(updatedCosts);
   };
 
   return (
     <StepPanel>
       <SectionHeader>
-        <div>
-          <StepPanelTitle>
-            Gastos adicionales de importación
-          </StepPanelTitle>
-
-          <p
-            style={{
-              margin: "6px 0 0",
-              color: "#64748b",
-              fontSize: "13px",
-              lineHeight: 1.45,
-            }}
-          >
-            Las comisiones bancarias y el ITF se
-            completan automáticamente a partir de
-            los pagos registrados en el paso
-            anterior.
-          </p>
-        </div>
-
+        <StepPanelTitle>Gastos adicionales de importación</StepPanelTitle>
         <AddButton
           type="button"
           onClick={handleAddCost}
@@ -228,9 +183,7 @@ function AdditionalCostsStep({
 
         {calculatedRows.map(
           (row, index) => {
-            const isBankCost =
-              row.source === "BANK";
-
+            const isBankCost = row.source === "BANK";
             const manualIndex = index;
 
             return (
@@ -238,9 +191,7 @@ function AdditionalCostsStep({
                 key={`${row.source}-${row.concept}-${index}`}
                 style={
                   isBankCost
-                    ? {
-                        background: "#f8fafc",
-                      }
+                    ? { background: "#f8fafc" }
                     : undefined
                 }
               >
@@ -309,33 +260,17 @@ function AdditionalCostsStep({
                     )
                   }
                 >
-                  <option value="USD">
-                    USD
-                  </option>
-
-                  <option value="BS">
-                    Bs
-                  </option>
+                  <option value="USD">USD</option>
+                  <option value="BS">Bs</option>
                 </WizardSelect>
 
-                <strong>
-                  {formatUsd(
-                    row.calculation.amountUsd
-                  )}
-                </strong>
-
-                <strong>
-                  {formatBs(
-                    row.calculation.amountBs
-                  )}
-                </strong>
+                <strong>{formatUsd(row.calculation.amountUsd)}</strong>
+                <strong>{formatBs(row.calculation.amountBs)}</strong>
 
                 <CreditCheckLabel>
                   <input
                     type="checkbox"
-                    checked={
-                      row.hasFiscalCredit
-                    }
+                    checked={row.hasFiscalCredit}
                     disabled={isBankCost}
                     onChange={(event) =>
                       handleCheckChange(
@@ -370,18 +305,8 @@ function AdditionalCostsStep({
                   />
                 </CreditCheckLabel>
 
-                <strong>
-                  {formatBs(
-                    row.calculation
-                      .fiscalCreditBs
-                  )}
-                </strong>
-
-                <strong>
-                  {formatBs(
-                    row.calculation.netAmountBs
-                  )}
-                </strong>
+                <strong>{formatBs(row.calculation.fiscalCreditBs)}</strong>
+                <strong>{formatBs(row.calculation.netAmountBs)}</strong>
 
                 {isBankCost ? (
                   <IconButton
@@ -415,45 +340,23 @@ function AdditionalCostsStep({
 
       <AdditionalCostsTotals>
         <div>
-          <span>
-            Total importe USD:
-          </span>
-
-          <strong>
-            {formatUsd(totals.amountUsd)}
-          </strong>
+          <span>Total importe USD:</span>
+          <strong>{formatUsd(totals.amountUsd)}</strong>
         </div>
 
         <div>
-          <span>
-            Total importe Bs:
-          </span>
-
-          <strong>
-            {formatBs(totals.amountBs)}
-          </strong>
+          <span>Total importe Bs:</span>
+          <strong>{formatBs(totals.amountBs)}</strong>
         </div>
 
         <div>
-          <span>
-            Total crédito fiscal:
-          </span>
-
-          <strong>
-            {formatBs(
-              totals.fiscalCreditBs
-            )}
-          </strong>
+          <span>Total crédito fiscal:</span>
+          <strong>{formatBs(totals.fiscalCreditBs)}</strong>
         </div>
 
         <div className="highlight">
-          <span>
-            Total neto distribuible:
-          </span>
-
-          <strong>
-            {formatBs(totals.netAmountBs)}
-          </strong>
+          <span>Total neto distribuible:</span>
+          <strong>{formatBs(totals.netAmountBs)}</strong>
         </div>
       </AdditionalCostsTotals>
     </StepPanel>
