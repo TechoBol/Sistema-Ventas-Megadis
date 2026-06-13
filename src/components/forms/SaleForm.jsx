@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowLeft, MapPin, ReceiptText, ShieldCheck, CreditCard, Info } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  ReceiptText,
+  ShieldCheck,
+  CreditCard,
+  Info,
+} from "lucide-react";
 import { useCustomer } from "../../hooks/useCustomer";
 import { useLoginStore } from "../store/loginStore";
 import LocationPicker from "../modals/LocationPicker";
@@ -25,7 +32,7 @@ import {
   FormGrid,
   Field,
   Label,
-  Input,
+  Input,InputArea,
   AddressWrapper,
   LocationButton,
   CustomerDropdown,
@@ -120,7 +127,8 @@ function SaleForm({
     // Direcciones
     const addresses = customer.addresses || [];
     setCustomerAddresses(addresses);
-    const primaryAddress = addresses.find((addr) => addr.isPrimary) || addresses[0];
+    const primaryAddress =
+      addresses.find((addr) => addr.isPrimary) || addresses[0];
     setSelectedAddressId(primaryAddress?.id || "new");
 
     // NITs
@@ -165,7 +173,11 @@ function SaleForm({
   };
 
   const handleFinish = () => {
-    if (mode !== "cotizacion" && paymentMethod === "Deposito bancario" && !bankName) {
+    if (
+      mode !== "cotizacion" &&
+      paymentMethod === "Deposito bancario" &&
+      !bankName
+    ) {
       errorToast("Por favor, seleccione un banco destino.");
       return;
     }
@@ -174,7 +186,9 @@ function SaleForm({
     const tieneNit = customerData.ci?.trim();
 
     if (mode === "reserva" && (!tieneNombre || !tieneNit)) {
-      errorToast("Para registrar una reserva es obligatorio el Nombre y CI/NIT del cliente.");
+      errorToast(
+        "Para registrar una reserva es obligatorio el Nombre y CI/NIT del cliente.",
+      );
       return;
     }
 
@@ -234,13 +248,29 @@ function SaleForm({
         {/* COLUMNA IZQUIERDA: FORMULARIO */}
         <LeftColumn>
           {mode !== "cotizacion" && (
-            <InvoiceBox onClick={() => setGenerateInvoice((current) => !current)}>
-              <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-                <ReceiptText size={22} style={{ color: generateInvoice ? "var(--form-primary)" : "#64748b", marginTop: "2px" }} />
+            <InvoiceBox
+              onClick={() => setGenerateInvoice((current) => !current)}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  alignItems: "flex-start",
+                }}
+              >
+                <ReceiptText
+                  size={22}
+                  style={{
+                    color: generateInvoice ? "var(--form-primary)" : "#64748b",
+                    marginTop: "2px",
+                  }}
+                />
                 <InvoiceInfo>
                   <InvoiceTitle>Generar factura electrónica</InvoiceTitle>
                   <InvoiceSubtitle>
-                    {generateInvoice ? "Se emitirá una factura válida para crédito fiscal." : "Se emitirá un recibo de control interno."}
+                    {generateInvoice
+                      ? "Se emitirá una factura válida para crédito fiscal."
+                      : "Se emitirá un recibo de control interno."}
                   </InvoiceSubtitle>
                 </InvoiceInfo>
               </div>
@@ -260,19 +290,29 @@ function SaleForm({
               <Label>NOMBRE O RAZÓN SOCIAL</Label>
               <Input
                 value={customerData.name}
-                onFocus={() => { setSearchTerm(customerData.name); setOpenCustomerDrop(true); }}
-                onChange={(event) => handleCustomerSearch("name", event.target.value)}
+                onFocus={() => {
+                  setSearchTerm(customerData.name);
+                  setOpenCustomerDrop(true);
+                }}
+                onChange={(event) =>
+                  handleCustomerSearch("name", event.target.value)
+                }
                 placeholder="Ingrese nombre del cliente"
               />
               {openCustomerDrop && (
                 <CustomerDropdown>
                   <CustomerHeader>
                     <CustomerHeaderCode>NIT / CI</CustomerHeaderCode>
-                    <CustomerHeaderName>Nombre / Razón Social</CustomerHeaderName>
+                    <CustomerHeaderName>
+                      Nombre / Razón Social
+                    </CustomerHeaderName>
                   </CustomerHeader>
                   {customers.length > 0 ? (
                     customers.map((c) => (
-                      <CustomerItem key={c.id} onClick={() => selectCustomer(c)}>
+                      <CustomerItem
+                        key={c.id}
+                        onClick={() => selectCustomer(c)}
+                      >
                         <CustomerCode>
                           {c.nits?.[0]?.number || "S/N"}
                         </CustomerCode>
@@ -302,8 +342,13 @@ function SaleForm({
               ) : (
                 <Input
                   value={customerData.ci}
-                  onFocus={() => { setSearchTerm(customerData.ci); setOpenCustomerDrop(true); }}
-                  onChange={(event) => handleCustomerSearch("ci", event.target.value)}
+                  onFocus={() => {
+                    setSearchTerm(customerData.ci);
+                    setOpenCustomerDrop(true);
+                  }}
+                  onChange={(event) =>
+                    handleCustomerSearch("ci", event.target.value)
+                  }
                   placeholder="Buscar o ingresar NIT/CI..."
                 />
               )}
@@ -351,7 +396,9 @@ function SaleForm({
               <Label>PROFESIÓN / OCUPACIÓN</Label>
               <Input
                 value={customerData.occupation}
-                onChange={(event) => handleChange("occupation", event.target.value)}
+                onChange={(event) =>
+                  handleChange("occupation", event.target.value)
+                }
                 placeholder="Ej: Médico, Ingeniero, Comerciante..."
               />
             </Field>
@@ -370,7 +417,9 @@ function SaleForm({
                       $activeBg={activeBg}
                       onClick={() => handleChange("originChannel", value)}
                     >
-                      <ChannelIconBox $bg={isActive ? "rgba(255,255,255,0.15)" : iconBg}>
+                      <ChannelIconBox
+                        $bg={isActive ? "rgba(255,255,255,0.15)" : iconBg}
+                      >
                         {icon}
                       </ChannelIconBox>
                       <ChannelTooltip>{value}</ChannelTooltip>
@@ -381,7 +430,9 @@ function SaleForm({
             </Field>
 
             <Field style={{ gridColumn: "span 2" }}>
-              <Label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <Label
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
                 DIRECCIÓN DE ENTREGA
               </Label>
               <AddressWrapper>
@@ -394,7 +445,11 @@ function SaleForm({
                   }}
                   placeholder="Calle, avenida, número de casa..."
                 />
-                <LocationButton type="button" onClick={() => setShowMap((current) => !current)} className={showMap ? "active" : ""}>
+                <LocationButton
+                  type="button"
+                  onClick={() => setShowMap((current) => !current)}
+                  className={showMap ? "active" : ""}
+                >
                   <MapPin size={18} />
                 </LocationButton>
               </AddressWrapper>
@@ -409,12 +464,19 @@ function SaleForm({
                   const value = event.target.value;
                   if (value === "new") {
                     setSelectedAddressId("new");
-                    setCustomerData((current) => ({ ...current, address: "", latitude: null, longitude: null }));
+                    setCustomerData((current) => ({
+                      ...current,
+                      address: "",
+                      latitude: null,
+                      longitude: null,
+                    }));
                     return;
                   }
                   const addressId = Number(value);
                   setSelectedAddressId(addressId);
-                  const selectedAddress = customerAddresses.find((a) => a.id === addressId);
+                  const selectedAddress = customerAddresses.find(
+                    (a) => a.id === addressId,
+                  );
                   if (!selectedAddress) return;
                   setCustomerData((current) => ({
                     ...current,
@@ -435,16 +497,38 @@ function SaleForm({
           </FormGrid>
 
           {showMap && (
-            <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #e2e8f0", marginTop: "12px" }}>
+            <div
+              style={{
+                borderRadius: "12px",
+                overflow: "hidden",
+                border: "1px solid #e2e8f0",
+                marginTop: "12px",
+              }}
+            >
               <LocationPicker
                 key={`${customerData.latitude}-${customerData.longitude}`}
-                value={{ lat: customerData.latitude, lng: customerData.longitude }}
+                value={{
+                  lat: customerData.latitude,
+                  lng: customerData.longitude,
+                }}
                 onConfirm={(coords) => {
-                  setCustomerData((current) => ({ ...current, latitude: coords.lat, longitude: coords.lng }));
+                  setCustomerData((current) => ({
+                    ...current,
+                    latitude: coords.lat,
+                    longitude: coords.lng,
+                  }));
                 }}
               />
             </div>
           )}
+          <Field style={{ gridColumn: "span 2" }}>
+            <Label>GLOSA</Label>
+            <InputArea
+              value={customerData.glosa || ""}
+              onChange={(event) => handleChange("glosa", event.target.value)}
+              placeholder="Observaciones de la venta..."
+            />
+          </Field>
         </LeftColumn>
 
         {/* COLUMNA DERECHA: RESUMEN */}
@@ -454,22 +538,41 @@ function SaleForm({
             <TotalValue>
               {mode === "reserva"
                 ? `Bs ${Number(pendingAmount).toFixed(2)}`
-                : `Bs ${Number(total || 0).toFixed(2)}`
-              }
+                : `Bs ${Number(total || 0).toFixed(2)}`}
             </TotalValue>
 
-            <div style={{ borderTop: "1px dashed rgba(255,255,255,0.3)", marginTop: "20px", paddingTop: "16px" }}>
+            <div
+              style={{
+                borderTop: "1px dashed rgba(255,255,255,0.3)",
+                marginTop: "20px",
+                paddingTop: "16px",
+              }}
+            >
               {mode === "cotizacion" ? (
                 <>
                   <PaymentLabel>VALIDEZ DE LA OFERTA</PaymentLabel>
-                  <PaymentBadge style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px" }}>
+                  <PaymentBadge
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginTop: "6px",
+                    }}
+                  >
                     Días válidos: {validityDays} días
                   </PaymentBadge>
                 </>
               ) : (
                 <>
                   <PaymentLabel>MÉTODO DE PAGO</PaymentLabel>
-                  <PaymentBadge style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px" }}>
+                  <PaymentBadge
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginTop: "6px",
+                    }}
+                  >
                     <CreditCard size={16} /> {paymentMethod}
                   </PaymentBadge>
                 </>
@@ -479,7 +582,13 @@ function SaleForm({
             {mode === "reserva" && (
               <div style={{ marginTop: "12px" }}>
                 <PaymentLabel>MONTO ADELANTADO</PaymentLabel>
-                <div style={{ fontSize: "16px", fontWeight: "700", marginTop: "2px" }}>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "700",
+                    marginTop: "2px",
+                  }}
+                >
                   Bs {Number(total || 0).toFixed(2)}
                 </div>
               </div>
@@ -489,7 +598,10 @@ function SaleForm({
           {mode !== "cotizacion" && paymentMethod === "Deposito bancario" && (
             <BankSelectWrapper>
               <BankSelectLabel>Banco destino</BankSelectLabel>
-              <BankSelect value={bankName} onChange={(event) => setBankName(event.target.value)}>
+              <BankSelect
+                value={bankName}
+                onChange={(event) => setBankName(event.target.value)}
+              >
                 <option value="">Seleccione un banco</option>
                 <option value="Banco Union">Banco Unión</option>
                 <option value="Banco BCP">Banco BCP</option>
@@ -499,32 +611,47 @@ function SaleForm({
           )}
 
           <StatusBox>
-            <ShieldCheck size={20} style={{ color: generateInvoice ? "#10b981" : "#64748b", flexShrink: 0 }} />
+            <ShieldCheck
+              size={20}
+              style={{
+                color: generateInvoice ? "#10b981" : "#64748b",
+                flexShrink: 0,
+              }}
+            />
             <div>
-              <div style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b" }}>
-                {mode === "cotizacion" ? "Presupuesto Informativo" : generateInvoice ? "Facturación Activa" : "Operación regular"}
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "#1e293b",
+                }}
+              >
+                {mode === "cotizacion"
+                  ? "Presupuesto Informativo"
+                  : generateInvoice
+                  ? "Facturación Activa"
+                  : "Operación regular"}
               </div>
-              <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+              <div
+                style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}
+              >
                 {mode === "cotizacion"
                   ? "Este documento no genera obligaciones fiscales legales."
                   : generateInvoice
-                    ? "Los datos se validarán para emitir la factura electrónica."
-                    : "Se emitirá un recibo de control interno para el despacho."
-                }
+                  ? "Los datos se validarán para emitir la factura electrónica."
+                  : "Se emitirá un recibo de control interno para el despacho."}
               </div>
             </div>
           </StatusBox>
         </RightColumn>
       </MainContainer>
-
       <Footer>
         <NotificationBox>
           <Info size={16} style={{ color: "var(--form-primary)" }} />
           <span>
             {mode === "cotizacion"
               ? "La cotización se guardará en el historial para consultas posteriores."
-              : "La venta se registrará automáticamente. El cliente se guardará si es nuevo."
-            }
+              : "La venta se registrará automáticamente. El cliente se guardará si es nuevo."}
           </span>
         </NotificationBox>
 

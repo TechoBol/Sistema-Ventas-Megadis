@@ -41,6 +41,7 @@ export const useCart = () => {
       validityDays?: number;
       notes?: string;
       nitId?: number | null;
+      glosa?: string;
     },
     cartItems: any[],
     subtotal: number,
@@ -89,6 +90,7 @@ export const useCart = () => {
           expiresAt,
           customerId: data.customerId || undefined,
           nitId: data.nitId ?? null,
+          glosa: data.glosa || null,
         };
 
         const result = await createQuotationService(payload, token);
@@ -116,6 +118,7 @@ export const useCart = () => {
         locationId: selectedLocation?.id || location.id,
         metodoPago: data.paymentMethod,
         nitId: data.nitId ?? null,
+        glosa: data.glosa || null,
       };
 
       console.log("PAYLOAD SALE:", payload);
