@@ -285,6 +285,7 @@ const Cart = () => {
     address: "",
     latitude: null,
     longitude: null,
+    glosa: "",
   };
 
   const [customerData, setCustomerData] = useState(initialCustomerData);
