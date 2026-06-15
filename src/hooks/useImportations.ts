@@ -79,9 +79,7 @@ const mapWizardPayloadToApi = (payload: any) => {
     referenceNumber: generalData.reference?.trim() || null,
     importationDate: generalData.date || null,
     officialExchangeRate: Number(generalData.officialExchangeRate || 6.96),
-    bankExchangeRate: generalData.bankExchangeRate
-      ? Number(generalData.bankExchangeRate)
-      : null,
+    bankExchangeRate: null, // quiza se borre sino se llega a utilizar la columna bankExchangeRate
     ivaPercent: 14.94,
     productCount: products.length,
 
@@ -124,6 +122,12 @@ const mapWizardPayloadToApi = (payload: any) => {
       },
 
       bankPayments: { payments: paymentsToSave },
+      /* guardar en el snapshot t/c flete naviero */
+      exchangeDifference: {
+        maritimeFreightExchangeRate: Number(
+          generalData.maritimeFreightExchangeRate || 0
+        ),
+      },
       bankFiscalCredit: {
         commission: {
           hasFiscalCredit: Boolean(bankFiscalCredit?.commission?.hasFiscalCredit),
@@ -132,6 +136,10 @@ const mapWizardPayloadToApi = (payload: any) => {
         itf: {
           hasFiscalCredit: Boolean(bankFiscalCredit?.itf?.hasFiscalCredit),
           creditRate: Number(bankFiscalCredit?.itf?.creditRate || 0),
+        },
+        exchangeDifference: {
+          hasFiscalCredit: Boolean(bankFiscalCredit?.exchangeDifference?.hasFiscalCredit),
+          creditRate: Number(bankFiscalCredit?.exchangeDifference?.creditRate || 0),
         },
       },
       additionalCosts: manualAdditionalCosts,

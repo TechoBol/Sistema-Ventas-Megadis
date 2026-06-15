@@ -13,6 +13,8 @@ import {
   WizardHeaderLeft,
   WizardBackButton,
   WizardTitle,
+  WizardTitleBlock,
+  WizardSubtitle,
   StepperWrapper,
   StepItem,
   StepCircle,
@@ -23,6 +25,11 @@ import {
   StepActionsRight,
   StepSecondaryButton,
   StepPrimaryButton,
+  ConfirmOverlay,
+  ConfirmDialog,
+  ConfirmTitle,
+  ConfirmText,
+  ConfirmActions,
 } from "../../ui/ImportationWizard.styles";
 
 const STEPS = [
@@ -60,7 +67,7 @@ const createDefaultAdditionalCosts = () => [
     concept: "Comisión aduana por despacho",
     amount: "",
     currency: "USD",
-    hasFiscalCredit: true,
+    hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
   },
@@ -84,7 +91,7 @@ const createDefaultAdditionalCosts = () => [
     concept: "SAMC",
     amount: "",
     currency: "BS",
-    hasFiscalCredit: true,
+    hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
   },
@@ -92,7 +99,7 @@ const createDefaultAdditionalCosts = () => [
     concept: "Gate In devolución",
     amount: "",
     currency: "BS",
-    hasFiscalCredit: true,
+    hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
   },
@@ -100,7 +107,7 @@ const createDefaultAdditionalCosts = () => [
     concept: "Emisión de documentos",
     amount: "",
     currency: "USD",
-    hasFiscalCredit: true,
+    hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
   },
@@ -331,6 +338,9 @@ function ImportationWizard({
     initialWizardState.additionalCosts
   );
 
+  /* estados para mensaje de confirmacion de guardado */
+  const [showVerifyConfirm, setShowVerifyConfirm] = useState(false);
+
   const handleGeneralDataChange = (field, value) => {
     setGeneralData((current) => ({
       ...current,
@@ -458,13 +468,18 @@ function ImportationWizard({
             <ArrowLeft size={20} />
           </WizardBackButton>
 
-          <div>
+          <WizardTitleBlock>
             <WizardTitle>
               {mode === "edit"
                 ? "Editar importación"
                 : "Nueva importación"}
             </WizardTitle>
-          </div>
+            <WizardSubtitle>
+              {generalData.reference
+                ? `Factura / Referencia: ${generalData.reference}`
+                : "Factura / Referencia: Sin referencia"}
+            </WizardSubtitle>
+          </WizardTitleBlock>
         </WizardHeaderLeft>
       </WizardHeader>
 
@@ -532,31 +547,43 @@ function ImportationWizard({
             </StepPrimaryButton>
           ) : (
             <>
-              <StepSecondaryButton
-                type="button"
-                onClick={() =>
-                  handleSubmit("borrador")
-                }
-              >
-                {mode === "edit"
-                  ? "Actualizar borrador"
-                  : "Guardar borrador"}
+              <StepSecondaryButton type="button" onClick={() => handleSubmit("borrador")}>
+                Guardar borrador
               </StepSecondaryButton>
-
-              <StepPrimaryButton
-                type="button"
-                onClick={() =>
-                  handleSubmit("verificado")
-                }
-              >
-                {mode === "edit"
-                  ? "Actualizar y verificar"
-                  : "Guardar verificado"}
+              <StepPrimaryButton type="button" onClick={() => setShowVerifyConfirm(true)}>
+                Guardar verificado
               </StepPrimaryButton>
             </>
           )}
         </StepActionsRight>
       </StepActions>
+      {/* modal mensaje de confirmacion de guerdado */}
+      {showVerifyConfirm && (
+        <ConfirmOverlay>
+          <ConfirmDialog>
+            <ConfirmTitle>Confirmar verificación</ConfirmTitle>
+            <ConfirmText>
+              Al guardar esta importación como verificada, ya no podrá editarse
+              posteriormente. Revisa que los datos, pagos, gastos y costos finales
+              sean correctos antes de continuar.
+            </ConfirmText>
+            <ConfirmActions>
+              <StepSecondaryButton type="button" onClick={() => setShowVerifyConfirm(false)}>
+                Cancelar
+              </StepSecondaryButton>
+              <StepPrimaryButton
+                type="button"
+                onClick={() => {
+                  setShowVerifyConfirm(false);
+                  handleSubmit("verificado");
+                }}
+              >
+                Guardar
+              </StepPrimaryButton>
+            </ConfirmActions>
+          </ConfirmDialog>
+        </ConfirmOverlay>
+      )}
     </WizardCard>
   );
 }

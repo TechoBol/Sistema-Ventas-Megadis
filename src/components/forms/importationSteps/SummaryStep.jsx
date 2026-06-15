@@ -3,8 +3,6 @@ import {
   StepPanel,
   SectionHeader,
   StepPanelTitle,
-  SummaryCardsGrid,
-  SummaryCard,
   SummaryTableWrapper,
   SummaryTable,
   SummaryTableHead,
@@ -67,78 +65,6 @@ function SummaryStep({
           Base imponible e impuestos
         </StepPanelTitle>
       </SectionHeader>
-
-      <SummaryCardsGrid>
-        <SummaryCard>
-          <span>Proveedor</span>
-          <strong>
-            {generalData.supplier ||
-              "Sin proveedor"}
-          </strong>
-        </SummaryCard>
-
-        <SummaryCard>
-          <span>Referencia</span>
-          <strong>
-            {generalData.reference ||
-              "Sin referencia"}
-          </strong>
-        </SummaryCard>
-
-        <SummaryCard>
-          <span>Tipo de cambio</span>
-          <strong>
-            {officialExchangeRate > 0
-              ? officialExchangeRate.toFixed(4)
-              : "Sin tipo de cambio"}
-          </strong>
-        </SummaryCard>
-
-        <SummaryCard>
-          <span>Total productos USD</span>
-          <strong>
-            {formatUsd(
-              totals.totalProductsUsd
-            )}
-          </strong>
-        </SummaryCard>
-
-        <SummaryCard>
-          <span>Total productos Bs</span>
-          <strong>
-            {formatBs(
-              totals.totalProductsBs
-            )}
-          </strong>
-        </SummaryCard>
-
-        <SummaryCard>
-          <span>Gastos base USD</span>
-          <strong>
-            {formatUsd(
-              totals.totalBaseExpensesUsd
-            )}
-          </strong>
-        </SummaryCard>
-
-        <SummaryCard $highlight>
-          <span>Base imponible total</span>
-          <strong>
-            {formatBs(totals.totalCifBs)}
-          </strong>
-        </SummaryCard>
-
-        <SummaryCard $highlight>
-          <span>
-            Valor después de impuestos
-          </span>
-          <strong>
-            {formatBs(
-              totals.totalValueAfterTaxesBs
-            )}
-          </strong>
-        </SummaryCard>
-      </SummaryCardsGrid>
 
       <SummaryTableWrapper>
         <SummaryTable>

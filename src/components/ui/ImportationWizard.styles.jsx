@@ -55,6 +55,12 @@ export const WizardBackButton = styled.button`
   }
 `;
 
+export const WizardTitleBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
 export const WizardTitle = styled.h2`
   margin: 0;
   font-size: 26px;
@@ -65,6 +71,13 @@ export const WizardTitle = styled.h2`
   @media (max-width: 700px) {
     font-size: 28px;
   }
+`;
+
+export const WizardSubtitle = styled.span`
+  display: block;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 export const StepperWrapper = styled.div`
@@ -154,7 +167,7 @@ export const StepLabel = styled.span`
 
 export const StepConnector = styled.div`
   flex: 1;
-  min-width: 90px;
+  min-width: 60px;
   height: 2px;
   margin-top: 21px;
   background: ${({ $completed }) =>
@@ -1082,4 +1095,46 @@ export const FinalCostTableFooter = styled.div`
     display: flex;
     align-items: center;
   }
+`;
+
+/* estilos para el menssaje de confirmacion de guardado */
+export const ConfirmOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+export const ConfirmDialog = styled.div`
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+  box-sizing: border-box;
+`;
+
+export const ConfirmTitle = styled.h3`
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: ${theme.colors.text};
+`;
+
+export const ConfirmText = styled.p`
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: ${theme.colors.textSecondary};
+`;
+
+export const ConfirmActions = styled.div`
+  margin-top: 22px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 `;
