@@ -1,5 +1,6 @@
 export const IVA_RATE = 0.1494;
 export const ITF_RATE = 0.003;
+export const BANK_COMMISSION_EXCHANGE_RATE = 6.97;
 
 export const roundToFourDecimals = (value) => {
   return Math.round((Number(value || 0) + Number.EPSILON) * 10000) / 10000;
@@ -25,30 +26,29 @@ export const getSectionTotalUsd = (items = []) => {
 export const calculateBankPayments = ({
   payments = [],
   officialExchangeRate = 0,
+  products = [],
+  expenses = {},
+  maritimeFreightExchangeRate = 0,
 }) => {
   const safePayments = Array.isArray(payments) ? payments : [];
-  const officialRate = Number(officialExchangeRate || 0);
   const rows = safePayments.map((payment, index) => {
     const amountUsd = Number(payment?.amountUsd || 0);
     const bankExchangeRate = Number(payment?.bankExchangeRate || 0);
     const commissionUsd = Number(payment?.commissionUsd || 0);
     const itfEntryUsd = Number(payment?.itfEntryUsd || 0);
+    
     const paymentAmountBs = roundToFourDecimals(
       amountUsd * bankExchangeRate
     );
 
-    /* la comisión en dólares es convertida a bolivianos usando el tipo de cambio oficial */
+    /* la comisión en dólares NO es convertida a bolivianos usando el tipo de cambio oficial */
     const commissionBs = roundToFourDecimals(
-      commissionUsd * officialRate
+      commissionUsd * BANK_COMMISSION_EXCHANGE_RATE
     );
 
     /* El ITF de salida está consistente: monto del pago USD × 0,3 % */
     const itfExitUsd = roundToFourDecimals(amountUsd * ITF_RATE);
 
-    /*
-     * El ITF de entrada se registra según el comprobante
-     * Ambos ITF son convertidos a Bs con el tipo de cambio del pago
-     */
     const itfEntryBs = roundToFourDecimals(
       itfEntryUsd * bankExchangeRate
     );
@@ -152,6 +152,51 @@ export const calculateBankPayments = ({
       totalOperationBs: 0,
     }
   );
+  {/* tipo de cambio */}
+  const officialRate = Number(officialExchangeRate || 0);
+  const maritimeRate = Number(maritimeFreightExchangeRate || 0);
+  const safeProductsForExchange = Array.isArray(products) ? products : [];
+  const safeFreights = Array.isArray(expenses?.freights) ? expenses.freights : [];
+  const totalProductsUsdForExchange = roundToFourDecimals(
+    safeProductsForExchange.reduce(
+      (total, product) => total + getProductSubtotalUsd(product),
+      0
+    )
+  );
+  const maritimeFreight = safeFreights.find((item, index) => {
+    const name = String(item?.name || "").toLowerCase();
+    return (
+      name.includes("naviero") ||
+      name.includes("flete i")
+    );
+  });
+  const maritimeFreightUsd = Number(
+    maritimeFreight?.amount ??
+      maritimeFreight?.amountUsd ??
+      0
+  );
+  const totalFreightsUsdForExchange = getSectionTotalUsd(safeFreights);
+  const otherFreightsUsd = roundToFourDecimals(totalFreightsUsdForExchange - maritimeFreightUsd);
+  const totalInsurancesUsdForExchange = getSectionTotalUsd(expenses?.insurances);
+  const totalPortCostsUsdForExchange = getSectionTotalUsd(expenses?.portCosts);
+  const freightExchangeRate = maritimeRate > 0 ? maritimeRate : officialRate;
+  const totalRegisteredDimBs = roundToFourDecimals(
+    totalProductsUsdForExchange * officialRate +
+      totalFreightsUsdForExchange * officialRate +
+      totalInsurancesUsdForExchange * officialRate +
+      totalPortCostsUsdForExchange * officialRate
+  );
+  const totalRealPaymentsBs = roundToFourDecimals(
+    totals.totalPaymentBs +
+      maritimeFreightUsd * freightExchangeRate +
+      otherFreightsUsd * officialRate +
+      totalInsurancesUsdForExchange * officialRate +
+      totalPortCostsUsdForExchange * officialRate
+  );
+  totals.totalRegisteredDimBs = totalRegisteredDimBs;
+  totals.totalRealPaymentsBs = totalRealPaymentsBs;
+  totals.totalExchangeDifferenceBs = roundToFourDecimals(totalRealPaymentsBs - totalRegisteredDimBs);
+  {/* fin - tipo de cambio */}
   return {
     rows,
     totals,
@@ -176,10 +221,17 @@ export const calculateAdditionalCost = (
         ? roundToFourDecimals(amount / officialExchangeRate)
         : 0;
 
-  const amountBs =
-    currency === "BS"
+  const hasCalculatedAmountBs =
+    cost?.amountBs !== undefined &&
+    cost?.amountBs !== null;
+
+  const amountBs = hasCalculatedAmountBs
+    ? roundToFourDecimals(cost.amountBs)
+    : currency === "BS"
       ? roundToFourDecimals(amount)
-      : roundToFourDecimals(amount * officialExchangeRate);
+      : roundToFourDecimals(
+          amount * officialExchangeRate
+        );
 
   const fiscalCreditBs = cost?.hasFiscalCredit
     ? roundToFourDecimals(amountBs * (creditRate / 100))
@@ -205,30 +257,60 @@ export const calculateAdditionalCost = (
 
 export const buildBankAdditionalCosts = (
   bankPayments,
-  officialExchangeRate
+  officialExchangeRate,
+  bankFiscalCredit = {},
+  products = [],
+  expenses = {},
+  maritimeFreightExchangeRate = 0
 ) => {
   const bankCalculation = calculateBankPayments({
     payments: bankPayments,
     officialExchangeRate,
+    products,
+    expenses,
+    maritimeFreightExchangeRate,
   });
-
   return [
     {
       concept: "Comisiones Bancarias DÓLARES",
       amount: bankCalculation.totals.totalCommissionUsd,
+      amountBs: bankCalculation.totals.totalCommissionBs,
       currency: "USD",
-      hasFiscalCredit: false,
-      creditRate: 0,
+      hasFiscalCredit: Boolean(bankFiscalCredit?.commission?.hasFiscalCredit),
+      creditRate: Number(bankFiscalCredit?.commission?.creditRate || 0),
       source: "BANK",
+      bankCostType: "commission",
       locked: true,
     },
     {
       concept: "ITF USD",
       amount: bankCalculation.totals.totalItfUsd,
+      amountBs: bankCalculation.totals.totalItfBs,
       currency: "USD",
-      hasFiscalCredit: false,
-      creditRate: 0,
+      hasFiscalCredit: Boolean(bankFiscalCredit?.itf?.hasFiscalCredit),
+      creditRate: Number(bankFiscalCredit?.itf?.creditRate || 0),
       source: "BANK",
+      bankCostType: "itf",
+      locked: true,
+    },
+    /* tipo de cambio */
+    {
+      concept: "Diferencia tipo de cambio",
+      amount: officialExchangeRate > 0
+        ? roundToFourDecimals(
+            bankCalculation.totals.totalExchangeDifferenceBs / officialExchangeRate
+          )
+        : 0,
+      amountBs: bankCalculation.totals.totalExchangeDifferenceBs,
+      currency: "USD",
+      hasFiscalCredit: Boolean(
+        bankFiscalCredit?.exchangeDifference?.hasFiscalCredit
+      ),
+      creditRate: Number(
+        bankFiscalCredit?.exchangeDifference?.creditRate || 0
+      ),
+      source: "BANK",
+      bankCostType: "exchangeDifference",
       locked: true,
     },
   ];
@@ -239,6 +321,7 @@ export const calculateImportation = ({
   products = [],
   expenses = {},
   bankPayments = [],
+  bankFiscalCredit = {},
   additionalCosts = [],
 }) => {
   const safeProducts = Array.isArray(products) ? products : [];
@@ -250,6 +333,10 @@ export const calculateImportation = ({
   const bankCalculation = calculateBankPayments({
     payments: bankPayments,
     officialExchangeRate,
+    products,
+    expenses,
+    maritimeFreightExchangeRate:
+      generalData?.maritimeFreightExchangeRate,
   });
 
   /* Las filas bancarias se construyen automáticamente */
@@ -259,7 +346,11 @@ export const calculateImportation = ({
 
   const bankAdditionalCosts = buildBankAdditionalCosts(
     bankPayments,
-    officialExchangeRate
+    officialExchangeRate,
+    bankFiscalCredit,
+    products,
+    expenses,
+    generalData?.maritimeFreightExchangeRate
   );
 
   const allAdditionalCosts = [

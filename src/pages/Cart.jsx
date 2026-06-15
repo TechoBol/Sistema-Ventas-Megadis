@@ -322,6 +322,7 @@ const Cart = () => {
       // 2. Ejecutamos la función del hook pasando los parámetros limpios y ordenados
       const result = await createSale(
         dataPayload,
+        effectiveLocationId,
         cartItems.map((item) => ({
           productId: item.productId,
           productUnitId: item.selectedUnitId,
