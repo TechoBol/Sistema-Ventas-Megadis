@@ -57,7 +57,7 @@ const createDefaultExpenses = () => ({
     { name: "Flete Naviero (FLETE I)", amount: "" },
     { name: "Flete terrestre Frontera FLETE(II)", amount: "" },
   ],
-  insurances: [{ name: "", amount: "" }],
+  insurances: [{ name: "Seguro", amount: "" }],
   portCosts: [{ name: "", amount: "" }],
   otherCosts: [{ name: "", amount: "" }],
 });
