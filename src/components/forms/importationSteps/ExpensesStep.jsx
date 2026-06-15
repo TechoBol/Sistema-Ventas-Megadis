@@ -67,7 +67,46 @@ function ExpenseGroup({
       </ExpenseCardHeader>
 
       <ExpenseRows>
-        {items.map((item, index) => (
+        {/* para que editen el nombre ni la posicion de flete 1 */}
+        {items.map((item, index) => {
+          const isLockedFreightName = title === "Fletes" && item.name === "Flete Naviero (FLETE I)"&& index === 0;
+          return (
+            <ExpenseRow key={index}>
+              <WizardInput
+                type="text"
+                placeholder={namePlaceholder}
+                value={item.name}
+                disabled={isLockedFreightName}
+                onChange={(event) =>
+                  onChange(index, "name", event.target.value)
+                }
+              />
+              <WizardInput
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0"
+                value={item.amount}
+                onChange={(event) =>
+                  onChange(index, "amount", event.target.value)
+                }
+              />
+              <IconButton
+                type="button"
+                title={
+                  isLockedFreightName
+                    ? "Este flete es requerido para el cálculo"
+                    : "Eliminar gasto"
+                }
+                disabled={items.length === 1 || isLockedFreightName}
+                onClick={() => onRemove(index)}
+              >
+                <Trash2 size={16} />
+              </IconButton>
+            </ExpenseRow>
+          );
+        })}
+        {/*{items.map((item, index) => (
           <ExpenseRow key={index}>
             <WizardInput
               type="text"
@@ -96,7 +135,7 @@ function ExpenseGroup({
               <Trash2 size={16} />
             </IconButton>
           </ExpenseRow>
-        ))}
+        ))}*/}
       </ExpenseRows>
 
       <ExpenseTotal>

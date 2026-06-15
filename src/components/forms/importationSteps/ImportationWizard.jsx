@@ -13,6 +13,8 @@ import {
   WizardHeaderLeft,
   WizardBackButton,
   WizardTitle,
+  WizardTitleBlock,
+  WizardSubtitle,
   StepperWrapper,
   StepItem,
   StepCircle,
@@ -23,6 +25,11 @@ import {
   StepActionsRight,
   StepSecondaryButton,
   StepPrimaryButton,
+  ConfirmOverlay,
+  ConfirmDialog,
+  ConfirmTitle,
+  ConfirmText,
+  ConfirmActions,
 } from "../../ui/ImportationWizard.styles";
 
 const STEPS = [
@@ -50,7 +57,7 @@ const createDefaultExpenses = () => ({
     { name: "Flete Naviero (FLETE I)", amount: "" },
     { name: "Flete terrestre Frontera FLETE(II)", amount: "" },
   ],
-  insurances: [{ name: "", amount: "" }],
+  insurances: [{ name: "Seguro", amount: "" }],
   portCosts: [{ name: "", amount: "" }],
   otherCosts: [{ name: "", amount: "" }],
 });
@@ -60,7 +67,7 @@ const createDefaultAdditionalCosts = () => [
     concept: "Comisión aduana por despacho",
     amount: "",
     currency: "USD",
-    hasFiscalCredit: true,
+    hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
   },
@@ -84,7 +91,7 @@ const createDefaultAdditionalCosts = () => [
     concept: "SAMC",
     amount: "",
     currency: "BS",
-    hasFiscalCredit: true,
+    hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
   },
@@ -92,7 +99,7 @@ const createDefaultAdditionalCosts = () => [
     concept: "Gate In devolución",
     amount: "",
     currency: "BS",
-    hasFiscalCredit: true,
+    hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
   },
@@ -100,14 +107,6 @@ const createDefaultAdditionalCosts = () => [
     concept: "Emisión de documentos",
     amount: "",
     currency: "USD",
-    hasFiscalCredit: true,
-    creditRate: "13",
-    source: "MANUAL",
-  },
-  {
-    concept: "Diferencia tipo de cambio",
-    amount: "",
-    currency: "BS",
     hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
@@ -122,12 +121,28 @@ const createDefaultAdditionalCosts = () => [
   },
 ];
 
-const createDefaultBankPayments = (officialExchangeRate = "6.96") => [
+const createDefaultBankPayments = () => [
   {
     ...emptyBankPayment,
-    bankExchangeRate: officialExchangeRate,
+    bankExchangeRate: "",
   },
 ];
+
+const createDefaultBankFiscalCredit = () => ({
+  commission: {
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+  itf: {
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+  /* tipo de cambio */
+  exchangeDifference: {
+    hasFiscalCredit: false,
+    creditRate: "13",
+  },
+});
 
 const getDateInputValue = (value) => {
   if (!value) return "";
@@ -168,9 +183,10 @@ const mapApiDataToWizardState = (importation) => {
       reference: importation?.referenceNumber || "",
       date: getDateInputValue(importation?.importationDate),
       officialExchangeRate,
-      bankExchangeRate: importation?.bankExchangeRate
-        ? String(importation.bankExchangeRate)
-        : "",
+      maritimeFreightExchangeRate:
+        snapshot.exchangeDifference?.maritimeFreightExchangeRate
+          ? String(snapshot.exchangeDifference.maritimeFreightExchangeRate)
+          : "",
     },
 
     products:
@@ -235,9 +251,23 @@ const mapApiDataToWizardState = (importation) => {
               payment.commissionUsd ?? "",
             itfEntryUsd: payment.itfEntryUsd ?? "",
           }))
-        : createDefaultBankPayments(
-            officialExchangeRate
-          ),
+        : createDefaultBankPayments(),
+
+    bankFiscalCredit: {
+      commission: {
+        hasFiscalCredit: Boolean(snapshot.bankFiscalCredit?.commission?.hasFiscalCredit),
+        creditRate: String(snapshot.bankFiscalCredit?.commission?.creditRate ?? "13"),
+      },
+      itf: {
+        hasFiscalCredit: Boolean(snapshot.bankFiscalCredit?.itf?.hasFiscalCredit),
+        creditRate: String(snapshot.bankFiscalCredit?.itf?.creditRate ?? "13"),
+      },
+      /* tipo de cambio */
+      exchangeDifference: {
+        hasFiscalCredit: Boolean(snapshot.bankFiscalCredit?.exchangeDifference?.hasFiscalCredit),
+        creditRate: String(snapshot.bankFiscalCredit?.exchangeDifference?.creditRate ?? "13"),
+      },
+    },
 
     additionalCosts:
       savedAdditionalCosts.length > 0
@@ -264,11 +294,12 @@ const createInitialWizardState = () => ({
     reference: "",
     date: "",
     officialExchangeRate: "6.96",
-    bankExchangeRate: "",
+    maritimeFreightExchangeRate: "",
   },
   products: [{ ...emptyProduct }],
   expenses: createDefaultExpenses(),
-  bankPayments: createDefaultBankPayments("6.96"),
+  bankPayments: createDefaultBankPayments(),
+  bankFiscalCredit: createDefaultBankFiscalCredit(),
   additionalCosts: createDefaultAdditionalCosts(),
 });
 
@@ -299,9 +330,16 @@ function ImportationWizard({
     initialWizardState.bankPayments
   );
 
+  const [bankFiscalCredit, setBankFiscalCredit] = useState(
+    initialWizardState.bankFiscalCredit
+  );
+
   const [additionalCosts, setAdditionalCosts] = useState(
     initialWizardState.additionalCosts
   );
+
+  /* estados para mensaje de confirmacion de guardado */
+  const [showVerifyConfirm, setShowVerifyConfirm] = useState(false);
 
   const handleGeneralDataChange = (field, value) => {
     setGeneralData((current) => ({
@@ -333,6 +371,7 @@ function ImportationWizard({
       products,
       expenses,
       bankPayments,
+      bankFiscalCredit,
       additionalCosts,
     };
     onSubmit?.(payload);
@@ -382,8 +421,12 @@ function ImportationWizard({
         <BanksStep
           bankPayments={bankPayments}
           onChangeBankPayments={setBankPayments}
-          officialExchangeRate={
-            generalData.officialExchangeRate
+          officialExchangeRate={generalData.officialExchangeRate}
+          products={products}
+          expenses={expenses}
+          maritimeFreightExchangeRate={generalData.maritimeFreightExchangeRate}
+          onChangeMaritimeFreightExchangeRate={(value) =>
+            handleGeneralDataChange("maritimeFreightExchangeRate", value)
           }
         />
       );
@@ -393,13 +436,11 @@ function ImportationWizard({
       return (
         <AdditionalCostsStep
           additionalCosts={additionalCosts}
-          onChangeAdditionalCosts={
-            setAdditionalCosts
-          }
-          officialExchangeRate={
-            generalData.officialExchangeRate
-          }
+          onChangeAdditionalCosts={setAdditionalCosts}
+          officialExchangeRate={generalData.officialExchangeRate}
           bankPayments={bankPayments}
+          bankFiscalCredit={bankFiscalCredit}
+          onChangeBankFiscalCredit={setBankFiscalCredit}
         />
       );
     }
@@ -410,6 +451,7 @@ function ImportationWizard({
         products={products}
         expenses={expenses}
         bankPayments={bankPayments}
+        bankFiscalCredit={bankFiscalCredit}
         additionalCosts={additionalCosts}
       />
     );
@@ -426,13 +468,18 @@ function ImportationWizard({
             <ArrowLeft size={20} />
           </WizardBackButton>
 
-          <div>
+          <WizardTitleBlock>
             <WizardTitle>
               {mode === "edit"
                 ? "Editar importación"
                 : "Nueva importación"}
             </WizardTitle>
-          </div>
+            <WizardSubtitle>
+              {generalData.reference
+                ? `Factura / Referencia: ${generalData.reference}`
+                : "Factura / Referencia: Sin referencia"}
+            </WizardSubtitle>
+          </WizardTitleBlock>
         </WizardHeaderLeft>
       </WizardHeader>
 
@@ -500,31 +547,43 @@ function ImportationWizard({
             </StepPrimaryButton>
           ) : (
             <>
-              <StepSecondaryButton
-                type="button"
-                onClick={() =>
-                  handleSubmit("borrador")
-                }
-              >
-                {mode === "edit"
-                  ? "Actualizar borrador"
-                  : "Guardar borrador"}
+              <StepSecondaryButton type="button" onClick={() => handleSubmit("borrador")}>
+                Guardar borrador
               </StepSecondaryButton>
-
-              <StepPrimaryButton
-                type="button"
-                onClick={() =>
-                  handleSubmit("verificado")
-                }
-              >
-                {mode === "edit"
-                  ? "Actualizar y verificar"
-                  : "Guardar verificado"}
+              <StepPrimaryButton type="button" onClick={() => setShowVerifyConfirm(true)}>
+                Guardar verificado
               </StepPrimaryButton>
             </>
           )}
         </StepActionsRight>
       </StepActions>
+      {/* modal mensaje de confirmacion de guerdado */}
+      {showVerifyConfirm && (
+        <ConfirmOverlay>
+          <ConfirmDialog>
+            <ConfirmTitle>Confirmar verificación</ConfirmTitle>
+            <ConfirmText>
+              Al guardar esta importación como verificada, ya no podrá editarse
+              posteriormente. Revisa que los datos, pagos, gastos y costos finales
+              sean correctos antes de continuar.
+            </ConfirmText>
+            <ConfirmActions>
+              <StepSecondaryButton type="button" onClick={() => setShowVerifyConfirm(false)}>
+                Cancelar
+              </StepSecondaryButton>
+              <StepPrimaryButton
+                type="button"
+                onClick={() => {
+                  setShowVerifyConfirm(false);
+                  handleSubmit("verificado");
+                }}
+              >
+                Guardar
+              </StepPrimaryButton>
+            </ConfirmActions>
+          </ConfirmDialog>
+        </ConfirmOverlay>
+      )}
     </WizardCard>
   );
 }

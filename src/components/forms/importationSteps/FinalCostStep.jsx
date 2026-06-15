@@ -43,6 +43,7 @@ function FinalCostStep({
   products,
   expenses,
   bankPayments,
+  bankFiscalCredit,
   additionalCosts,
 }) {
   const calculations = useMemo(
@@ -52,6 +53,7 @@ function FinalCostStep({
         products,
         expenses,
         bankPayments,
+        bankFiscalCredit,
         additionalCosts,
       }),
     [
@@ -59,6 +61,7 @@ function FinalCostStep({
       products,
       expenses,
       bankPayments,
+      bankFiscalCredit,
       additionalCosts,
     ]
   );

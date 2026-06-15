@@ -42,6 +42,8 @@ function AdditionalCostsStep({
   onChangeAdditionalCosts,
   officialExchangeRate,
   bankPayments = [],
+  bankFiscalCredit,
+  onChangeBankFiscalCredit,
 }) {
   const exchangeRate = Number(officialExchangeRate || 0);
 
@@ -55,9 +57,10 @@ function AdditionalCostsStep({
     () =>
       buildBankAdditionalCosts(
         bankPayments,
-        exchangeRate
+        exchangeRate,
+        bankFiscalCredit
       ),
-    [bankPayments, exchangeRate]
+    [bankPayments, exchangeRate, bankFiscalCredit]
   );
 
   /*
@@ -136,6 +139,25 @@ function AdditionalCostsStep({
           : cost
     );
     onChangeAdditionalCosts(updatedCosts);
+  };
+
+  const handleBankCheckChange = (bankCostType, checked) => {
+    onChangeBankFiscalCredit((current) => ({
+      ...current,
+      [bankCostType]: {
+        ...current[bankCostType],
+        hasFiscalCredit: checked,
+      },
+    }));
+  };
+  const handleBankCreditRateChange = (bankCostType, value) => {
+    onChangeBankFiscalCredit((current) => ({
+      ...current,
+      [bankCostType]: {
+        ...current[bankCostType],
+        creditRate: value,
+      },
+    }));
   };
 
   const handleAddCost = () => {
@@ -270,38 +292,33 @@ function AdditionalCostsStep({
                 <CreditCheckLabel>
                   <input
                     type="checkbox"
-                    checked={row.hasFiscalCredit}
-                    disabled={isBankCost}
-                    onChange={(event) =>
-                      handleCheckChange(
-                        manualIndex,
-                        event.target.checked
-                      )
-                    }
+                    checked={Boolean(row.hasFiscalCredit)}
+                    onChange={(event) => {
+                      if (isBankCost) {
+                        handleBankCheckChange(row.bankCostType, event.target.checked);
+                        return;
+                      }
+                      handleCheckChange(manualIndex, event.target.checked);
+                    }}
                   />
-
-                  <span>
-                    {row.hasFiscalCredit
-                      ? "Aplica"
-                      : "No aplica"}
-                  </span>
-
+                  <span>{row.hasFiscalCredit ? "Aplica" : "No aplica"}</span>
                   <WizardInput
                     type="number"
                     min="0"
                     step="0.01"
                     value={row.creditRate}
-                    disabled={
-                      isBankCost ||
-                      !row.hasFiscalCredit
-                    }
-                    onChange={(event) =>
+                    disabled={!row.hasFiscalCredit}
+                    onChange={(event) => {
+                      if (isBankCost) {
+                        handleBankCreditRateChange(row.bankCostType, event.target.value);
+                        return;
+                      }
                       handleChange(
                         manualIndex,
                         "creditRate",
                         event.target.value
-                      )
-                    }
+                      );
+                    }}
                   />
                 </CreditCheckLabel>
 
