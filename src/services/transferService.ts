@@ -11,6 +11,9 @@ export const createTransferService = async (data: any, token: string) => {
     },
     body: JSON.stringify(data),
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
 
   const resData = await res.json();
 
@@ -42,7 +45,7 @@ export const getMyTransfersService = async (token: string) => {
 export const approveTransferService = async (
   id: number,
   fromLocationId: number,
-  token: string
+  token: string,
 ) => {
   const res = await fetch(`${API}/transfer/transfer-approve/${id}`, {
     method: "PUT",
@@ -54,7 +57,9 @@ export const approveTransferService = async (
   });
 
   const resData = await res.json();
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) {
     throw new Error(resData.message || "Error aprobando transferencia");
   }
@@ -62,17 +67,16 @@ export const approveTransferService = async (
   return resData;
 };
 
-export const rejectTransferService = async (
-  id: number,
-  token: string
-) => {
+export const rejectTransferService = async (id: number, token: string) => {
   const res = await fetch(`${API}/transfer/transfer-reject/${id}`, {
     method: "PUT",
     headers: {
       "x-access-token": token,
     },
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   const resData = await res.json();
 
   if (!res.ok) {

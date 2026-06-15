@@ -4,7 +4,7 @@ const API = import.meta.env.VITE_API_DOMAIN;
 
 export const getDashboardSummaryService = async (
   token: string,
-  locationId?: number | null
+  locationId?: number | null,
 ) => {
   // Si hay locationId, lo agrega como query param
   const url = locationId
@@ -14,7 +14,9 @@ export const getDashboardSummaryService = async (
   const res = await fetch(url, {
     headers: { "x-access-token": token },
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (res.status === 401 || res.status === 403) {
     cerrarSesion();
   }

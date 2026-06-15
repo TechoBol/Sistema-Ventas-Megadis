@@ -1,3 +1,4 @@
+import { cerrarSesion } from "./CerrarSesion";
 export const createSaleService = async (data: any, token: string) => {
   const response = await fetch(
     `${import.meta.env.VITE_API_DOMAIN}/sale/create-sale`,
@@ -10,7 +11,9 @@ export const createSaleService = async (data: any, token: string) => {
       body: JSON.stringify(data),
     },
   );
-
+  if (response.status === 401 || response.status === 403) {
+    cerrarSesion();
+  }
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
     console.error("Backend error:", response.status, errorBody);
@@ -32,7 +35,9 @@ export const createQuotationService = async (data: any, token: string) => {
       body: JSON.stringify(data),
     },
   );
-
+  if (response.status === 401 || response.status === 403) {
+    cerrarSesion();
+  }
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
     console.error("Backend error:", response.status, errorBody);

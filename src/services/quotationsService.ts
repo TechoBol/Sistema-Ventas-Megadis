@@ -1,10 +1,15 @@
+import { cerrarSesion } from "./CerrarSesion";
+
 export const getQuotationsService = async (token: string) => {
   const response = await fetch(
     `${import.meta.env.VITE_API_DOMAIN}/quotations/get-quotations`,
     {
       headers: { "x-access-token": token },
-    }
+    },
   );
+  if (response.status === 401 || response.status === 403) {
+    cerrarSesion();
+  }
   if (!response.ok) throw new Error("No se pudieron obtener las cotizaciones");
   return response.json();
 };
@@ -12,7 +17,7 @@ export const getQuotationsService = async (token: string) => {
 export const updateQuotationStatusService = async (
   id: number,
   status: string,
-  token: string
+  token: string,
 ) => {
   const response = await fetch(
     `${import.meta.env.VITE_API_DOMAIN}/quotations/${id}/status`,
@@ -23,7 +28,7 @@ export const updateQuotationStatusService = async (
         "x-access-token": token,
       },
       body: JSON.stringify({ status }),
-    }
+    },
   );
   if (!response.ok) throw new Error("No se pudo actualizar el estado");
   return response.json();
@@ -32,7 +37,7 @@ export const updateQuotationStatusService = async (
 export const convertQuotationService = async (
   id: number,
   data: any,
-  token: string
+  token: string,
 ) => {
   const response = await fetch(
     `${import.meta.env.VITE_API_DOMAIN}/quotations/${id}/convert`,
@@ -43,7 +48,7 @@ export const convertQuotationService = async (
         "x-access-token": token,
       },
       body: JSON.stringify(data),
-    }
+    },
   );
 
   if (!response.ok) {
