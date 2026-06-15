@@ -38,8 +38,6 @@ const drawEmpresa = (doc, cotizacion) => {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
 
-  doc.text(cotizacion.location?.address || "Dirección no registrada", 14, 32);
-
   doc.text("Teléfono: 69417829", 14, 38);
   doc.text("Cochabamba - Bolivia", 14, 44);
 };
