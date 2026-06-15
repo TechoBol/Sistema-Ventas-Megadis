@@ -43,6 +43,7 @@ export const useCart = () => {
       nitId?: number | null;
       glosa?: string;
     },
+    effectiveLocationId: number,
     cartItems: any[],
     subtotal: number,
     discount: number,
@@ -72,7 +73,7 @@ export const useCart = () => {
           : null;
 
         const payload = {
-          locationId: selectedLocation?.id || location.id,
+          locationId: effectiveLocationId,
           products: cartItems,
           subtotal,
           total,
@@ -109,13 +110,15 @@ export const useCart = () => {
       // =====================================================
       // 🔥 VENTA — flujo normal
       // =====================================================
+      console.log(selectedLocation)
+      console.log(location)
       const payload = {
         ...data,
         products: cartItems,
         subtotal,
         discount,
         total,
-        locationId: selectedLocation?.id || location.id,
+        locationId: effectiveLocationId,
         metodoPago: data.paymentMethod,
         nitId: data.nitId ?? null,
         glosa: data.glosa || null,
