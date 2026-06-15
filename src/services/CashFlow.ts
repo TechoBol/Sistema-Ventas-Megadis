@@ -1,4 +1,5 @@
 import { ICashFlow } from "../components/models/CashFlow";
+import { cerrarSesion } from "./CerrarSesion";
 
 export const getAllCashFlow = async (token: string) => {
   try {
@@ -10,7 +11,9 @@ export const getAllCashFlow = async (token: string) => {
         },
       },
     );
-
+    if (res.status === 401 || res.status === 403) {
+      cerrarSesion();
+    }
     if (!res.ok) return [];
 
     return res.json();
@@ -32,7 +35,9 @@ export const createCashFlow = async (token: string, body: ICashFlow) => {
         body: JSON.stringify(body),
       },
     );
-
+    if (res.status === 401 || res.status === 403) {
+      cerrarSesion();
+    }
     if (!res.ok) return null;
 
     return res.json();

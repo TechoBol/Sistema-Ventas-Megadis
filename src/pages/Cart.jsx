@@ -58,7 +58,7 @@ import {
   AddPresentationButton,
 } from "../components/ui/Cart";
 import { socket } from "../services/SocketIOConnection";
-
+import { useAmazonS3 } from "../hooks/useAmazonS3";
 import { useCart } from "../hooks/useCart";
 import Swal from "sweetalert2";
 import SaleForm from "../components/forms/SaleForm";
@@ -79,7 +79,7 @@ const Cart = () => {
   const { effectiveLocationId } = usePermissions();
   /* ── Modos de Operación Centralizados ── */
   const [mode, setMode] = useState("venta"); // 'venta' | 'cotizacion' | 'reserva'
-
+  const {getFileUrl} = useAmazonS3()
   /* ── Estados Dinámicos por Modo ── */
   const [paymentMethod, setPaymentMethod] = useState("Efectivo");
   const [advanceAmount, setAdvanceAmount] = useState(0); // Para Reservas
@@ -90,7 +90,7 @@ const Cart = () => {
   const [query, setQuery] = useState("");
   const [dropOpen, setDropOpen] = useState(false);
   const searchRef = useRef(null);
-  console.log(effectiveLocationId)
+  console.log(effectiveLocationId);
   const filtered =
     query.trim() === ""
       ? (products ?? []).slice(0, 50)
@@ -142,8 +142,9 @@ const Cart = () => {
     bossDiscount: product.bossDiscount || 0,
     purchasePrice: Number(product.purchasePrice || 0),
     stock:
-      product?.inventories?.find((inv) => inv.locationId === effectiveLocationId)
-        ?.quantity || 0,
+      product?.inventories?.find(
+        (inv) => inv.locationId === effectiveLocationId,
+      )?.quantity || 0,
     baseUnitName: product.baseUnit?.name || "unid.",
   });
 
@@ -353,6 +354,13 @@ const Cart = () => {
         icon: "success",
         confirmButtonColor: "var(--mode-color)",
       });
+      console.log(result);
+      const fileUrl = await getFileUrl(result.pdfUrl);
+
+      console.log("URL:", fileUrl);
+
+      // Abrir documento
+      window.open(fileUrl, "_blank");
     } catch (err) {
       console.error(err);
       Swal.fire({

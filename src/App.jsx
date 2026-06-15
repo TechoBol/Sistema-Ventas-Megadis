@@ -25,12 +25,23 @@ import Brands from "./pages/Brands";
 import Quotations from "./pages/Quotations";
 
 import { ProtectedRoute } from "./routes/ProtectedRoute.jsx";
+import { socket } from "./services/SocketIOConnection.ts";
+import { cerrarSesion } from "./services/CerrarSesion.ts";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
 function App() {
   const { isLoggedIn, level } = useLoginStore();
+  useEffect(() => {
+    socket.on("forceLogout", () => {
+      cerrarSesion();
+    });
 
+    return () => {
+      socket.off("forceLogout");
+    };
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <GlobalStyle />

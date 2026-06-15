@@ -38,6 +38,9 @@ export const updateLineService = async (
     },
     body: JSON.stringify(data),
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 
@@ -61,6 +64,9 @@ export const addBrandService = async (
     },
     body: JSON.stringify({ name }),
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 
@@ -78,6 +84,9 @@ export const updateBrandService = async (
     },
     body: JSON.stringify({ oldName, newName }),
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 
@@ -94,5 +103,8 @@ export const deleteBrandService = async (
     },
     body: JSON.stringify({ name }),
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };

@@ -43,7 +43,9 @@ export const updateEmployeeService = async (
     },
     body: JSON.stringify(data),
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok)
     throw new Error("No se pudo actualizar la información del empleado");
   return res.json();
@@ -56,7 +58,9 @@ export const deleteEmployeeService = async (id: number, token: string) => {
       "x-access-token": token,
     },
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) throw new Error("Error al eliminar el empleado");
   return res.json();
 };

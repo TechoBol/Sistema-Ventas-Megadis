@@ -26,7 +26,9 @@ export const createLocationService = async (data: any, token: string) => {
       body: JSON.stringify(data),
     },
   );
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 
@@ -51,7 +53,9 @@ export const updateLocationService = async (id: any, data: any, token: any) => {
       body: JSON.stringify(data),
     },
   );
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!response.ok) {
     throw new Error("No se pudo actualizar la ubicación");
   }

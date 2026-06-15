@@ -23,7 +23,9 @@ export const getCustomerByIdService = async (id: number, token: string) => {
       "x-access-token": token,
     },
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) throw new Error("Error al obtener el cliente.");
   return res.json();
 };
@@ -37,7 +39,9 @@ export const createCustomerService = async (data: any, token: string) => {
     },
     body: JSON.stringify(data),
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) throw new Error("No se pudo crear el cliente.");
   return res.json();
 };
@@ -55,7 +59,9 @@ export const updateCustomerService = async (
     },
     body: JSON.stringify(data),
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) throw new Error("No se pudo actualizar el cliente.");
   return res.json();
 };
@@ -67,7 +73,9 @@ export const deleteCustomerService = async (id: number, token: string) => {
       "x-access-token": token,
     },
   });
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) throw new Error("Error al eliminar el cliente.");
   return res.json();
 };

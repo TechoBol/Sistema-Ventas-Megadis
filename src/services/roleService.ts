@@ -10,6 +10,9 @@ export const getRolesService = async (token: string) => {
   if (res.status === 401 || res.status === 403) {
     cerrarSesion();
   }
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 
@@ -22,6 +25,9 @@ export const createRoleService = async (data: any, token: string) => {
     },
     body: JSON.stringify(data),
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 
@@ -38,6 +44,9 @@ export const updateRoleService = async (
     },
     body: JSON.stringify(data),
   });
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   return res.json();
 };
 

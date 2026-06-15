@@ -14,7 +14,9 @@ export const createProductService = async (data: Product, token: string) => {
     },
   );
   const resData = await response.json();
-
+  if (response.status === 401 || response.status === 403) {
+    cerrarSesion();
+  }
   if (!response.ok) {
     throw new Error(resData.message || "No se pudo crear el producto");
   }
@@ -36,7 +38,9 @@ export const updateProductService = async (id: any, data: any, token: any) => {
   );
 
   const resData = await res.json();
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) {
     throw new Error(resData.message || "No se pudo actualizar el producto");
   }
@@ -58,7 +62,9 @@ export const updateMargenService = async (id: any, data: any, token: any) => {
   );
 
   const resData = await res.json();
-
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
   if (!res.ok) {
     throw new Error(resData.message || "No se pudo actualizar el producto");
   }

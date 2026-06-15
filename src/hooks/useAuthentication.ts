@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { successToast, errorToast } from "../services/toasts";
 import { useLoginStore } from "../components/store/loginStore";
 import { logInAuth } from "../services/AuthenticationService";
+import { socket } from "../services/SocketIOConnection";
 
 const useAuthentication = () => {
   const navigate = useNavigate();
@@ -53,6 +54,7 @@ const useAuthentication = () => {
       } else {
         navigate("/dashboard");
       }
+      socket.emit("joinEmployeeRoom", response.id);
     } catch (error) {
       console.error("Error en login:", error);
       errorToast("Ocurrió un error inesperado");
