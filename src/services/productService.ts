@@ -89,3 +89,20 @@ export const getKardexService = async (data: any, token: string) => {
 
   return resData;
 };
+
+export const getStockByBranchesService = async (productId: number, token: string) => {
+  const res = await fetch(
+    `${import.meta.env.VITE_API_DOMAIN}/product/stock-branches/${productId}`,
+    {
+      headers: { "x-access-token": token },
+    },
+  );
+
+  const resData = await res.json();
+
+  if (!res.ok) {
+    throw new Error(resData.message || "No se pudo obtener el stock por sucursales");
+  }
+
+  return resData;
+};

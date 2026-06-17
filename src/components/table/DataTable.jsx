@@ -66,43 +66,43 @@ function DataTable({
         renderCell: hasCustomRender
           ? column.renderCell
           : (params) => {
-              const value = params.formattedValue ?? params.value;
+            const value = params.formattedValue ?? params.value;
 
-              if (
-                value === null ||
-                value === undefined ||
-                value === "" ||
-                value === "-"
-              ) {
-                return (
-                  <div
-                    style={{
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      width: "100%",
-                    }}
-                  >
-                    -
-                  </div>
-                );
-              }
-
+            if (
+              value === null ||
+              value === undefined ||
+              value === "" ||
+              value === "-"
+            ) {
               return (
-                <Tooltip title={value} {...tooltipProps}>
-                  <div
-                    style={{
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      width: "100%",
-                    }}
-                  >
-                    {value}
-                  </div>
-                </Tooltip>
+                <div
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    width: "100%",
+                  }}
+                >
+                  -
+                </div>
               );
-            },
+            }
+
+            return (
+              <Tooltip title={value} {...tooltipProps}>
+                <div
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    width: "100%",
+                  }}
+                >
+                  {value}
+                </div>
+              </Tooltip>
+            );
+          },
       };
     });
 
@@ -143,9 +143,7 @@ function DataTable({
                   }
                   onClick={(event) => {
                     event.stopPropagation();
-
                     if (!hasLocation) return;
-
                     locationConfig.onOpen?.(row);
                   }}
                 >
@@ -186,7 +184,7 @@ function DataTable({
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        action.onClick?.(params.row);
+                        action.onClick?.(params.row, event);
                       }}
                     >
                       <Icon size={17} />
