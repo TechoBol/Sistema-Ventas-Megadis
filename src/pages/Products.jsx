@@ -17,9 +17,10 @@ import {
   TopActions,
   SearchWrapper,
 } from "../components/ui/Products";
-import { Pencil, Plus, Search } from "lucide-react";
+import { Pencil, Plus, Search, Warehouse } from "lucide-react";
 import { useLoginStore } from "../components/store/loginStore";
 import { useLocationStore } from "../components/store/locationStore";
+import { BranchesPopover } from "../components/modals/BranchesPopover";
 
 const fechaHoy = () => {
   const fecha = new Date().toLocaleDateString("es-BO", {
@@ -34,6 +35,9 @@ const fechaHoy = () => {
 
 function Products() {
   const [showForm, setShowForm] = useState(false);
+
+  const [branchesAnchor, setBranchesAnchor] = useState(null);
+  const [branchProductId, setBranchProductId] = useState(null);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { location } = useLoginStore();
@@ -137,20 +141,30 @@ function Products() {
   ////////////////////////////////////////////////////////////
   // ACCIONES
   ////////////////////////////////////////////////////////////
-  const actions = useMemo(
-    () =>
-      permissions.canEditProduct
-        ? [
-            {
-              key: "edit",
-              title: "Editar producto",
-              icon: Pencil,
-              onClick: handleEditProduct,
-            },
-          ]
-        : [],
-    [permissions],
-  );
+  const actions = useMemo(() => {
+    const list = [];
+
+    list.push({
+      key: "branches",
+      title: "Stock por sucursal",
+      icon: Warehouse,
+      onClick: (row, event) => {
+        setBranchProductId(row.id);
+        setBranchesAnchor(event.currentTarget);
+      },
+    });
+
+    if (permissions.canEditProduct) {
+      list.push({
+        key: "edit",
+        title: "Editar producto",
+        icon: Pencil,
+        onClick: handleEditProduct,
+      });
+    }
+
+    return list;
+  }, [permissions]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) =>
@@ -218,6 +232,15 @@ function Products() {
             }}
           />
         )}
+        <BranchesPopover
+          productId={branchProductId}
+          anchorEl={branchesAnchor}
+          currentLocationId={activeLocationId}
+          onClose={() => {
+            setBranchesAnchor(null);
+            setBranchProductId(null);
+          }}
+        />
       </PageContainer>
     </>
   );
