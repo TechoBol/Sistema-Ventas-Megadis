@@ -88,6 +88,12 @@ const sidebarSections = [
         path: "/kardex",
         permission: "canManageInventory",
       },
+      {
+        label: "Inventario Valorado",
+        icon: ClipboardList,
+        path: "/inventory-valorado",
+        permission: "canManageInventory",
+      },
     ],
   },
 

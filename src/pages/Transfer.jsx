@@ -51,7 +51,7 @@ function Transfer() {
   const [selectedView, setSelectedView] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_TRANSFER_FORM);
-const { location, token, employeeId } = useLoginStore();
+  const { location, token, employeeId } = useLoginStore();
   const { products } = useInventory();
 
   useEffect(() => {
@@ -99,7 +99,6 @@ const { location, token, employeeId } = useLoginStore();
   const { level } = usePermissions();
 
   const filteredTransfers = useMemo(() => {
-    
     const value = searchTerm.trim().toLowerCase();
 
     let result = [];
@@ -122,7 +121,6 @@ const { location, token, employeeId } = useLoginStore();
 
         return Number(transfer.raw?.requestedById) === employeeId;
       });
-
     }
 
     if (!value) return result;
@@ -140,7 +138,14 @@ const { location, token, employeeId } = useLoginStore();
         .toLowerCase()
         .includes(value),
     );
-  }, [searchTerm, selectedView, formattedTransfers, location, employeeId, level]);
+  }, [
+    searchTerm,
+    selectedView,
+    formattedTransfers,
+    location,
+    employeeId,
+    level,
+  ]);
   const transferColumns = useMemo(
     () => [
       {
@@ -203,11 +208,19 @@ const { location, token, employeeId } = useLoginStore();
         flex: 1,
         minWidth: 140,
 
-        renderCell: (params) => (
-          <StatusBadge $status={params.row.status?.toLowerCase()}>
-            {params.row.status}
-          </StatusBadge>
-        ),
+        renderCell: (params) => {
+          const statusMap = {
+            PENDING: "Pendiente",
+            APPROVED: "Aprobado",
+            REJECTED: "Rechazado",
+          };
+
+          return (
+            <StatusBadge $status={params.row.status?.toLowerCase()}>
+              {statusMap[params.row.status] || params.row.status}
+            </StatusBadge>
+          );
+        },
       },
     ],
     [],

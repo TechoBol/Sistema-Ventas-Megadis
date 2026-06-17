@@ -23,6 +23,7 @@ import InventoryFisico from "./pages/InventoryFisico";
 import MatrizVenta from "./pages/MatrizVenta";
 import Brands from "./pages/Brands";
 import Quotations from "./pages/Quotations";
+import InventoryValorado from "./pages/InventoryValorado";
 
 import { ProtectedRoute } from "./routes/ProtectedRoute.jsx";
 import { socket } from "./services/SocketIOConnection.ts";
@@ -108,6 +109,14 @@ function App() {
               element={
                 <ProtectedRoute allowedLevels={[1, 2]}>
                   <Costs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory-valorado"
+              element={
+                <ProtectedRoute allowedLevels={[1, 2]}>
+                  <InventoryValorado />
                 </ProtectedRoute>
               }
             />
