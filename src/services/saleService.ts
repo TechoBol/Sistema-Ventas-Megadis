@@ -55,3 +55,33 @@ export const updateDateSaleService = async (
   if (!res.ok) throw new Error(data.error || "Error al actualizar fecha");
   return data;
 };
+
+export const deliverSaleProductsService = async (
+  token: string,
+  saleId: number,
+) => {
+  const res = await fetch(
+    `${API}/sale/${saleId}/deliver`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-access-token": token,
+      },
+    },
+  );
+
+  if (res.status === 401 || res.status === 403) {
+    cerrarSesion();
+  }
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(
+      data.message || "Error al marcar productos como entregados",
+    );
+  }
+
+  return data;
+};

@@ -64,6 +64,8 @@ import Swal from "sweetalert2";
 import SaleForm from "../components/forms/SaleForm";
 import { errorToast } from "../services/toasts";
 import { usePermissions } from "../hooks/usePermissions";
+import { useSucursales } from "../hooks/useSucursales";
+
 const fechaHoy = () => {
   const fecha = new Date().toLocaleDateString("es-BO", {
     weekday: "long",
@@ -79,7 +81,7 @@ const Cart = () => {
   const { effectiveLocationId } = usePermissions();
   /* ── Modos de Operación Centralizados ── */
   const [mode, setMode] = useState("venta"); // 'venta' | 'cotizacion' | 'reserva'
-  const {getFileUrl} = useAmazonS3()
+  const { getFileUrl } = useAmazonS3();
   /* ── Estados Dinámicos por Modo ── */
   const [paymentMethod, setPaymentMethod] = useState("Efectivo");
   const [advanceAmount, setAdvanceAmount] = useState(0); // Para Reservas
@@ -100,7 +102,7 @@ const Cart = () => {
           const q = query.toLowerCase();
           return name.includes(q) || code.includes(q);
         });
-
+  const { data: locations } = useSucursales();
   useEffect(() => {
     const handler = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target))
@@ -132,6 +134,7 @@ const Cart = () => {
     name: product.name,
     quantity: 1,
     itemDiscount: 0,
+    outputLocationId: effectiveLocationId,
     productUnits: product.productUnits,
     selectedUnitId: unit.id,
     equivalence: Number(unit.equivalence),
@@ -147,6 +150,19 @@ const Cart = () => {
       )?.quantity || 0,
     baseUnitName: product.baseUnit?.name || "unid.",
   });
+
+  const changeOutputLocation = (itemId, locationId) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              outputLocationId: Number(locationId),
+            }
+          : item,
+      ),
+    );
+  };
 
   const addToCart = (product) => {
     setCartItems((prev) => {
@@ -329,6 +345,8 @@ const Cart = () => {
           quantity: item.quantity,
           equivalence: item.equivalence,
           itemDiscount: Number(item.itemDiscount || 0),
+
+          outputLocationId: item.outputLocationId || null,
         })),
         subtotal,
         totalDiscount,
@@ -524,6 +542,7 @@ const Cart = () => {
                       <TH style={{ textAlign: "left" }}>Precio Unit.</TH>
                       <TH style={{ textAlign: "left" }}>Descuento</TH>
                       <TH style={{ textAlign: "left" }}>Subtotal</TH>
+                      <TH style={{ textAlign: "left" }}>Salida</TH>
                       <TH></TH>
                     </tr>
                   </THead>
@@ -777,6 +796,38 @@ const Cart = () => {
                                   </div>
                                 </TD>
                                 <TD>{itemSubtotal(item).toFixed(2)} Bs</TD>
+
+                                <TD>
+                                  <select
+                                    value={item.outputLocationId || ""}
+                                    onChange={(e) =>
+                                      changeOutputLocation(
+                                        item.id,
+                                        e.target.value,
+                                      )
+                                    }
+                                    style={{
+                                      padding: "6px 10px",
+                                      borderRadius: 8,
+                                      border: "1px solid #E2E8F0",
+                                      background: "#fff",
+                                      fontSize: 13,
+                                      minWidth: 140,
+                                    }}
+                                  >
+                                    <option value="">Seleccionar</option>
+
+                                    {locations.map((location) => (
+                                      <option
+                                        key={location.id}
+                                        value={location.id}
+                                      >
+                                        {location.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </TD>
+
                                 <TD style={{ textAlign: "center" }}>
                                   <DeleteButton
                                     onClick={() => removeItem(item.id)}
