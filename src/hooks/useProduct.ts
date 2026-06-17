@@ -1,7 +1,8 @@
 import { useState } from "react";
 import {
   createProductService,
-  updateProductService,updateMargenService
+  updateProductService, updateMargenService,
+  getStockByBranchesService,
 } from "../services/productService";
 import { useLoginStore } from "../components/store/loginStore";
 
@@ -9,7 +10,7 @@ export const useProduct = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { token, location } = useLoginStore();
 
 
@@ -30,6 +31,7 @@ export const useProduct = () => {
       setLoading(false);
     }
   };
+
   const updateProduct = async (id: number, data: any) => {
     try {
       setError(null);
@@ -66,13 +68,23 @@ export const useProduct = () => {
       setLoading(false);
     }
   };
-  
+
+  const getStockByBranches = async (productId: number) => {
+    try {
+      const result = await getStockByBranchesService(productId, token);
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  };
+
   return {
     createProduct,
     loading,
     setLoading,
     error,
     updateProduct,
-    updateMargen
+    updateMargen,
+    getStockByBranches,
   };
 };

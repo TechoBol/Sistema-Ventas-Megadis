@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useLoginStore } from "../components/store/loginStore";
 import { getSalesService } from "../services/saleService";
 import { useNavigate } from "react-router-dom";
-import {socket} from "../services/SocketIOConnection";
+import { socket } from "../services/SocketIOConnection";
+import { deliverSaleProductsService } from "../services/saleService";
 
 export const useSales = () => {
   const { token } = useLoginStore();
@@ -31,10 +32,14 @@ export const useSales = () => {
   useEffect(() => {
     getSales();
   }, []);
-
+  const entregarProducto = async (sale: number) => {
+    await deliverSaleProductsService(token, sale);
+    socket.emit("newCartProduct", "");
+  };
   return {
     data,
     refresh: getSales,
     goToSales,
+    entregarProducto,
   };
 };

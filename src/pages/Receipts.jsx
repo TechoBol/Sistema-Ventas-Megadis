@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+} from "react";
 import DataTable from "../components/table/DataTable";
 import { useSales } from "../hooks/useSale";
 import { useAmazonS3 } from "../hooks/useAmazonS3";
@@ -12,7 +18,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
 import PrintIcon from "@mui/icons-material/Print";
 import { FaTrash } from "react-icons/fa";
-import { FileText, Search, ReceiptText } from "lucide-react";
+import { FileText, Search, ReceiptText, CheckCircle } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useSearchParams } from "react-router-dom";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -34,6 +40,9 @@ import {
   ClearFiltersButton,
 } from "../components/ui/Products";
 import { errorToast } from "../services/toasts";
+import Swal from "sweetalert2";
+import { usePermissions } from "../hooks/usePermissions";
+import { StatusBadge } from "../components/ui/Page.styles";
 
 const fechaHoy = () => {
   const fecha = new Date().toLocaleDateString("es-BO", {
@@ -53,9 +62,10 @@ const fechaHoy = () => {
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 function Receipts() {
+
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
-  const { data } = useSales();
+  const { data , entregarProducto } = useSales();
   const { getFileUrl } = useAmazonS3();
   const containerRef = useRef(null);
   const [startDate, setStartDate] = useState(null);
@@ -65,8 +75,7 @@ function Receipts() {
   const [numPages, setNumPages] = useState(null);
   const [pageWidth, setPageWidth] = useState(600);
   const [currentCode, setCurrentCode] = useState("");
-
-
+  const { effectiveLocationId } = usePermissions();
 
   useEffect(() => {
     const code = searchParams.get("search");
@@ -74,7 +83,7 @@ function Receipts() {
       setSearch(code);
     }
   }, [searchParams]);
-  
+
   // =====================================================
   // RESPONSIVE PDF
   // =====================================================
@@ -108,7 +117,9 @@ function Receipts() {
         const matchCode = sale?.code?.toLowerCase()?.includes(q);
         const matchCliente = sale?.customer?.name?.toLowerCase()?.includes(q);
         const matchNit = sale?.customerNitSnapshot?.toLowerCase()?.includes(q);
-        const matchRazon = sale?.customerNitCompanySnapshot?.toLowerCase()?.includes(q);
+        const matchRazon = sale?.customerNitCompanySnapshot
+          ?.toLowerCase()
+          ?.includes(q);
         const matchEmpleado = sale?.employee?.name?.toLowerCase()?.includes(q);
         const matchSucursal = sale?.location?.name?.toLowerCase()?.includes(q);
         const matchTipo = sale?.typeSale?.trim()?.toLowerCase()?.includes(q);
@@ -162,7 +173,6 @@ function Receipts() {
           return;
         }
         if (!response.ok) {
-
           throw new Error("No se pudo descargar PDF");
         }
 
@@ -176,7 +186,7 @@ function Receipts() {
         console.error("Error al abrir PDF:", error);
       }
     },
-    [getFileUrl]
+    [getFileUrl],
   );
 
   const handleClosePdf = useCallback(() => {
@@ -248,16 +258,14 @@ function Receipts() {
         headerName: "NIT/CI",
         flex: 1,
         minWidth: 140,
-        valueGetter: (_, row) =>
-          row?.customerNitSnapshot || "-",
+        valueGetter: (_, row) => row?.customerNitSnapshot || "-",
       },
       {
         field: "companyName",
         headerName: "Razón Social",
         flex: 1.5,
         minWidth: 220,
-        valueGetter: (_, row) =>
-          row?.customerNitCompanySnapshot || "-",
+        valueGetter: (_, row) => row?.customerNitCompanySnapshot || "-",
       },
       {
         field: "employee",
@@ -265,8 +273,9 @@ function Receipts() {
         flex: 1.2,
         minWidth: 160,
         valueGetter: (_, row) =>
-          `${row?.employee?.name || ""} ${row?.employee?.lastName || ""}`.trim() ||
-          "-",
+          `${row?.employee?.name || ""} ${
+            row?.employee?.lastName || ""
+          }`.trim() || "-",
       },
       {
         field: "location",
@@ -299,8 +308,27 @@ function Receipts() {
           return new Date(value).toLocaleString();
         },
       },
+      {
+  field: "deliveryStatus",
+  headerName: "Entrega",
+  width: 150,
+
+  renderCell: ({ row }) => {
+    const pending = row.details?.some(
+      (d) => d.deliveryStatus === "PENDING"
+    );
+
+    return (
+      <StatusBadge
+        $status={pending ? "pending" : "delivered"}
+      >
+        {pending ? "Pendiente" : "Entregado"}
+      </StatusBadge>
+    );
+  },
+},
     ],
-    []
+    [],
   );
 
   const actions = useMemo(
@@ -315,11 +343,47 @@ function Receipts() {
         key: "view-pdf",
         title: "Ver Factura",
         icon: ReceiptText,
-        onClick: (sale) => handleViewPDF(`MEGADIS/FACTURAS/${sale.code}.pdf`, sale.code),
+        onClick: (sale) =>
+          handleViewPDF(`MEGADIS/FACTURAS/${sale.code}.pdf`, sale.code),
+      },
+      {
+        key: "deliver",
+        title: "Marcar entregado",
+        icon: CheckCircle,
+
+        hidden: (sale) => {
+          const pendingMine = sale.details?.some(
+            (d) =>
+              d.outputLocationId === effectiveLocationId &&
+              d.deliveryStatus === "PENDING",
+          );
+
+          return !pendingMine;
+        },
+
+        onClick: (sale) => handleDeliver(sale),
       },
     ],
-    [handleViewPDF]
+    [handleViewPDF],
   );
+
+  const handleDeliver = async (sale) => {
+    const result = await Swal.fire({
+      title: "¿Marcar entrega?",
+      text: "Se marcarán como entregados los productos de esta sucursal.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, entregar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
+    console.log(sale)
+    await entregarProducto( sale.id);
+
+    successToast("Entrega registrada");
+    refresh();
+  };
 
   return (
     <>
@@ -342,7 +406,10 @@ function Receipts() {
             </SearchWrapper>
 
             <FiltersGroup>
-              <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+              <LocalizationProvider
+                dateAdapter={AdapterDayjs}
+                adapterLocale="es"
+              >
                 <DatePicker
                   label="Desde"
                   value={startDate}

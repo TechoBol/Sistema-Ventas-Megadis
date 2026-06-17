@@ -38,8 +38,9 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   .qr-button {
-  color: #000 !important;
-  border: 2px solid #F20C1F !important;
+    color: #000 !important;
+    border: 2px solid #F20C1F !important;
+  }
 }
 
 .qr-button:focus {

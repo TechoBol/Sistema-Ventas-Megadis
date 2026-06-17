@@ -198,7 +198,6 @@ export const StatusBadge = styled.span`
   min-width: 88px;
   height: 28px;
   padding: 0 12px;
-
   border-radius: 999px;
 
   display: inline-flex;
@@ -207,19 +206,51 @@ export const StatusBadge = styled.span`
 
   font-size: 12px;
   font-weight: 700;
-  text-transform: capitalize;
 
   color: ${({ $status }) => {
-    if ($status === "verificado" || $status === "aprobado") return "#047857";
-    if ($status === "rechazado") return "#dc2626";
-    if ($status === "borrador") return "#b45309";
+    if (
+      $status === "approved" ||
+      $status === "verificado" ||
+      $status === "aprobado"
+    )
+      return "#047857";
+
+    if (
+      $status === "rejected" ||
+      $status === "rechazado"
+    )
+      return "#dc2626";
+
+    if (
+      $status === "pending" ||
+      $status === "borrador"
+    )
+      return "#b45309";
+
     return "#475569";
   }};
 
   background: ${({ $status }) => {
-    if ($status === "verificado" || $status === "aprobado") return "rgba(105, 213, 132, 0.18)";
-    if ($status === "rechazado") return "rgba(220, 101, 95, 0.16)";
-    if ($status === "borrador") return "rgba(245, 158, 11, 0.16)";
+    if (
+      $status === "approved" ||
+      $status === "verificado" ||
+      $status === "aprobado" || 
+      $status === "delivered" 
+    )
+      return "rgba(105, 213, 132, 0.18)";
+
+    if (
+      $status === "rejected" ||
+      $status === "rechazado"
+    )
+      return "rgba(220, 101, 95, 0.16)";
+
+    if (
+      $status === "pending" ||
+      $status === "borrador"
+    )
+      return "rgba(245, 158, 11, 0.16)";
+
     return "rgba(148, 163, 184, 0.16)";
   }};
 `;
