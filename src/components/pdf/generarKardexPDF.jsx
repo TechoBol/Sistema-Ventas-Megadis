@@ -361,5 +361,8 @@ export const generarKardexPDF = ({
   // 🔥 GUARDAR PDF
   // =====================================================
 
-  doc.save(`kardex_${producto?.name || "general"}.pdf`);
+  const pdfBlob = doc.output("blob");
+  const pdfUrl = URL.createObjectURL(pdfBlob);
+
+  window.open(pdfUrl, "_blank");
 };
