@@ -239,7 +239,7 @@ export default function TransferDetailModal({
                     {item.product?.line?.name || "Sin marca"}
                   </ProductMeta>
 
-                  <ProductMeta>Código: {item.product?.barcode}</ProductMeta>
+                  <ProductMeta>Código: {item.product?.code}</ProductMeta>
                 </ProductItem>
               ))}
             </ProductsBox>
