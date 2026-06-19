@@ -89,7 +89,7 @@ export default function CreateTransferModal({
     };
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
-  }, [activeIndex, showDestinations,showOrigen]);
+  }, [activeIndex, showDestinations , showOrigen]);
 
   if (!open) return null;
 
@@ -198,17 +198,16 @@ export default function CreateTransferModal({
 
   // ── submit ─────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    // bloqueo instantáneo
     if (isSending.current) return;
-
-    // ── pedir glosa ─────────────────────────────
+  
+    // ── GLOSA ─────────────────────────────
     const glosaResult = await Swal.fire({
       title: "Ingrese una glosa",
       input: "text",
       inputLabel: "Glosa",
       inputPlaceholder: "Ej: Transferencia a sucursal central",
       showCancelButton: true,
-      confirmButtonText: "Guardar",
+      confirmButtonText: "Continuar",
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#28a745",
       inputValidator: (value) => {
@@ -217,25 +216,54 @@ export default function CreateTransferModal({
         }
       },
     });
-
-    // canceló modal → NO envía
+  
     if (!glosaResult.isConfirmed) return;
-
+  
+    let editReason = null;
+  
+    // ── MOTIVO DE EDICIÓN ─────────────────────────────
+    if (mode === "edit") {
+      const reasonResult = await Swal.fire({
+        title: "Motivo de la edición",
+        input: "textarea",
+        inputLabel: "Razón",
+        inputPlaceholder:
+          "Ej: Se corrigió la cantidad de productos solicitados",
+        showCancelButton: true,
+        confirmButtonText: "Guardar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#f39c12",
+        inputValidator: (value) => {
+          if (!value?.trim()) {
+            return "Debes indicar el motivo de la edición";
+          }
+        },
+      });
+  
+      if (!reasonResult.isConfirmed) return;
+  
+      editReason = reasonResult.value;
+    }
+  
     isSending.current = true;
     setSending(true);
-
+  
     try {
       await onSubmit({
         origenId: form.origenId,
         destinationId: form.destinationId,
         glosa: glosaResult.value,
+        editReason,
         items: form.items.map((i) => ({
           productId: i.productId,
           quantity: Number(i.quantity),
         })),
       });
-
-      successToast("Transferencia enviada con éxito");
+  
+      mode === "create"
+        ? successToast("Transferencia enviada con éxito")
+        : successToast("Transferencia actualizada con éxito");
+  
       onClose();
     } catch {
       errorToast("Error al enviar la transferencia");

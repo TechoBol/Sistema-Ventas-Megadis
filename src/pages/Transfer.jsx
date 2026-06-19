@@ -66,6 +66,7 @@ function Transfer() {
     createTransfer,
     approveTransfer,
     rejectTransfer,
+    updateTransfer,
   } = useTransfers();
   const { data: locations } = useSucursales();
 
@@ -291,6 +292,13 @@ function Transfer() {
     const url = await getFileUrl("MEGADIS/TRANSFERENCIAS/" + key + ".pdf");
     window.open(url, "_blank");
   };
+  const handleUpdate = async (id, data) => {
+    const updatedTransfer = await updateTransfer(id, data);
+
+    setSelectedTransfer(updatedTransfer);
+
+    return updatedTransfer;
+  };
   return (
     <>
       <PageSurface>
@@ -364,6 +372,7 @@ function Transfer() {
         transfer={selectedTransfer}
         onApprove={handleApprove}
         onReject={handleReject}
+        onUpdate={handleUpdate}
       />
     </>
   );

@@ -71,29 +71,29 @@ const useInventory = () => {
 
     socket.on("transfer", handleTransfer);
     socket.on("updateProductMargin", (updatedProduct) => {
-  setProducts((prev) =>
-    prev.map((item) => {
-      if (item.id !== updatedProduct.id) {
-        return item;
-      }
+      setProducts((prev) =>
+        prev.map((item) => {
+          if (item.id !== updatedProduct.id) {
+            return item;
+          }
 
-      return {
-        ...item,
+          return {
+            ...item,
 
-        salePrice: updatedProduct.salePrice,
-        porcentajeGanancia: updatedProduct.porcentajeGanancia,
-        quantityDiscount: updatedProduct.quantityDiscount,
-        bossDiscount: updatedProduct.bossDiscount,
+            salePrice: updatedProduct.salePrice,
+            porcentajeGanancia: updatedProduct.porcentajeGanancia,
+            quantityDiscount: updatedProduct.quantityDiscount,
+            bossDiscount: updatedProduct.bossDiscount,
 
-        // IMPORTANTE
-        productUnits: updatedProduct.productUnits,
+            // IMPORTANTE
+            productUnits: updatedProduct.productUnits,
 
-        // opcional
-        inventories: updatedProduct.inventories,
-      };
-    }),
-  );
-});
+            // opcional
+            inventories: updatedProduct.inventories,
+          };
+        }),
+      );
+    });
     return () => {
       socket.off("newProduct", handleRefresh);
 

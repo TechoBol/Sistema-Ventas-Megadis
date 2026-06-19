@@ -5,6 +5,7 @@ import {
   getMyTransfersService,
   approveTransferService,
   rejectTransferService,
+  updateTransferService,
 } from "../services/transferService";
 import { useNavigate } from "react-router-dom";
 import { generarTransferPDF } from "../components/pdf/generarTransferPDF";
@@ -89,11 +90,33 @@ export const useTransfers = () => {
   const setTransferNotification = useNotificationStore(
     (state) => state.setTransferNotification,
   );
+
+  const updateTransfer = async (id: number, values: any) => {
+    const transfer = await updateTransferService(id, values, token);
+    const pdfBlob = generarTransferPDF(transfer);
+    console.log("aca");
+    // 3. Convertir a File
+    const file = new File([pdfBlob], `transfer_${transfer.transferCode}.pdf`, {
+      type: "application/pdf",
+    });
+
+    // 4. Subir a S3
+    const pdfKey = await uploadPDFTranfer(file, transfer.transferCode);
+
+    console.log("PDF Transfer subido:", pdfKey);
+    socket.emit(
+      "newTranfer",
+      "Transferencia " + transfer.transferCode + " aprobada",
+    );
+    await getTransfers();
+    return transfer;
+  };
   return {
     data,
     createTransfer,
     goToTransfer,
     approveTransfer,
     rejectTransfer,
+    updateTransfer
   };
 };

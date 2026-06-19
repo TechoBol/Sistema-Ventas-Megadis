@@ -85,3 +85,26 @@ export const rejectTransferService = async (id: number, token: string) => {
 
   return resData;
 };
+
+export const updateTransferService = async (
+  id: number,
+  data: any,
+  token: string,
+) => {
+  const res = await fetch(`${API}/transfer/transfers/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "x-access-token": token,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const resData = await res.json();
+
+  if (!res.ok) {
+    throw new Error(resData.message || "Error actualizando transferencia");
+  }
+
+  return resData;
+};
