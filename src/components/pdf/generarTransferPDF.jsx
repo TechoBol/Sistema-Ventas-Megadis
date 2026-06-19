@@ -84,18 +84,14 @@ export const generarTransferPDF = (transfer) => {
     ["Código", transfer.transferCode || `TR-${transfer.id}`],
     ["Origen", transfer.fromLocation?.name || "—"],
     ["Destino", transfer.toLocation?.name || "—"],
+
     [
       "Fecha solicitud",
       transfer.createdAt
         ? new Date(transfer.createdAt).toLocaleString("es-BO")
         : "—",
     ],
-    [
-      "Ultima Actualizacion",
-      transfer.editedAt
-        ? new Date(transfer.editedAt).toLocaleString("es-BO")
-        : "—",
-    ],
+
     [
       "Solicitado por",
       `${transfer.requestedBy?.name || ""} ${
@@ -104,34 +100,53 @@ export const generarTransferPDF = (transfer) => {
     ],
   ];
 
-  // 🔥 FECHA DINÁMICA
-  if (transfer.status === "APPROVED" && transfer.approvedAt) {
+  // DATOS DE EDICIÓN
+  if (transfer.editedAt) {
     info.push([
-      "Fecha aprobación",
-      new Date(transfer.approvedAt).toLocaleString("es-BO"),
+      "Última edición",
+      new Date(transfer.editedAt).toLocaleString("es-BO"),
     ]);
   }
 
-  if (transfer.status === "REJECTED" && transfer.approvedAt) {
+  if (transfer.editedBy) {
     info.push([
-      "Fecha rechazo",
-      new Date(transfer.approvedAt).toLocaleString("es-BO"),
+      "Editado por",
+      `${transfer.editedBy.name} ${transfer.editedBy.lastName}`,
     ]);
   }
 
-  // 🔥 USUARIO DINÁMICO
-  if (transfer.status === "APPROVED" && transfer.approvedBy) {
-    info.push([
-      "Aprobado por",
-      `${transfer.approvedBy.name} ${transfer.approvedBy.lastName}`,
-    ]);
+  // DATOS DE APROBACIÓN
+  if (transfer.status === "APPROVED") {
+    if (transfer.approvedAt) {
+      info.push([
+        "Fecha aprobación",
+        new Date(transfer.approvedAt).toLocaleString("es-BO"),
+      ]);
+    }
+
+    if (transfer.approvedBy) {
+      info.push([
+        "Aprobado por",
+        `${transfer.approvedBy.name} ${transfer.approvedBy.lastName}`,
+      ]);
+    }
   }
 
-  if (transfer.status === "REJECTED" && transfer.approvedBy) {
-    info.push([
-      "Rechazado por",
-      `${transfer.approvedBy.name} ${transfer.approvedBy.lastName}`,
-    ]);
+  // DATOS DE RECHAZO
+  if (transfer.status === "REJECTED") {
+    if (transfer.approvedAt) {
+      info.push([
+        "Fecha rechazo",
+        new Date(transfer.approvedAt).toLocaleString("es-BO"),
+      ]);
+    }
+
+    if (transfer.approvedBy) {
+      info.push([
+        "Rechazado por",
+        `${transfer.approvedBy.name} ${transfer.approvedBy.lastName}`,
+      ]);
+    }
   }
 
   let infoY = y + 10;
@@ -172,11 +187,14 @@ export const generarTransferPDF = (transfer) => {
   const finalY = doc.lastAutoTable.finalY || infoY + 10;
 
   // 🔥 GLOSA (DEBAJO DE TABLA)
+  // GLOSA
   let glosaY = finalY + 10;
 
   if (transfer.glosa) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
+    doc.setTextColor(...theme.dark);
+
     doc.text("Glosa:", margin, glosaY);
 
     doc.setFont("helvetica", "normal");
@@ -190,26 +208,47 @@ export const generarTransferPDF = (transfer) => {
 
     glosaY += splitGlosa.length * 5 + 10;
   }
-  // 🔥 MOTIVO DE RECHAZO (SOLO SI ES REJECTED)
-  if (transfer.status === "REJECTED" && transfer.rejectionReason) {
-    let motivoY = glosaY;
 
+  // MOTIVO DE EDICIÓN
+  if (transfer.editReason) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...theme.warning);
+
+    doc.text("Motivo de edición:", margin, glosaY);
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...theme.dark);
+
+    const splitReason = doc.splitTextToSize(
+      transfer.editReason,
+      pageWidth - margin * 2,
+    );
+
+    doc.text(splitReason, margin, glosaY + 5);
+
+    glosaY += splitReason.length * 5 + 10;
+  }
+
+  // MOTIVO DE RECHAZO
+  if (transfer.status === "REJECTED" && transfer.rejectionReason) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...theme.error);
-    doc.text("Motivo de rechazo:", margin, motivoY);
+
+    doc.text("Motivo de rechazo:", margin, glosaY);
 
     doc.setFont("helvetica", "normal");
+    doc.setTextColor(...theme.dark);
 
-    const splitMotivo = doc.splitTextToSize(
+    const splitReject = doc.splitTextToSize(
       transfer.rejectionReason,
       pageWidth - margin * 2,
     );
 
-    doc.text(splitMotivo, margin, motivoY + 5);
+    doc.text(splitReject, margin, glosaY + 5);
 
-    // ajustar cursor
-    glosaY += splitMotivo.length * 5 + 10;
+    glosaY += splitReject.length * 5 + 10;
   }
   // FIRMA SECTION
   const firmaY = glosaY + 15;
@@ -225,10 +264,7 @@ export const generarTransferPDF = (transfer) => {
 
   firma("Supervisor", margin);
 
-  firma(
-    "Encargado Almacen Origen",
-    margin + colWidth,
-  );
+  firma("Encargado Almacen Origen", margin + colWidth);
 
   firma("Encargado Almacén Destino", margin + colWidth * 2);
 

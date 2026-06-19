@@ -74,7 +74,7 @@ function MarginProfit() {
 
   const brandFilters = useMemo(() => {
     return [
-      { id: "all", name: "Todos" },
+      { id: "all", name: "TODOS" },
 
       ...lines.map((line) => ({
         id: line.id,

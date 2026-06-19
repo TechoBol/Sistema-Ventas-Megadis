@@ -7,6 +7,7 @@ export const generarInventarioValoradoPDF = ({
   linea = "TODAS",
   marca = "TODAS",
   producto = "TODOS",
+  hasta
 }) => {
   const doc = new jsPDF({
     orientation: "landscape",
@@ -42,6 +43,7 @@ export const generarInventarioValoradoPDF = ({
   drawFilter("MARCA:", linea, 35);
   drawFilter("LINEA:", marca, 40);
   drawFilter("PRODUCTO:", producto, 45);
+  drawFilter("HASTA:", new Date(hasta).toLocaleDateString("es-BO"), 50);
 
   ////////////////////////////////////////////////////
   // BODY
@@ -130,11 +132,11 @@ export const generarInventarioValoradoPDF = ({
       0: { cellWidth: 25 },
       1: { cellWidth: 35 },
       2: { cellWidth: 40 },
-      3: { cellWidth: 18 },
+      3: { cellWidth: 20 },
       4: { cellWidth: 90 },
       5: { cellWidth: 17 },
-      6: { cellWidth: 24 },
-      7: { cellWidth: 24 },
+      6: { cellWidth: 23 },
+      7: { cellWidth: 23 },
     },
   });
 
