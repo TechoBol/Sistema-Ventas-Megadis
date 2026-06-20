@@ -14,6 +14,7 @@ import {
   PrimaryActionButton,
 } from "../components/ui/Page.styles";
 import { useSucursales } from "../hooks/useSucursales";
+import { getRegionLabel } from "../constants/regions";
 
 const fechaHoy = () => {
   const fecha = new Date().toLocaleDateString("es-BO", {
@@ -56,6 +57,8 @@ function Locations() {
       typeValue: location.type,
       abbreviation: location.abbreviation,
       address: location.address ?? "Sin dirección",
+      region: getRegionLabel(location.region) ?? "Sin región",
+      regionValue: location.region,
       saleCounter: location.saleCounter,
       isVisible: location.isVisible,
     }));
@@ -70,6 +73,7 @@ function Locations() {
         location.type,
         location.abbreviation,
         location.address,
+        location.region,
       ]
         .join(" ")
         .toLowerCase()
@@ -102,6 +106,12 @@ function Locations() {
         headerName: "Dirección",
         flex: 1.6,
         minWidth: 220,
+      },
+      {
+        field: "region",
+        headerName: "Región",
+        flex: 1,
+        minWidth: 140,
       },
     ],
     []
