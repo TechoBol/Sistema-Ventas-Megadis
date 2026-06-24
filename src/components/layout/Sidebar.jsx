@@ -16,6 +16,9 @@ import {
   FileText,
   ChevronDown,
   DollarSign,
+  Search,
+  Check,
+  Warehouse,
 } from "lucide-react";
 
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -51,10 +54,21 @@ import {
   BranchDropdownHeader,
   BranchOption,
   BranchOptionTop,
-  BranchName,
-  BranchCode,
   BranchBadge,
-  BranchGroupTitle
+  BranchGroupTitle,
+  BranchSearchWrapper,
+  BranchSearch,
+  BranchSearchInput,
+  BranchRegion,
+  BranchRegionTitle,
+  BranchGrid,
+  BranchCard,
+  BranchCardIcon,
+  BranchCardName,
+  BranchCardCode,
+  BranchSelected,
+  BranchDivider,
+  EmptyBranchState,
 } from "../ui/layout/Sidebar.styles";
 import { useSucursales } from "../../hooks/useSucursales";
 import { useLocationStore } from "../store/locationStore";
@@ -212,13 +226,14 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
       setSelectedLocation(defaultLocation);
     }
   }, [locations, selectedLocation]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         branchDropdownRef.current &&
         !branchDropdownRef.current.contains(event.target)
       ) {
-        setShowLocations(false);
+        closeLocationDropdown();
       }
     };
 
@@ -230,7 +245,13 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   }, []);
 
   const [showLocations, setShowLocations] = useState(false);
+  const [search, setSearch] = useState("");
   const branchDropdownRef = useRef(null);
+
+  const closeLocationDropdown = () => {
+    setSearch("");
+    setShowLocations(false);
+  };
 
   const defaultOpenMenus = useMemo(() => {
     const openMenus = {};
@@ -278,8 +299,40 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
       }))
       .filter((section) => section.items.length > 0);
   }, [permissions]);
-  const branches = locations.filter((l) => l.type === "BRANCH");
-  const warehouses = locations.filter((l) => l.type === "WAREHOUSE");
+
+  const groupedLocations = useMemo(() => {
+    const text = search.trim().toLowerCase();
+
+    const filtered = locations.filter((location) => {
+      if (!text) return true;
+
+      return (
+        location.name.toLowerCase().includes(text) ||
+        location.abbreviation?.toLowerCase().includes(text) ||
+        location.region?.toLowerCase().includes(text)
+      );
+    });
+
+    return filtered.reduce((groups, location) => {
+      const region = location.region?.trim() || "Sin región";
+
+      if (!groups[region]) {
+        groups[region] = [];
+      }
+
+      groups[region].push(location);
+
+      return groups;
+    }, {});
+  }, [locations, search]);
+
+  const LocationIcon = ({ type, size = 24 }) =>
+    type === "WAREHOUSE" ? (
+      <Warehouse size={size} />
+    ) : (
+      <Building2 size={size} />
+    );
+
   return (
     <SidebarWrapper $isOpen={isOpen} $isCollapsed={isCollapsed}>
       <SidebarHeader $isCollapsed={isCollapsed}>
@@ -289,9 +342,12 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
               {" "}
               <BranchSelectorButton
                 onClick={() => {
-                  if (canChangeLocation) {
-                    setShowLocations((prev) => !prev);
-                  }
+                  if (!canChangeLocation) return;
+                  setShowLocations((prev) => {
+                    const next = !prev;
+                    if (!next) closeLocationDropdown();
+                    return next;
+                  });
                 }}
                 style={{
                   cursor: canChangeLocation ? "pointer" : "default",
@@ -323,55 +379,67 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
               </BranchSelectorButton>
               {canChangeLocation && showLocations && (
                 <BranchDropdown>
-                  <BranchDropdownHeader>
-                    Seleccionar ubicación
-                  </BranchDropdownHeader>
-
-                  <BranchGroupTitle>SUCURSALES</BranchGroupTitle>
-
-                  {branches.map((location) => (
-                    <BranchOption
-                      key={location.id}
-                      $active={selectedLocation?.id === location.id}
-                      onClick={() => {
-                        setSelectedLocation(location);
-                        setShowLocations(false);
-                      }}
-                    >
-                      <BranchOptionTop>
-                        <BranchName>{location.name}</BranchName>
-
-                        {selectedLocation?.id === location.id && (
-                          <BranchBadge>Actual</BranchBadge>
-                        )}
-                      </BranchOptionTop>
-
-                      <BranchCode>{location.abbreviation}</BranchCode>
-                    </BranchOption>
-                  ))}
-
-                  <BranchGroupTitle>ALMACENES</BranchGroupTitle>
-
-                  {warehouses.map((location) => (
-                    <BranchOption
-                      key={location.id}
-                      $active={selectedLocation?.id === location.id}
-                      onClick={() => {
-                        setSelectedLocation(location);
-                        setShowLocations(false);
-                      }}
-                    >
-                      <BranchOptionTop>
-                        <BranchName>{location.name}</BranchName>
-
-                        {selectedLocation?.id === location.id && (
-                          <BranchBadge>Actual</BranchBadge>
-                        )}
-                      </BranchOptionTop>
-
-                      <BranchCode>{location.abbreviation}</BranchCode>
-                    </BranchOption>
-                  ))}
+                  <BranchSearchWrapper>
+                    <BranchSearch>
+                      <Search size={18} />
+                      <BranchSearchInput
+                        placeholder="Buscar ubicación..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </BranchSearch>
+                  </BranchSearchWrapper>
+                  {Object.keys(groupedLocations).length === 0 ? (
+                    <EmptyBranchState>
+                      <Search size={34} />
+                      <span>No se encontraron ubicaciones</span>
+                      <p>Intenta con otro nombre.</p>
+                    </EmptyBranchState>
+                  ) : (
+                    Object.entries(groupedLocations).map(([region, regionLocations], index) => (
+                      <React.Fragment key={region}>
+                        {index !== 0 }
+                        <BranchRegion>
+                          <BranchRegionTitle>
+                            {region}
+                          </BranchRegionTitle>
+                          <BranchGrid>
+                            {regionLocations.map((location) => {
+                              const active =
+                                selectedLocation?.id === location.id;
+                              return (
+                                <BranchCard
+                                  key={location.id}
+                                  $active={active}
+                                  onClick={() => {
+                                    setSelectedLocation(location);
+                                    closeLocationDropdown();
+                                  }}
+                                >
+                                  <BranchCardIcon $active={active}>
+                                    <LocationIcon type={location.type} />
+                                  </BranchCardIcon>
+                                  <BranchCardName>
+                                    {location.name}
+                                  </BranchCardName>
+                                  {location.abbreviation && (
+                                    <BranchCardCode>
+                                      {location.abbreviation}
+                                    </BranchCardCode>
+                                  )}
+                                  {active && (
+                                    <BranchSelected>
+                                      <Check size={14} />
+                                    </BranchSelected>
+                                  )}
+                                </BranchCard>
+                              );
+                            })}
+                          </BranchGrid>
+                        </BranchRegion>
+                      </React.Fragment>
+                    ))
+                  )}
                 </BranchDropdown>
               )}
             </BranchSelectorWrapper>

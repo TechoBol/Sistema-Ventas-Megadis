@@ -103,14 +103,14 @@ export const generarTransferPDF = (transfer) => {
   // DATOS DE EDICIÓN
   if (transfer.editedAt) {
     info.push([
-      "Última edición",
+      "Última modificación",
       new Date(transfer.editedAt).toLocaleString("es-BO"),
     ]);
   }
 
   if (transfer.editedBy) {
     info.push([
-      "Editado por",
+      "Modificado por",
       `${transfer.editedBy.name} ${transfer.editedBy.lastName}`,
     ]);
   }
