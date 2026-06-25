@@ -121,19 +121,14 @@ const drawFila = (doc, items, y) => {
 // CABECERA EMPRESA
 // =====================================================
 
-const drawEmpresa = (doc, venta) => {
+const drawEmpresa = (doc, venta, offsetY = 0) => {
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.text("MEGADIS S.R.L.", 14, 18);
-
-  doc.setFontSize(10);
-  doc.text(venta.location?.name || "", 14, 25);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-
-  doc.text("Teléfono: 69417829", 14, 38);
-  doc.text("Cochabamba - Bolivia", 14, 44);
+  doc.setFontSize(8);
+  doc.text("MEGADIS S.R.L.", 14, 7 + offsetY);
+  doc.setFontSize(7);
+  doc.text((venta.location?.name || "").toUpperCase(), 14, 12 + offsetY);
+  doc.text("Teléfono: 69417829", 14, 17 + offsetY);
+  doc.text(venta.location?.region + " - BOLIVIA", 14, 22 + offsetY);
 };
 
 // =====================================================
@@ -141,15 +136,24 @@ const drawEmpresa = (doc, venta) => {
 // =====================================================
 
 const drawTablaProductos = (doc, venta, startY) => {
-  const body = venta.details.map((item) => [
-    item.product.code,
-    item.quantity,
-    item.unitName || item.productUnit?.unit?.name || "-",
-    item.product.name,
-    Number(item.unitPrice).toFixed(2),
-    Number(item.itemDiscount || 0).toFixed(2),
-    Number(item.subtotal).toFixed(2),
-  ]);
+  const body = venta.details.map((item) => {
+    const esOtraSucursal =
+      item.outputLocation && item.outputLocation.id !== venta.locationId;
+
+    const descripcion = esOtraSucursal
+      ? `${item.product.name}\n(RECOGER EN: ${item.outputLocation.name})`
+      : item.product.name;
+
+    return [
+      item.product.code,
+      item.quantity,
+      item.unitName || item.productUnit?.unit?.name || "-",
+      descripcion,
+      Number(item.unitPrice).toFixed(2),
+      Number(item.itemDiscount || 0).toFixed(2),
+      Number(item.subtotal).toFixed(2),
+    ];
+  });
 
   autoTable(doc, {
     startY,
@@ -167,24 +171,25 @@ const drawTablaProductos = (doc, venta, startY) => {
     body,
     theme: "plain",
     styles: {
-      fontSize: 8,
-      cellPadding: 3,
+      fontSize: 5,
+      cellPadding: 1,
       textColor: [0, 0, 0],
+      overflow: "linebreak",
     },
     headStyles: {
       fontStyle: "bold",
-      fontSize: 8,
+      fontSize: 5,
       fillColor: [255, 255, 255],
       textColor: [0, 0, 0],
     },
     columnStyles: {
-      0: { cellWidth: 24 },
-      1: { cellWidth: 18 },
-      2: { cellWidth: 22 },
-      3: { cellWidth: 52 },
-      4: { cellWidth: 22 },
-      5: { cellWidth: 20 },
-      6: { cellWidth: 24 },
+      0: { cellWidth: 20 },
+      1: { cellWidth: 15 },
+      2: { cellWidth: 18 },
+      3: { cellWidth: 65 },
+      4: { cellWidth: 20 },
+      5: { cellWidth: 18 },
+      6: { cellWidth: 22 },
     },
     didDrawCell: (data) => {
       const { cell, row } = data;
@@ -219,10 +224,10 @@ const drawTablaProductos = (doc, venta, startY) => {
 
 const drawTotales = (doc, venta, finalY) => {
   const boxX = 128;
-  const boxY = finalY + 10;
+  const boxY = finalY + 5;
   const labelWidth = 32;
   const valueWidth = 22;
-  const rowHeight = 8;
+  const rowHeight = 5;
 
   doc.setLineWidth(0.2);
   doc.rect(boxX, boxY, labelWidth + valueWidth, rowHeight * 3);
@@ -240,31 +245,31 @@ const drawTotales = (doc, venta, finalY) => {
   );
   doc.line(boxX + labelWidth, boxY, boxX + labelWidth, boxY + rowHeight * 3);
 
-  doc.setFontSize(8);
+  doc.setFontSize(5);
   doc.setFont("helvetica", "normal");
 
-  doc.text("SUBTOTAL Bs", boxX + 5, boxY + 5.5);
+  doc.text("SUBTOTAL Bs", boxX + 3, boxY + 3.5);
   doc.text(
     Number(venta.subtotal).toFixed(2),
     boxX + labelWidth + valueWidth - 4,
-    boxY + 5.5,
+    boxY + 3.5,
     { align: "right" },
   );
 
-  doc.text("DESCUENTO Bs", boxX + 4, boxY + 13.5);
+  doc.text("DESCUENTO Bs", boxX + 3, boxY + 8.5);
   doc.text(
     Number(venta.discount).toFixed(2),
     boxX + labelWidth + valueWidth - 4,
-    boxY + 13.5,
+    boxY + 8.5,
     { align: "right" },
   );
 
   doc.setFont("helvetica", "bold");
-  doc.text("TOTAL Bs", boxX + 8, boxY + 21.5);
+  doc.text("TOTAL Bs", boxX + 3, boxY + 13.5);
   doc.text(
     Number(venta.total).toFixed(2),
     boxX + labelWidth + valueWidth - 4,
-    boxY + 21.5,
+    boxY + 13.5,
     { align: "right" },
   );
 
@@ -275,26 +280,35 @@ const drawTotales = (doc, venta, finalY) => {
 // NOTA ENTREGA
 // =====================================================
 
-const generarNotaEntrega = (doc, venta, copia) => {
-  doc.addPage("letter", "p");
-
+const generarNotaEntrega = (
+  doc,
+  venta,
+  copia,
+  offsetY = 0,
+  nuevaPagina = true,
+) => {
+  if (nuevaPagina) {
+    doc.addPage("letter", "p");
+  }
   // Ancho útil: carta = 215.9mm, márgenes 14 cada lado → ~188mm útiles
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  drawEmpresa(doc, venta);
+  drawEmpresa(doc, venta, offsetY);
 
   // ---------- TITULO ----------
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.text("NOTA DE ENTREGA", pageWidth / 2, 55, { align: "center" });
-
   doc.setFontSize(10);
-  doc.text(`COPIA ${copia}`, pageWidth / 2, 63, { align: "center" });
+  doc.text("NOTA DE ENTREGA", pageWidth / 2, 25 + offsetY, { align: "center" });
+
+  doc.setFontSize(8);
+  doc.text(`COPIA ${copia}`, pageWidth / 2, 30 + offsetY, {
+    align: "center",
+  });
 
   // ---------- DATOS DEL CLIENTE ----------
-  doc.setFontSize(9);
+  doc.setFontSize(7);
 
-  let y = 70;
+  let y = 35 + offsetY;
 
   // Fila 1: Cód. Cliente | Cód. Venta | Fecha
   drawFila(
@@ -325,7 +339,7 @@ const generarNotaEntrega = (doc, venta, copia) => {
     y,
   );
 
-  y += 8;
+  y += 5;
 
   // Fila 2: Cliente | Vendedor
   drawFila(
@@ -414,7 +428,7 @@ const generarNotaEntrega = (doc, venta, copia) => {
 
   // ---------- GLOSA ----------
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(5);
   doc.text("Glosa:", 14, boxY + 14);
   doc.setFont("helvetica", "normal");
 
@@ -423,15 +437,15 @@ const generarNotaEntrega = (doc, venta, copia) => {
   doc.text(lineasGlosa.slice(0, 2), 30, boxY + 14);
 
   // ---------- FIRMAS ----------
-  const firmaY = boxY + 48;
-  const width = 45;
+  const firmaY = boxY + 25;
+  const width = 35;
 
   doc.setLineWidth(0.3);
   doc.line(18, firmaY, 18 + width, firmaY);
   doc.line(78, firmaY, 78 + width, firmaY);
   doc.line(138, firmaY, 138 + width, firmaY);
 
-  doc.setFontSize(8);
+  doc.setFontSize(5);
   doc.setFont("helvetica", "normal");
   doc.text("Elaborado por", 30, firmaY + 6);
   doc.text("Despachado por", 90, firmaY + 6);
@@ -446,8 +460,17 @@ export const generarDocumentoVenta = (venta) => {
   const doc = new jsPDF("p", "mm", "letter");
   doc.deletePage(1);
 
-  generarNotaEntrega(doc, venta, "CLIENTE");
-  generarNotaEntrega(doc, venta, "ARCHIVO");
+  const usarMediaHoja = venta.details.length <= 5;
+
+  if (usarMediaHoja) {
+    doc.addPage("letter", "p");
+
+    generarNotaEntrega(doc, venta, "CLIENTE", 0, false);
+    generarNotaEntrega(doc, venta, "ARCHIVO", 140, false);
+  } else {
+    generarNotaEntrega(doc, venta, "CLIENTE");
+    generarNotaEntrega(doc, venta, "ARCHIVO");
+  }
 
   return doc.output("blob");
 };

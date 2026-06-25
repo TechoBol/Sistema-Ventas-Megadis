@@ -32,7 +32,8 @@ import {
   FormGrid,
   Field,
   Label,
-  Input,InputArea,
+  Input,
+  InputArea,
   AddressWrapper,
   LocationButton,
   CustomerDropdown,
@@ -290,13 +291,20 @@ function SaleForm({
               <Label>NOMBRE O RAZÓN SOCIAL</Label>
               <Input
                 value={customerData.name}
-                onFocus={() => {
-                  setSearchTerm(customerData.name);
+                onChange={(event) => handleChange("name", event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+
+                  const search = customerData.name?.trim();
+
+                  if (!search) {
+                    setOpenCustomerDrop(false);
+                    return;
+                  }
+
+                  setSearchTerm(search);
                   setOpenCustomerDrop(true);
                 }}
-                onChange={(event) =>
-                  handleCustomerSearch("name", event.target.value)
-                }
                 placeholder="Ingrese nombre del cliente"
               />
               {openCustomerDrop && (
@@ -342,13 +350,20 @@ function SaleForm({
               ) : (
                 <Input
                   value={customerData.ci}
-                  onFocus={() => {
-                    setSearchTerm(customerData.ci);
+                  onChange={(event) => handleChange("ci", event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+
+                    const search = customerData.ci?.trim();
+
+                    if (!search) {
+                      setOpenCustomerDrop(false);
+                      return;
+                    }
+
+                    setSearchTerm(search);
                     setOpenCustomerDrop(true);
                   }}
-                  onChange={(event) =>
-                    handleCustomerSearch("ci", event.target.value)
-                  }
                   placeholder="Buscar o ingresar NIT/CI..."
                 />
               )}

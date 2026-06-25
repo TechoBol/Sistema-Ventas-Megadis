@@ -144,10 +144,7 @@ const Cart = () => {
     quantityDiscount: product.quantityDiscount || 0,
     bossDiscount: product.bossDiscount || 0,
     purchasePrice: Number(product.purchasePrice || 0),
-    stock:
-      product?.inventories?.find(
-        (inv) => inv.locationId === effectiveLocationId,
-      )?.quantity || 0,
+    inventories: product.inventories || [],
     baseUnitName: product.baseUnit?.name || "unid.",
   });
 
@@ -575,15 +572,26 @@ const Cart = () => {
                         return group.map((item, idx) => {
                           const RowComponent = idx === 0 ? TR : PresentationRow;
 
+                          const currentLocationStock =
+                            item.inventories.find(
+                              (inv) => inv.locationId === item.outputLocationId,
+                            )?.quantity || 0;
+
                           const usedByOthers = group
-                            .filter((g) => g.id !== item.id)
+                            .filter(
+                              (g) =>
+                                g.id !== item.id &&
+                                g.outputLocationId === item.outputLocationId,
+                            )
                             .reduce(
                               (acc, g) =>
                                 acc + (Number(g.quantity) || 0) * g.equivalence,
                               0,
                             );
 
-                          const remainingStock = item.stock - usedByOthers;
+                          const remainingStock =
+                            currentLocationStock - usedByOthers;
+
                           const maxInThisUnit = (
                             remainingStock / item.equivalence
                           ).toFixed(2);
@@ -664,7 +672,7 @@ const Cart = () => {
                                   <input
                                     type="number"
                                     min="1"
-                                    max={item.stock}
+                                    max={Number(maxInThisUnit)}
                                     value={item.quantity}
                                     onChange={(e) => {
                                       const valorIngresado = Number(
@@ -682,16 +690,21 @@ const Cart = () => {
                                         return;
                                       }
 
-                                      if (valorIngresado > item.stock) {
+                                      const maxQty = Math.floor(
+                                        remainingStock / item.equivalence,
+                                      );
+
+                                      if (valorIngresado > maxQty) {
                                         errorToast(
-                                          `Stock insuficiente. Máximo disponible: ${item.stock} unids.`,
+                                          `Stock insuficiente. Máximo disponible: ${maxQty} ${item.unitName}.`,
                                         );
+
                                         setCartItems((p) =>
                                           p.map((i) =>
                                             i.id === item.id
                                               ? {
                                                   ...i,
-                                                  quantity: item.stock,
+                                                  quantity: maxQty,
                                                   unitPrice: calcUnitPrice(
                                                     i.baseSalePrice,
                                                     item.stock,

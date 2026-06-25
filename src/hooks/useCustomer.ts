@@ -45,27 +45,29 @@ export const useCustomer = () => {
   const filteredCustomers = useMemo(() => {
     const value = searchTerm.trim().toLowerCase();
 
-    if (!value) return customers;
+    if (!value) return [];
 
-    return customers.filter((customer: any) => {
-      // Busca también dentro de los NITs y nombres de empresa
-      const nitsText = customer.nits
-        .map((n: any) => `${n.number} ${n.companyName ?? ""}`)
-        .join(" ");
+    return customers.filter((customer: { name: string; businessName: string; phone: string; address: string; nits: any[]; }) => {
+      const nameMatch = customer.name?.trim().toLowerCase() === value;
 
-      return [
-        customer.name,
-        customer.phone,
-        customer.address,
-        customer.businessName,
-        nitsText,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(value);
+      const businessMatch =
+        customer.businessName?.trim().toLowerCase() === value;
+
+      const phoneMatch = customer.phone?.trim().toLowerCase() === value;
+
+      const addressMatch = customer.address?.trim().toLowerCase() === value;
+
+      const nitMatch = customer.nits.some(
+        (nit) =>
+          nit.number?.trim().toLowerCase() === value ||
+          nit.companyName?.trim().toLowerCase() === value,
+      );
+
+      return (
+        nameMatch || businessMatch || phoneMatch || addressMatch || nitMatch
+      );
     });
   }, [customers, searchTerm]);
-
   return {
     customers: filteredCustomers,
     searchTerm,

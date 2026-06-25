@@ -4,6 +4,7 @@ import ProductForm from "../components/forms/ProductForm";
 import DataTable from "../components/table/DataTable";
 import { PriceCell } from "../components/modals/PriceCell";
 import { StockCell } from "../components/modals/StockCell";
+import { useLines } from "../hooks/useLine";
 import useInventory from "../hooks/useInventory";
 import { usePermissions } from "../hooks/usePermissions";
 import {
@@ -16,6 +17,8 @@ import {
   SearchInput,
   TopActions,
   SearchWrapper,
+  FilterButtonGroup,
+  FilterButton,
 } from "../components/ui/Products";
 import { Pencil, Plus, Search, Warehouse } from "lucide-react";
 import { useLoginStore } from "../components/store/loginStore";
@@ -35,6 +38,7 @@ const fechaHoy = () => {
 
 function Products() {
   const [showForm, setShowForm] = useState(false);
+  const [selectedLineId, setSelectedLineId] = useState("all");
 
   const [branchesAnchor, setBranchesAnchor] = useState(null);
   const [branchProductId, setBranchProductId] = useState(null);
@@ -49,8 +53,8 @@ function Products() {
       ? selectedLocation?.id
       : location?.id;
 
-  const { products, search, onFilterTextBoxChanged, isLoading } =
-    useInventory();
+  const { products, search, onFilterTextBoxChanged, isLoading } = useInventory();
+  const { lines } = useLines();
   ////////////////////////////////////////////////////////////
   // EDITAR PRODUCTO
   ////////////////////////////////////////////////////////////
@@ -166,11 +170,31 @@ function Products() {
     return list;
   }, [permissions]);
 
+  ////////////////////////////////////////////////////
+  // FILTROS
+  ////////////////////////////////////////////////////
+
+  const lineFilters = useMemo(() => {
+    return [
+      { id: "all", name: "TODOS" },
+      ...lines.map((line) => ({
+        id: String(line.id),
+        name: line.name,
+      })),
+    ];
+  }, [lines]);
+
   const filteredProducts = useMemo(() => {
-    return products.filter((product) =>
-      product.inventories?.some((inv) => inv.locationId === activeLocationId),
-    );
-  }, [products, activeLocationId]);
+    return products.filter((product) => {
+      const matchesLocation = product.inventories?.some(
+        (inv) => inv.locationId === activeLocationId,
+      );
+      const matchesLine =
+        selectedLineId === "all" || String(product.lineId) === selectedLineId;
+      return matchesLocation && matchesLine;
+    });
+  }, [products, activeLocationId, selectedLineId]);
+
   ////////////////////////////////////////////////////////////
   // RENDER
   ////////////////////////////////////////////////////////////
@@ -211,6 +235,20 @@ function Products() {
                 )}
               </TopActions>
             </PageHeader>
+            
+            {/* FILTROS DE MARCAS */}
+            <FilterButtonGroup>
+              {lineFilters.map((line) => (
+                <FilterButton
+                  key={line.id}
+                  type="button"
+                  $active={selectedLineId === line.id}
+                  onClick={() => setSelectedLineId(line.id)}
+                >
+                  {line.name}
+                </FilterButton>
+              ))}
+            </FilterButtonGroup>
 
             <DataTable
               rows={filteredProducts || []}
