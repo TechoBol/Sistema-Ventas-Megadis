@@ -90,7 +90,7 @@ const createDefaultAdditionalCosts = () => [
   {
     concept: "SAMC",
     amount: "",
-    currency: "BS",
+    currency: "USD",
     hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
@@ -98,7 +98,7 @@ const createDefaultAdditionalCosts = () => [
   {
     concept: "Gate In devolución",
     amount: "",
-    currency: "BS",
+    currency: "USD",
     hasFiscalCredit: false,
     creditRate: "13",
     source: "MANUAL",
