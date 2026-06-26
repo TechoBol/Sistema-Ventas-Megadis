@@ -12,17 +12,19 @@ export const useDashboard = () => {
   const permissions = usePermissions();
   const queryClient = useQueryClient();
 
+  const isGeneral = (permissions.isAdmin || permissions.isManager) && selectedLocation === null;
+
   const activeLocation =
     permissions.isAdmin || permissions.isManager
       ? selectedLocation
       : userLocation;
 
-  const locationId = activeLocation?.id;
+  const locationId = activeLocation?.id ?? null;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard", locationId],
-    queryFn: () => getDashboardSummaryService(token, locationId),
-    enabled: !!locationId,
+    queryKey: ["dashboard", isGeneral ? "general" : locationId],
+    queryFn: () => getDashboardSummaryService(token, isGeneral ? null : locationId),
+    enabled: isGeneral || !!locationId,
     staleTime: 1000 * 30,
     gcTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -30,7 +32,7 @@ export const useDashboard = () => {
 
   useEffect(() => {
     const handleVenta = () => {
-      void queryClient.invalidateQueries({ queryKey: ["dashboard", locationId] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard", isGeneral ? "general" : locationId] });
     };
 
     socket.on("cartProduct", handleVenta);
@@ -39,7 +41,7 @@ export const useDashboard = () => {
 
   return {
     data,
-    isLoading: isLoading || !locationId,
+    isLoading: isLoading || (!isGeneral && !locationId),
     refresh: () => queryClient.invalidateQueries({ queryKey: ["dashboard", locationId] }),
   };
 };

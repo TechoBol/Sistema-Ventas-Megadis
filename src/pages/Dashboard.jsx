@@ -85,7 +85,7 @@ function Dashboard() {
   if (isLoading)
     return <div style={styles.loading}>Cargando dashboard...</div>;
 
-  const { kpis, ventas_semana, tipo_pago, hora_pico, productos_top, sucursales_top, clientes_top } = data;
+  const { kpis, ventas_semana, tipo_pago, hora_pico, productos_top, sucursales_top, clientes_top, meta } = data;
 
   return (
     <div style={styles.wrapper}>
@@ -162,12 +162,14 @@ function Dashboard() {
               rawValue={p.cantidad} max={productos_top[0]?.cantidad ?? 0} />
           ))}
         </Card>
-        <Card title="Sucursales con más ventas">
-          {sucursales_top.map((s, i) => (
-            <RankingRow key={i} index={i + 1} nombre={s.nombre} valor={bs(s.total)}
-              rawValue={s.total} max={sucursales_top[0]?.total ?? 0} />
-          ))}
-        </Card>
+        {meta?.isGeneral && (
+          <Card title="Sucursales con más ventas">
+            {sucursales_top.map((s, i) => (
+              <RankingRow key={i} index={i + 1} nombre={s.nombre} valor={bs(s.total)}
+                rawValue={s.total} max={sucursales_top[0]?.total ?? 0} />
+            ))}
+          </Card>
+        )}
         <Card title="Clientes con más compras">
           {clientes_top.map((c, i) => (
             <RankingRow key={i} index={i + 1} nombre={c.nombre} valor={bs(c.total)}
