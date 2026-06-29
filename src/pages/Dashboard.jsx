@@ -77,6 +77,43 @@ function CustomTooltip({ active, payload, label, format }) {
   );
 }
 
+function CotizacionesChart({ data }) {
+  const COLORS = ["#3a3a3a", "#2ecc71", "#c0392b", "#e67e22"];
+  const total = data.pendientes + data.aprobadas + data.rechazadas + data.vencidas;
+  const chartData = [
+    { name: "Pendientes", value: data.pendientes },
+    { name: "Aprobadas",  value: data.aprobadas },
+    { name: "Rechazadas", value: data.rechazadas },
+    { name: "Vencidas",   value: data.vencidas },
+  ];
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <PieChart width={120} height={120}>
+        <Pie data={chartData} dataKey="value" cx={55} cy={55}
+          innerRadius={34} outerRadius={52} paddingAngle={2} stroke="none">
+          {chartData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+        </Pie>
+      </PieChart>
+      <div style={{ flex: 1 }}>
+        {chartData.map((item, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: COLORS[i], flexShrink: 0, display: "inline-block" }} />
+              {item.name}
+            </span>
+            <span style={{ fontSize: 12, color: "#fff" }}>
+              {item.value}
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginLeft: 4 }}>
+                ({total > 0 ? Math.round((item.value / total) * 100) : 0}%)
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Componente principal ───────────────────────────────────────────────────
 
 function Dashboard() {
@@ -85,17 +122,61 @@ function Dashboard() {
   if (isLoading)
     return <div style={styles.loading}>Cargando dashboard...</div>;
 
-  const { kpis, ventas_semana, tipo_pago, hora_pico, productos_top, sucursales_top, clientes_top, meta } = data;
+  const {
+    kpis,
+    ventas_semana,
+    tipo_pago,
+    hora_pico,
+    productos_top,
+    sucursales_top,
+    clientes_top,
+    meta,
+    vendedores_top,
+    sin_movimiento,
+    cotizaciones_estados,
+  } = data;
 
   return (
     <div style={styles.wrapper}>
 
-      {/* KPIs */}
+      {/* KPIs fila 1 */}
       <div style={styles.kpiRow}>
-        <KpiCard variant="red" label="Venta del día" value={bs(kpis.venta_dia)} sub={`Hoy, ${formatFecha(kpis.fecha_hoy)}`} />
-        <KpiCard variant="dark" label="Ventas hoy" value={String(kpis.transacciones_hoy)} sub="Transacciones del día" />
-        <KpiCard variant="pink" label={`Monto histórico de ${mesCap}`} value={bs(kpis.monto_historico)} sub="Desde el inicio de mes" />
-        <KpiCard variant="dark2" label={`Ventas ${mesCap}`} value={kpis.transacciones_historicas.toLocaleString("es-BO")} sub="Total de transacciones del mes" />
+        <KpiCard variant="red"   label="Venta del día"                    value={bs(kpis.venta_dia)}                                          sub={`Hoy, ${formatFecha(kpis.fecha_hoy)}`} />
+        <KpiCard variant="dark"  label="Ventas hoy"                       value={String(kpis.transacciones_hoy)}                              sub="Transacciones del día" />
+        <KpiCard variant="pink"  label={`Monto histórico de ${mesCap}`}   value={bs(kpis.monto_historico)}                                    sub="Desde el inicio de mes" />
+        <KpiCard variant="dark2" label={`Ventas ${mesCap}`}               value={kpis.transacciones_historicas.toLocaleString("es-BO")}       sub="Total de transacciones del mes" />
+      </div>
+
+      {/* KPIs fila 2 */}
+      <div style={styles.kpiRow2}>
+
+        <Card title={meta?.isGeneral ? "Top vendedores del mes" : "Vendedor del mes"}>
+          {vendedores_top?.length === 0 && (
+            <p style={styles.emptyText}>Sin ventas este mes</p>
+          )}
+          {vendedores_top?.map((v, i) => (
+            <RankingRow key={i} index={i + 1} nombre={v.nombre} valor={`${v.transacciones} ventas`}
+              rawValue={v.transacciones} max={vendedores_top[0]?.transacciones ?? 0} />
+          ))}
+        </Card>
+
+        <Card title="Sin movimiento +30 días">
+          {sin_movimiento?.length === 0 ? (
+            <p style={styles.emptyText}>Sin productos inactivos</p>
+          ) : (
+            sin_movimiento?.map((p, i) => (
+              <div key={i} style={styles.sinMovimientoRow}>
+                <span style={styles.sinMovimientoDot} />
+                <span style={styles.sinMovimientoName}>{p.name}</span>
+              </div>
+            ))
+          )}
+        </Card>
+
+        <Card title="Estado de cotizaciones">
+          {cotizaciones_estados && <CotizacionesChart data={cotizaciones_estados} />}
+        </Card>
+
       </div>
 
       {/* Gráficos */}
@@ -156,12 +237,14 @@ function Dashboard() {
 
       {/* Rankings */}
       <div style={styles.rankingsGrid}>
+
         <Card title="Productos más vendidos">
           {productos_top.map((p, i) => (
             <RankingRow key={i} index={i + 1} nombre={p.nombre} valor={`${p.cantidad} und`}
               rawValue={p.cantidad} max={productos_top[0]?.cantidad ?? 0} />
           ))}
         </Card>
+
         {meta?.isGeneral && (
           <Card title="Sucursales con más ventas">
             {sucursales_top.map((s, i) => (
@@ -170,12 +253,14 @@ function Dashboard() {
             ))}
           </Card>
         )}
+
         <Card title="Clientes con más compras">
           {clientes_top.map((c, i) => (
             <RankingRow key={i} index={i + 1} nombre={c.nombre} valor={bs(c.total)}
               rawValue={c.total} max={clientes_top[0]?.total ?? 0} />
           ))}
         </Card>
+
       </div>
 
     </div>
