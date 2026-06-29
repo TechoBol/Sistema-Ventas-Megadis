@@ -97,11 +97,11 @@ const Cart = () => {
     query.trim() === ""
       ? (products ?? []).slice(0, 50)
       : (products ?? []).filter((p) => {
-          const name = p?.name?.toLowerCase?.() || "";
-          const code = p?.code?.toLowerCase?.() || "";
-          const q = query.toLowerCase();
-          return name.includes(q) || code.includes(q);
-        });
+        const name = p?.name?.toLowerCase?.() || "";
+        const code = p?.code?.toLowerCase?.() || "";
+        const q = query.toLowerCase();
+        return name.includes(q) || code.includes(q);
+      });
   const { data: locations } = useSucursales();
   useEffect(() => {
     const handler = (e) => {
@@ -128,7 +128,7 @@ const Cart = () => {
   };
 
   const buildLine = (product, unit) => ({
-    id: `${product.id}-${unit.id}`,
+    id: `${product.id}-${unit.id}-${Date.now()}`,
     productId: product.id,
     code: product.code,
     name: product.name,
@@ -153,9 +153,9 @@ const Cart = () => {
       prev.map((item) =>
         item.id === itemId
           ? {
-              ...item,
-              outputLocationId: Number(locationId),
-            }
+            ...item,
+            outputLocationId: Number(locationId),
+          }
           : item,
       ),
     );
@@ -163,7 +163,8 @@ const Cart = () => {
 
   const addToCart = (product) => {
     setCartItems((prev) => {
-      const existingLine = prev.find((i) => i.productId === product.id);
+      const existingLine = prev.find((i) => i.productId === product.id &&
+        i.outputLocationId === effectiveLocationId);
 
       if (existingLine) {
         return prev.map((i) =>
@@ -175,6 +176,7 @@ const Cart = () => {
         product.productUnits.find((u) => u.isDefault) ||
         product.productUnits[0];
 
+      console.log(effectiveLocationId)
       return [...prev, buildLine(product, defaultUnit)];
     });
     setQuery("");
@@ -215,9 +217,8 @@ const Cart = () => {
       // Evitar que dos líneas del mismo producto usen la misma presentación
       const conflict = prev.find(
         (i) =>
-          i.productId === current.productId &&
-          i.id !== itemId &&
-          i.selectedUnitId === newUnitId,
+          i.productId === current.productId && i.id !== itemId &&
+          i.selectedUnitId === newUnitId && i.outputLocationId === current.outputLocationId,
       );
       if (conflict) {
         errorToast("Esta presentación ya está agregada para este producto.");
@@ -230,7 +231,7 @@ const Cart = () => {
         if (item.id !== itemId) return item;
         return {
           ...item,
-          id: `${item.productId}-${selectedUnit.id}`,
+          id: `${item.productId}-${selectedUnit.id}-${Date.now()}`,
           selectedUnitId: selectedUnit.id,
           equivalence: Number(selectedUnit.equivalence),
           unitName: selectedUnit.unit.name,
@@ -558,12 +559,11 @@ const Cart = () => {
                     ) : (
                       Object.values(
                         cartItems.reduce((groups, item) => {
-                          if (!groups[item.productId]) {
-                            groups[item.productId] = [];
-                          }
-                          groups[item.productId].push(item);
+                          const key = `${item.productId}-${item.outputLocationId}`; // ← clave compuesta
+                          if (!groups[key]) groups[key] = [];
+                          groups[key].push(item);
                           return groups;
-                        }, {}),
+                        }, {})
                       ).map((group) => {
                         const usedUnitIds = group.map((i) => i.selectedUnitId);
                         const hasMorePresentations =
@@ -703,15 +703,15 @@ const Cart = () => {
                                           p.map((i) =>
                                             i.id === item.id
                                               ? {
-                                                  ...i,
-                                                  quantity: maxQty,
-                                                  unitPrice: calcUnitPrice(
-                                                    i.baseSalePrice,
-                                                    item.stock,
-                                                    i.quantityDiscount,
-                                                    i.bossDiscount,
-                                                  ),
-                                                }
+                                                ...i,
+                                                quantity: maxQty,
+                                                unitPrice: calcUnitPrice(
+                                                  i.baseSalePrice,
+                                                  item.stock,
+                                                  i.quantityDiscount,
+                                                  i.bossDiscount,
+                                                ),
+                                              }
                                               : i,
                                           ),
                                         );
@@ -724,15 +724,15 @@ const Cart = () => {
                                           p.map((i) =>
                                             i.id === item.id
                                               ? {
-                                                  ...i,
-                                                  quantity: qty,
-                                                  unitPrice: calcUnitPrice(
-                                                    i.baseSalePrice,
-                                                    qty,
-                                                    i.quantityDiscount,
-                                                    i.bossDiscount,
-                                                  ),
-                                                }
+                                                ...i,
+                                                quantity: qty,
+                                                unitPrice: calcUnitPrice(
+                                                  i.baseSalePrice,
+                                                  qty,
+                                                  i.quantityDiscount,
+                                                  i.bossDiscount,
+                                                ),
+                                              }
                                               : i,
                                           ),
                                         );
@@ -747,15 +747,15 @@ const Cart = () => {
                                           p.map((i) =>
                                             i.id === item.id
                                               ? {
-                                                  ...i,
-                                                  quantity: 1,
-                                                  unitPrice: calcUnitPrice(
-                                                    i.baseSalePrice,
-                                                    1,
-                                                    i.quantityDiscount,
-                                                    i.bossDiscount,
-                                                  ),
-                                                }
+                                                ...i,
+                                                quantity: 1,
+                                                unitPrice: calcUnitPrice(
+                                                  i.baseSalePrice,
+                                                  1,
+                                                  i.quantityDiscount,
+                                                  i.bossDiscount,
+                                                ),
+                                              }
                                               : i,
                                           ),
                                         );
@@ -888,9 +888,8 @@ const Cart = () => {
                       {paymentMethodsData.map((method) => (
                         <div
                           key={method.id}
-                          className={`payment-tile-card ${
-                            paymentMethod === method.id ? "active" : ""
-                          }`}
+                          className={`payment-tile-card ${paymentMethod === method.id ? "active" : ""
+                            }`}
                           onClick={() => setPaymentMethod(method.id)}
                         >
                           <div className="tile-icon">{method.icon}</div>

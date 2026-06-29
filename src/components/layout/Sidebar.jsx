@@ -213,7 +213,7 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   const { data: locations } = useSucursales();
   const { location: userLocation } = useLoginStore();
 
-  const { selectedLocation, setSelectedLocation } = useLocationStore();
+  const { selectedLocation, setSelectedLocation, initialized, setInitialized } = useLocationStore();
   const canChangeLocation = permissions.isAdmin || permissions.isManager;
 
   const displayLocation =
@@ -221,12 +221,16 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
       ? (selectedLocation ?? GENERAL_LOCATION)
       : userLocation;
 
+  
   useEffect(() => {
-    if (selectedLocation === undefined && locations.length) {
-      const defaultLocation = canChangeLocation ? null : (locations.find((l) => l.id === 1) || locations[0]);
+    if (!initialized && locations?.length) {
+      const defaultLocation = canChangeLocation
+        ? locations[0]
+        : (locations.find((l) => l.id === userLocation?.id) || locations[0]);
       setSelectedLocation(defaultLocation);
+      setInitialized();
     }
-  }, [locations, selectedLocation]);
+  }, [locations, initialized]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
