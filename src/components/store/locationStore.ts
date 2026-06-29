@@ -1,13 +1,27 @@
-// store/locationStore.ts
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-interface LocationStore {
-  selectedLocation: any | null;
-  setSelectedLocation: (location: any) => void;
+interface Location {
+  id: number;
+  name: string;
+  [key: string]: any;
 }
 
-export const useLocationStore = create<LocationStore>((set) => ({
-  selectedLocation: null,
-  setSelectedLocation: (location) =>
-    set({ selectedLocation: location }),
-}));
+interface LocationStore {
+  selectedLocation: Location | null;
+  initialized: boolean;
+  setSelectedLocation: (location: Location | null) => void;
+  setInitialized: () => void;
+}
+
+export const useLocationStore = create<LocationStore>()(
+  persist(
+    (set) => ({
+      selectedLocation: null,
+      initialized: false,
+      setSelectedLocation: (location) => set({ selectedLocation: location }),
+      setInitialized: () => set({ initialized: true }),
+    }),
+    { name: "selected-location" },
+  ),
+);

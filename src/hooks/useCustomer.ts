@@ -46,7 +46,6 @@ export const useCustomer = () => {
     const value = searchTerm.trim().toLowerCase();
 
     if (!value) return customers;
-    
     return customers.filter((customer: { name: string; businessName: string; phone: string; address: string; nits: any[]; }) => {
       const nameMatch = customer.name?.trim().toLowerCase() === value;
 

@@ -19,11 +19,13 @@ import {
   SearchWrapper,
   FilterButtonGroup,
   FilterButton,
+  ActionsGroup,
 } from "../components/ui/Products";
-import { Pencil, Plus, Search, Warehouse } from "lucide-react";
+import { Pencil, Plus, Search, Warehouse, FileText } from "lucide-react";
 import { useLoginStore } from "../components/store/loginStore";
 import { useLocationStore } from "../components/store/locationStore";
 import { BranchesPopover } from "../components/modals/BranchesPopover";
+import { generarListaPreciosPDF } from "../components/pdf/generarListaPreciosPDF";
 
 const fechaHoy = () => {
   const fecha = new Date().toLocaleDateString("es-BO", {
@@ -48,10 +50,13 @@ function Products() {
   const { selectedLocation } = useLocationStore();
   const permissions = usePermissions();
   const { canViewCosts } = usePermissions();
+
   const activeLocationId =
     permissions.isAdmin || permissions.isManager
       ? selectedLocation?.id
       : location?.id;
+
+  console.log("activeLocationId", activeLocationId);
 
   const { products, search, onFilterTextBoxChanged, isLoading } =
     useInventory();
@@ -104,11 +109,21 @@ function Products() {
         headerName: "Stock",
         flex: 1,
         renderCell: (params) => {
-          const inventory = params.row?.inventories?.find(
-            (inv) => inv.locationId === activeLocationId,
-          );
+          let stock = 0;
 
-          const stock = inventory?.quantity || 0;
+          if (activeLocationId == null) {
+            stock =
+              params.row?.inventories?.reduce(
+                (total, inv) => total + Number(inv.quantity || 0),
+                0,
+              ) || 0;
+          } else {
+            const inventory = params.row?.inventories?.find(
+              (inv) => inv.locationId === activeLocationId,
+            );
+
+            stock = inventory?.quantity || 0;
+          }
 
           return <StockCell stock={stock} units={params.row.productUnits} />;
         },
@@ -187,11 +202,16 @@ function Products() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesLocation = product.inventories?.some(
-        (inv) => inv.locationId === activeLocationId,
-      );
+      const matchesLocation =
+        activeLocationId == null
+          ? true
+          : product.inventories?.some(
+              (inv) => inv.locationId === activeLocationId,
+            );
+
       const matchesLine =
         selectedLineId === "all" || String(product.lineId) === selectedLineId;
+
       return matchesLocation && matchesLine;
     });
   }, [products, activeLocationId, selectedLineId]);
@@ -211,7 +231,6 @@ function Products() {
 
                 <Subtitle>{fechaHoy()}</Subtitle>
               </HeaderTitle>
-
               <TopActions>
                 <SearchWrapper>
                   <Search size={18} />
@@ -221,27 +240,29 @@ function Products() {
                     placeholder="Buscar producto..."
                   />
                 </SearchWrapper>
-                <AddButton
-                  type="button"
-                  onClick={() => {
-                   console.log("generar PDF")
-                  }}
-                >
-                  <Plus size={18} strokeWidth={3} />
-                  Añadir Producto
-                </AddButton>
-                {permissions.canCreateProduct && (
+
+                <ActionsGroup>
                   <AddButton
                     type="button"
-                    onClick={() => {
-                      setSelectedProduct(null);
-                      setShowForm(true);
-                    }}
+                    onClick={() => generarListaPreciosPDF(filteredProducts)}
                   >
-                    <Plus size={18} strokeWidth={3} />
-                    Añadir Producto
+                    <FileText size={18} strokeWidth={3} />
+                    Precios PDF
                   </AddButton>
-                )}
+
+                  {permissions.canCreateProduct && (
+                    <AddButton
+                      type="button"
+                      onClick={() => {
+                        setSelectedProduct(null);
+                        setShowForm(true);
+                      }}
+                    >
+                      <Plus size={18} strokeWidth={3} />
+                      Añadir Producto
+                    </AddButton>
+                  )}
+                </ActionsGroup>
               </TopActions>
             </PageHeader>
 
