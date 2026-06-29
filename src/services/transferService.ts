@@ -67,16 +67,26 @@ export const approveTransferService = async (
   return resData;
 };
 
-export const rejectTransferService = async (id: number, token: string) => {
+export const rejectTransferService = async (
+  id: number,
+  reason: string,
+  token: string,
+) => {
   const res = await fetch(`${API}/transfer/transfer-reject/${id}`, {
     method: "PUT",
     headers: {
+      "Content-Type": "application/json",
       "x-access-token": token,
     },
+    body: JSON.stringify({
+      rejectionReason: reason,
+    }),
   });
+
   if (res.status === 401 || res.status === 403) {
     cerrarSesion();
   }
+
   const resData = await res.json();
 
   if (!res.ok) {

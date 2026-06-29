@@ -53,7 +53,8 @@ function Products() {
       ? selectedLocation?.id
       : location?.id;
 
-  const { products, search, onFilterTextBoxChanged, isLoading } = useInventory();
+  const { products, search, onFilterTextBoxChanged, isLoading } =
+    useInventory();
   const { lines } = useLines();
   ////////////////////////////////////////////////////////////
   // EDITAR PRODUCTO
@@ -220,7 +221,15 @@ function Products() {
                     placeholder="Buscar producto..."
                   />
                 </SearchWrapper>
-
+                <AddButton
+                  type="button"
+                  onClick={() => {
+                   console.log("generar PDF")
+                  }}
+                >
+                  <Plus size={18} strokeWidth={3} />
+                  Añadir Producto
+                </AddButton>
                 {permissions.canCreateProduct && (
                   <AddButton
                     type="button"
@@ -235,7 +244,7 @@ function Products() {
                 )}
               </TopActions>
             </PageHeader>
-            
+
             {/* FILTROS DE MARCAS */}
             <FilterButtonGroup>
               {lineFilters.map((line) => (
