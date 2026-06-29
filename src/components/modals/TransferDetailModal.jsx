@@ -83,7 +83,7 @@ export default function TransferDetailModal({
   const handleReject = async () => {
     try {
       await onReject(transfer.id, reason);
-      setReason("");
+      setReason("")
       successToast("Transferencia rechazada");
       onClose();
     } catch (error) {

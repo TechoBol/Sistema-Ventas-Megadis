@@ -6,17 +6,13 @@ export const getDashboardSummaryService = async (
   token: string,
   locationId?: number | null,
 ) => {
-  // Si hay locationId, lo agrega como query param
   const url = locationId
     ? `${API}/dashboard/summary?locationId=${locationId}`
-    : `${API}/dashboard/summary`;
+    : `${API}/dashboard/general`;
 
   const res = await fetch(url, {
     headers: { "x-access-token": token },
   });
-  if (res.status === 401 || res.status === 403) {
-    cerrarSesion();
-  }
   if (res.status === 401 || res.status === 403) {
     cerrarSesion();
   }

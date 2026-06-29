@@ -65,8 +65,8 @@ export const useTransfers = () => {
     await getTransfers();
   };
 
-  const rejectTransfer = async (id: number) => {
-    const transfer = await rejectTransferService(id, token);
+  const rejectTransfer = async (id: number , reason : string) => {
+    const transfer = await rejectTransferService(id,reason, token);
     socket.emit("newTranfer", "Transferencia " + transfer.transferCode +"  rechazada");
     await getTransfers();
   };

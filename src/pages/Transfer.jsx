@@ -282,9 +282,9 @@ function Transfer() {
     await approveTransfer(id, location.id);
   };
 
-  const handleReject = async (id) => {
+  const handleReject = async (id, reason) => {
     //if (!canApproveActions) return;
-    await rejectTransfer(id);
+    await rejectTransfer(id,reason);
   };
   const { getFileUrl } = useAmazonS3();
 

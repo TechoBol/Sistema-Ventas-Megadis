@@ -1,11 +1,6 @@
-import styled from "styled-components";
-import { theme } from "./Theme";
-
 export const PAGO_COLORS = ["#c0392b", "#e67e22", "#7f8c8d"];
 
 export const ACCENT = "#c0392b";
-
-// ── Estilos ────────────────────────────────────────────────────────────────
 
 export const styles = {
   wrapper: {
@@ -23,6 +18,14 @@ export const styles = {
 
   kpiRow: {
     display: "flex",
+    gap: 12,
+    marginBottom: 12,
+  },
+
+  // Nueva fila 2 de KPIs
+  kpiRow2: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
     gap: 12,
     marginBottom: 12,
   },
@@ -46,12 +49,13 @@ export const styles = {
       borderRadius: 12,
       padding: "16px 20px",
       flex: 1,
+      minWidth: 0,
     },
     variants: {
-      red: { background: "#c0392b" },
-      dark: { background: "#232323" },
-      pink: { background: "#fde8e8", border: "1px solid #f5c6c6" },
-      dark2: { background: "#2a2a2a" },
+      red:   { background: "#c0392b", flex: 2 },
+      dark:  { background: "#232323", flex: 1 },
+      pink:  { background: "#fde8e8", border: "1px solid #f5c6c6", flex: 2 },
+      dark2: { background: "#2a2a2a", flex: 1 },
     },
     label: (isPink) => ({
       fontSize: 12,
@@ -165,7 +169,7 @@ export const styles = {
       display: "flex",
       gap: 16,
       alignItems: "center",
-      justifyContent: "center", 
+      justifyContent: "center",
       paddingInline: 16,
       width: "100%",
     },
@@ -194,13 +198,39 @@ export const styles = {
       borderRadius: 2,
       background: color,
       display: "inline-block",
-      flexShrink: 0,     
+      flexShrink: 0,
     }),
     amount: {
       fontSize: 12,
       color: "rgba(255,255,255,0.5)",
       whiteSpace: "nowrap",
     },
+  },
+
+  // Sin movimiento
+  sinMovimientoRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 7,
+  },
+  sinMovimientoDot: {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#e67e22",
+    flexShrink: 0,
+  },
+  sinMovimientoName: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.75)",
+  },
+
+  // Texto vacío
+  emptyText: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.35)",
+    margin: 0,
   },
 
   // Ejes de recharts

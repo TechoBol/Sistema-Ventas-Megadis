@@ -100,14 +100,29 @@ export const BackButton = styled.button`
 export const TopActions = styled.div`
   width: 100%;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  align-items: center;
+  gap: 20px;
   margin-bottom: 24px;
 
   @media (max-width: 700px) {
     flex-direction: column;
     align-items: stretch;
+  }
+`;
+
+export const ActionsGroup = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  @media (max-width: 700px) {
+    width: 100%;
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
   }
 `;
 

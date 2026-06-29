@@ -74,12 +74,14 @@ import { useSucursales } from "../../hooks/useSucursales";
 import { useLocationStore } from "../store/locationStore";
 import { useLoginStore } from "../store/loginStore";
 
+const GENERAL_LOCATION = { id: null, name: "General", type: "GENERAL", abbreviation: "ALL" };
+
 const sidebarSections = [
   {
-    title: "Inicio",
+    //title: "Inicio",
     items: [
       {
-        label: "Dashboard",
+        label: "Inicio",
         icon: LayoutDashboard,
         path: "/dashboard",
         permission: "canViewDashboard",
@@ -211,21 +213,24 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   const { data: locations } = useSucursales();
   const { location: userLocation } = useLoginStore();
 
-  const { selectedLocation, setSelectedLocation } = useLocationStore();
+  const { selectedLocation, setSelectedLocation, initialized, setInitialized } = useLocationStore();
   const canChangeLocation = permissions.isAdmin || permissions.isManager;
 
   const displayLocation =
     permissions.isAdmin || permissions.isManager
-      ? selectedLocation
+      ? (selectedLocation ?? GENERAL_LOCATION)
       : userLocation;
 
+  
   useEffect(() => {
-    if (!selectedLocation && locations.length) {
-      const defaultLocation = locations.find((l) => l.id === 1) || locations[0];
-
+    if (!initialized && locations?.length) {
+      const defaultLocation = canChangeLocation
+        ? locations[0]
+        : (locations.find((l) => l.id === userLocation?.id) || locations[0]);
       setSelectedLocation(defaultLocation);
+      setInitialized();
     }
-  }, [locations, selectedLocation]);
+  }, [locations, initialized]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -327,11 +332,9 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   }, [locations, search]);
 
   const LocationIcon = ({ type, size = 24 }) =>
-    type === "WAREHOUSE" ? (
-      <Warehouse size={size} />
-    ) : (
-      <Building2 size={size} />
-    );
+    type === "WAREHOUSE" ? <Warehouse size={size} /> :
+      type === "GENERAL" ? <LayoutDashboard size={size} /> :
+        <Building2 size={size} />;
 
   return (
     <SidebarWrapper $isOpen={isOpen} $isCollapsed={isCollapsed}>
@@ -389,6 +392,29 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
                       />
                     </BranchSearch>
                   </BranchSearchWrapper>
+
+                  <BranchRegion>
+                    <BranchGrid>
+                      <BranchCard
+                        $active={selectedLocation === null}
+                        onClick={() => {
+                          setSelectedLocation(null);
+                          closeLocationDropdown();
+                        }}
+                      >
+                        <BranchCardIcon $active={selectedLocation === null}>
+                          <LayoutDashboard size={24} />
+                        </BranchCardIcon>
+                        <BranchCardName>General</BranchCardName>
+                        <BranchCardCode>TODOS</BranchCardCode>
+                        {selectedLocation === null && (
+                          <BranchSelected><Check size={14} /></BranchSelected>
+                        )}
+                      </BranchCard>
+                    </BranchGrid>
+                  </BranchRegion>
+
+                  <BranchDivider />
                   {Object.keys(groupedLocations).length === 0 ? (
                     <EmptyBranchState>
                       <Search size={34} />
@@ -398,7 +424,7 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
                   ) : (
                     Object.entries(groupedLocations).map(([region, regionLocations], index) => (
                       <React.Fragment key={region}>
-                        {index !== 0 }
+                        {index !== 0}
                         <BranchRegion>
                           <BranchRegionTitle>
                             {region}
